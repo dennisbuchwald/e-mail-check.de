@@ -27,14 +27,14 @@ import Article from '../layouts/Article.astro';
 	<ul>
 		<li><strong>Zweck:</strong> Technische Prüfung einer an eine Testadresse gesendeten Mail auf Zustellbarkeit (SPF, DKIM, DMARC, Sperrlisten, Spamfilter-Bewertung).</li>
 		<li><strong>Mail-Inhalt:</strong> nur im Arbeitsspeicher, für die Dauer der Prüfung (meist wenige Sekunden), nie auf einem Datenträger.</li>
-		<li><strong>Prüfergebnis:</strong> Score, Prüfpunkte und technische Prüfwerte, darunter IP und Name des sendenden Servers, DNS-Einträge, Absender- und Signatur-Domains, Namen der Spamfilter-Regeln und bis zu drei kurze Fundstellen je Regel (zum Beispiel eine verlinkte Domain). Automatische Löschung nach 7 Tagen.</li>
+		<li><strong>Prüfergebnis:</strong> Score, Prüfpunkte und technische Prüfwerte, darunter IP und Name des sendenden Servers, DNS-Einträge, Absender- und Signatur-Domains, Namen der Spamfilter-Regeln. Fundstellen aus der Mail (Links, Textstellen) speichern wir nicht. Automatische Löschung nach 7 Tagen.</li>
 		<li><strong>Testadresse:</strong> mit Zeitstempeln 7 Tage gespeichert, ohne IP-Adresse.</li>
-		<li><strong>Ort:</strong> Server in Deutschland. [Hosting-Anbieter eintragen]</li>
+		<li><strong>Ort:</strong> Server der Hetzner Online GmbH im Rechenzentrum Falkenstein, Deutschland.</li>
 	</ul>
 
 	<h2>Wer außer uns etwas erfährt</h2>
 	<ul>
-		<li><strong>Hosting-Anbieter:</strong> [Name], als unser Auftragsverarbeiter.</li>
+		<li><strong>Hosting-Anbieter:</strong> Hetzner Online GmbH, Gunzenhausen, als unser Auftragsverarbeiter.</li>
 		<li><strong>Betreiber öffentlicher Sperrlisten</strong>: Spamhaus, SpamCop, Barracuda, NiX Spam und PSBL erhalten per DNS-Anfrage die IP des sendenden Servers. Spamhaus DBL, SURBL und URIBL erhalten Domainnamen aus Links. Nie den Text der Mail, keine Mailadressen, keine Prüfsummen. Einige sitzen außerhalb der EU.</li>
 		<li>Details stehen in der <a href="/datenschutz">Datenschutzerklärung</a>.</li>
 	</ul>
@@ -45,7 +45,7 @@ import Article from '../layouts/Article.astro';
 		<li>Ergebnisse sind nur über zufällige, nicht erratbare Links (128 Bit) erreichbar und werden nicht in Suchmaschinen aufgenommen.</li>
 		<li>Automatische Löschung von Ergebnissen und Testadressen nach 7 Tagen, keine Backups davon.</li>
 		<li>Keine Zugriffsprotokolle mit IP-Adressen. Zähler gegen Missbrauch nur im Arbeitsspeicher.</li>
-		<li>Verschlüsselte Übertragung: HTTPS für die Website, STARTTLS für eingehende Mails. [Nach Livegang bestätigen]</li>
+		<li>Verschlüsselte Übertragung: HTTPS für die Website, STARTTLS für eingehende Mails (TLS 1.3).</li>
 		<li>Getrennte Dienste in Containern, Zugriff auf den Server nur für den Betreiber.</li>
 	</ul>
 
