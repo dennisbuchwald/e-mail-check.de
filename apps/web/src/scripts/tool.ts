@@ -424,15 +424,21 @@ export function initTool(): void {
 		return f.tech;
 	}
 
-	function countUp(el: HTMLElement, to: number) {
-		if (reduced2) return void (el.textContent = fmt(to));
+	/** Calm count-up: same duration and ease-out curve as the bars, so number and bars arrive together. */
+	const COUNT_MS = 2400;
+	function countUp(el: HTMLElement, to: number, onDone: () => void) {
+		if (reduced2) {
+			el.textContent = fmt(to);
+			return onDone();
+		}
+		el.textContent = fmt(0);
 		const start = performance.now();
-		const dur = 900;
 		const tick = (now: number) => {
-			const t = Math.min(1, (now - start) / dur);
+			const t = Math.min(1, (now - start) / COUNT_MS);
 			const eased = 1 - Math.pow(1 - t, 3);
 			el.textContent = fmt(Math.round(to * eased * 10) / 10);
 			if (t < 1) requestAnimationFrame(tick);
+			else onDone();
 		};
 		requestAnimationFrame(tick);
 	}
@@ -454,7 +460,9 @@ export function initTool(): void {
 		const band = $('[data-band]');
 		band.className = `tag with-dot is-${BAND_STATUS[r.band] ?? 'skip'}`;
 		band.textContent = BAND_LABEL[r.band] ?? '';
-		countUp($('[data-score]'), r.score);
+		const scoreBlock = $('.score-block');
+		scoreBlock.dataset.counting = '';
+		countUp($('[data-score]'), r.score, () => delete scoreBlock.dataset.counting);
 		$('[data-auth-warning]').hidden = !r.authWarning;
 
 		// Sub scores

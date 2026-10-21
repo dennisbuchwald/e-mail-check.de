@@ -145,7 +145,7 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 				<div class="card scorecard">
 					<div class="score-block">
 						<span class="eyebrow">Score</span>
-						<span class="score-line"><span class="h score-num" data-score>–</span><span class="score-of"> / 10</span></span>
+						<span class="score-line"><span class="h score-num"><span class="score-sizer" aria-hidden="true">10,0</span><span class="score-value" data-score>–</span></span><span class="score-of"> / 10</span></span>
 						<span class="tag with-dot" data-band>–</span>
 					</div>
 					<div class="subs" data-subs></div>
@@ -1179,10 +1179,27 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 	.score-block .eyebrow {
 		font-size: 11px;
 	}
+	/* The widest value ("10,0") reserves the width, so counting up never moves the bars next to it. */
 	.score-num {
+		display: inline-grid;
 		font-size: 92px;
 		line-height: 0.9;
 		font-variant-numeric: tabular-nums;
+	}
+	.score-sizer,
+	.score-value {
+		grid-area: 1 / 1;
+		text-align: left;
+	}
+	.score-sizer {
+		visibility: hidden;
+	}
+	/* The band label appears once the number has arrived. */
+	.score-block .tag {
+		transition: opacity 0.5s ease;
+	}
+	.score-block[data-counting] .tag {
+		opacity: 0;
 	}
 	.score-of {
 		font-size: 20px;
@@ -1554,7 +1571,8 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 		background: var(--status);
 		transform-origin: left;
 		transform: scaleX(0);
-		transition: transform 1.1s cubic-bezier(0.2, 0.8, 0.2, 1);
+		/* Same duration and curve as the score count-up (tool.ts COUNT_MS). */
+		transition: transform 2.4s cubic-bezier(0.33, 1, 0.68, 1);
 	}
 	.action {
 		padding: 22px 24px;
