@@ -10,7 +10,9 @@ faq:
   - frage: "Wie kann ich E-Mails testen?"
     antwort: "Kopier oben die Testadresse und schick von deinem normalen Postfach eine Mail dorthin, am besten so, wie du sonst auch schreibst. Nach rund 30 Sekunden siehst du dein Ergebnis. Willst du ein Kontaktformular oder ein Newsletter-Tool testen, trag die Testadresse dort als Empfänger ein."
   - frage: "Ist der Test kostenlos und wie oft darf ich testen?"
-    antwort: "Der Test ist kostenlos und du brauchst kein Konto. Damit niemand den Dienst missbraucht, gibt es eine Obergrenze an Tests pro Stunde. Bei normaler Nutzung, also testen, etwas ändern, erneut testen, stößt du nicht daran."
+    antwort: "Ja, unbegrenzt: Es gibt kein Tageslimit wie bei manchen anderen Mail-Testern und du brauchst kein Konto. Damit niemand den Dienst mit Massen-Anfragen lahmlegt, sind höchstens 10 Tests pro Stunde möglich. Beim normalen Ablauf aus Testen, Ändern und erneut Testen kommst du da nicht hin."
+  - frage: "Gibt es eine Alternative zu mail-tester.com ohne Limit?"
+    antwort: "Ja, genau das ist e-mail-check.de. mail-tester.com erlaubt laut eigener FAQ 3 kostenlose Tests in 24 Stunden. Hier testest du ohne Tageslimit, auf Deutsch und mit Anleitung für deinen Anbieter. Den ausführlichen Vergleich findest du auf unserer Seite zur Mail-Tester-Alternative."
   - frage: "Was passiert mit meiner Testmail?"
     antwort: "Der Inhalt deiner Mail wird nur im Arbeitsspeicher ausgewertet und direkt danach gelöscht. Gespeichert wird nur die Zusammenfassung mit Score und Prüfpunkten, und auch die löschen wir nach 7 Tagen automatisch. Unsere Server stehen in Deutschland."
   - frage: "Was ist ein guter Score?"
@@ -82,6 +84,10 @@ Dieser Mail-Tester prüft, ob **deine ausgehenden Mails** beim Empfänger ankomm
 - **Glaubst du, dein Mail-Konto wurde gehackt?** Das BSI hat einen [Notfallplan für gehackte E-Mail-Konten](https://www.bsi.bund.de/DE/Themen/Verbraucherinnen-und-Verbraucher/Cyber-Sicherheitslage/Methoden-der-Cyber-Kriminalitaet/Identitaetsdiebstahl/Hilfe-fuer-Betroffene/hilfe-fuer-betroffene_node.html) mit den nächsten Schritten.
 
 Landen eher Mails, die du bekommst, in deinem eigenen Spam-Ordner? Dann liegt das an deinem Postfach, nicht an deiner Domain. Hilfe findest du beim Anbieter deines Postfachs.
+
+## Unbegrenzt testen, statt nach 3 Versuchen zu warten
+
+Wer etwas repariert, testet oft: Eintrag ändern, testen, nächsten Eintrag ändern, wieder testen. Deshalb gibt es hier kein Tageslimit. Wie wir uns von anderen Testern unterscheiden, steht im [Vergleich mit mail-tester.com](/mail-tester-alternative).
 
 ## Datenschutz in drei Sätzen
 

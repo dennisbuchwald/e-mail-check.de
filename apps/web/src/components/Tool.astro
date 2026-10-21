@@ -24,7 +24,7 @@ const details: Record<string, string> = {
 	<!-- START -->
 	<div class="screen screen-start" data-screen="start" hidden={mode === 'result'}>
 		<div class="start-copy">
-			<span class="pill">Kostenlos · ohne Konto · DSGVO-konform</span>
+			<span class="pill">Unbegrenzt kostenlos · ohne Konto<span class="pill-extra">&nbsp;· DSGVO-konform</span></span>
 			<h1>{title}</h1>
 			{intro && <p class="lead">{intro}</p>}
 		</div>
@@ -43,7 +43,7 @@ const details: Record<string, string> = {
 			<ul class="trust" aria-label="Datenschutz">
 				<li>Server in Deutschland</li>
 				<li>Testmail sofort gelöscht</li>
-				<li>Ergebnis 7 Tage</li>
+				<li>Kein Tageslimit</li>
 			</ul>
 		</div>
 	</div>
@@ -174,6 +174,11 @@ const details: Record<string, string> = {
 	}
 
 	/* START */
+	@media (max-width: 420px) {
+		.pill-extra {
+			display: none;
+		}
+	}
 	.screen-start {
 		display: flex;
 		flex-wrap: wrap;

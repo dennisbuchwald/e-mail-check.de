@@ -1,0 +1,22 @@
+---
+import { getEntry, render } from 'astro:content';
+import Article from '../layouts/Article.astro';
+
+const page = await getEntry('seiten', 'mail-tester-alternative');
+if (!page) throw new Error('content/seiten/mail-tester-alternative.md missing');
+const { Content } = await render(page);
+const d = page.data;
+---
+
+<Article
+	title={d.titel}
+	seoTitle={d.seoTitel}
+	description={d.beschreibung}
+	path="/mail-tester-alternative"
+	crumbs={[{ href: '/', label: 'Start' }, { href: '/mail-tester-alternative', label: 'Mail-Tester-Alternative' }]}
+	kurz={d.intro}
+	faq={d.faq}
+	stand={d.stand}
+>
+	<Content />
+</Article>
