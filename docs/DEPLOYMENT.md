@@ -1,6 +1,29 @@
 # Deployment
 
-Stand 21.10.2026. **Nichts davon ist ausgeführt.** Alles ist vorbereitet und getestet, soweit das ohne Server geht.
+Stand 21.10.2026: **Läuft im Vorschau-Modus** auf https://e-mail-check.de (Passwortschutz, Zugang lokal in `.deploy-zugang.txt`, nicht im Repo).
+
+## Ist-Stand
+
+| Was | Wert |
+|---|---|
+| Server | Hetzner Cloud CAX11 „e-mail-check“, Falkenstein, Ubuntu 26.04, Projekt 16480297 |
+| IPv4 / IPv6 | 167.235.225.13 / 2a01:4f8:1c17:677f::1 |
+| PTR | 167.235.225.13 → mx.e-mail-check.de |
+| Domain + DNS | IONOS (Nameserver ui-dns). IONOS-Mail-Einträge (MX, SPF `include:_spf-eu.ionos.com ~all`, DKIM s1/s2-ionos, DMARC-CNAME) bleiben für Postfächer wie kontakt@ |
+| Eigene Einträge | A/AAAA `@` und `www`, A `mx`, MX `test` → `10 mx.e-mail-check.de`, TXT `test` → `v=spf1 -all` |
+| TLS | Let's Encrypt für e-mail-check.de, www, mx (Caddy), STARTTLS auf Port 25 (TLS 1.3 getestet) |
+| Geprüft | Außen-Testmail per swaks: echte Client-IP kommt an, Spamhaus antwortet über unbound, Ergebnis korrekt |
+| Deploy | `DEPLOY_HOST=167.235.225.13 scripts/deploy.sh` |
+
+## Go-live (wenn Impressum + Recht fertig)
+1. In `infra/caddy/Caddyfile.prod` den Block `@preview` / `basic_auth` / `header @preview` löschen.
+2. In `docker-compose.prod.yml` die Zeilen `PREVIEW_USER`/`PREVIEW_HASH` löschen.
+3. `noindex` aus `datenschutz.astro` und `avv.astro` entfernen, deployen.
+4. Search Console verifizieren, Sitemap einreichen.
+
+---
+
+Ursprüngliche Planung (Abschnitte A bis E):
 
 ## A. Was Dennis freigeben bzw. selbst tun muss
 
@@ -12,7 +35,7 @@ Reihenfolge einhalten, jeder Punkt ist ein eigener Schritt.
 | 2 | **Hetzner-Cloud-Server anlegen:** neues Projekt „e-mail-check“, Typ **CAX11** (ARM, 2 vCPU, 4 GB) oder größer, Standort Nürnberg oder Falkenstein, Image **Ubuntu 24.04**, deinen SSH-Key auswählen, IPv4 + IPv6 an, bei „Cloud config“ den Inhalt von `infra/server/cloud-init.yml` einfügen. Optional zusätzlich eine Hetzner-Firewall mit den Ports 22, 25, 80, 443. | Dennis (oder ich mit Freigabe + API-Token) | laut Hetzner-Preisliste | Konto + laufende Kosten |
 | 3 | **DNS-Einträge** setzen (Tabelle unten) | Dennis (oder ich mit Freigabe) | 0 € bei Hetzner DNS | Domains/DNS nur mit Freigabe |
 | 4 | **Reverse DNS (PTR)** der Server-IPv4 auf `mx.e-mail-check.de` (Hetzner Console → Server → Netzwerk → Reverse DNS) | Dennis | 0 € | Konto |
-| 5 | **`.env` auf dem Server** ausfüllen (`cp .env.example .env`), mindestens `ACME_EMAIL` | Dennis oder ich per SSH | – | Server-Zugriff |
+| 5 | **`.env` auf dem Server** ausfüllen (`cp .env.example .env`), Vorschau-Passwort-Hash | Dennis oder ich per SSH | – | Server-Zugriff |
 | 6 | **Freigabe Deploy:** `DEPLOY_HOST=<ip> scripts/deploy.sh` | ich, nach deinem OK | – | Deploy nur mit Freigabe |
 | 7 | **Go-live-Freigabe Inhalte:** Impressum vollständig, Datenschutz/AVV geprüft, `noindex` raus, Anleitungen geprüft | Dennis | – | Rechtliches |
 | 8 | Google Search Console verifizieren (DNS-TXT) und Sitemap einreichen | Dennis | 0 € | Konto |
