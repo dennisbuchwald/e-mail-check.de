@@ -23,6 +23,11 @@
 		}
 	}
 
+	# Statistics (only when the "stats" profile runs). Same origin: no third party, no CSP exception.
+	handle_path /stats/* {
+		reverse_proxy umami:3000
+	}
+
 	# Shared results: one static shell, id is read client-side.
 	@result path_regexp ^/ergebnis/[A-Za-z0-9_-]{22}$
 	handle @result {

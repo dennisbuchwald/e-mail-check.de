@@ -6,9 +6,16 @@
   "scripts": {
     "dev:engine": "pnpm --filter @emc/engine dev",
     "test": "pnpm -r test",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "up": "docker compose up -d --build",
+    "down": "docker compose down",
+    "send-test": "node scripts/send-test.ts",
+    "test:e2e": "playwright test",
+    "og-image": "node scripts/og-image.mjs",
+    "dev:web": "pnpm --filter @emc/web dev"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@types/node": "^26.6.5",
     "typescript": "^7.0.2"
   }

@@ -8,6 +8,8 @@ COPY packages/shared/package.json packages/shared/
 RUN pnpm install --frozen-lockfile --filter @emc/web...
 COPY packages/shared packages/shared
 COPY apps/web apps/web
+ARG PUBLIC_UMAMI_ID=""
+ENV PUBLIC_UMAMI_ID=$PUBLIC_UMAMI_ID
 RUN pnpm --filter @emc/web build
 
 FROM caddy:2-alpine

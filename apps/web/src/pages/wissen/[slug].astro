@@ -7,6 +7,7 @@ export async function getStaticPaths() {
 	const entries = await getCollection('wissen');
 	return entries.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
 }
+const CRUMB: Record<string, string> = { spf: 'SPF', dkim: 'DKIM', dmarc: 'DMARC', 'spf-dkim-dmarc': 'SPF, DKIM, DMARC', 'mails-landen-im-spam': 'Mails im Spam' };
 const { entry } = Astro.props;
 const { Content } = await render(entry);
 const d = entry.data;
@@ -19,7 +20,7 @@ const related = (await getCollection('wissen')).filter((e) => e.id !== entry.id)
 	seoTitle={d.seoTitel}
 	description={d.beschreibung}
 	path={`/wissen/${entry.id}`}
-	crumbs={[{ href: '/', label: 'Start' }, { href: '/wissen/spf-dkim-dmarc', label: 'Wissen' }, { href: `/wissen/${entry.id}`, label: d.titel }]}
+	crumbs={[{ href: '/', label: 'Start' }, { href: '/wissen/spf-dkim-dmarc', label: 'Wissen' }, { href: `/wissen/${entry.id}`, label: CRUMB[entry.id] ?? d.titel }]}
 	kurz={d.kurz}
 	faq={d.faq}
 	quellen={d.quelle}

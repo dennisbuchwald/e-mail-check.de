@@ -10,6 +10,7 @@ networks:
 
 volumes:
   data:
+  umami-db:
 
 services:
   unbound:
@@ -56,4 +57,30 @@ services:
     ports:
       - "8080:80"
     depends_on: [engine]
+    networks: [mail]
+
+  # Cookie-free statistics, off by default: `docker compose --profile stats up`
+  umami-db:
+    image: postgres:17-alpine
+    profiles: [stats]
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD:-local-only-change-me}
+    volumes:
+      - umami-db:/var/lib/postgresql/data
+    networks: [mail]
+
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    profiles: [stats]
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD:-local-only-change-me}@umami-db:5432/umami
+      APP_SECRET: ${UMAMI_APP_SECRET:-local-only-change-me}
+      DISABLE_TELEMETRY: "1"
+    depends_on: [umami-db]
+    ports:
+      - "3000:3000"
     networks: [mail]

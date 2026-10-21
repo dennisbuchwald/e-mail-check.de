@@ -24,7 +24,7 @@ const main = d.themen[0];
 	seoTitle={d.seoTitel}
 	description={d.beschreibung}
 	path={path}
-	crumbs={[{ href: '/', label: 'Start' }, { href: '/anleitung', label: 'Anleitungen' }, { href: path, label: d.titel }]}
+	crumbs={[{ href: '/', label: 'Start' }, { href: '/anleitung', label: 'Anleitungen' }, { href: path, label: `${d.anbieterName} ${d.themen.map((t) => TOPIC_NAMES[t].tech).join(', ')}` }]}
 	kurz={d.kurzantwort}
 	faq={d.faq}
 	quellen={d.quelle}

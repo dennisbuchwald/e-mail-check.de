@@ -20,7 +20,7 @@ const { size = 38, withText = true } = Astro.props;
 		<circle cx="96" cy="36" r="18" fill="#02CA50"></circle>
 		<path d="M88.5 36.5 L94 42 L103.5 31.5" fill="none" stroke="#1D1D1F" stroke-width="5.8" stroke-linecap="round" stroke-linejoin="round"></path>
 	</svg>
-	{withText && <span class="h logo-text">e-mail-check<span class="tld">.de</span></span>}
+	{withText && <span class="h logo-text" aria-hidden="true">e-mail-check<span class="tld">.de</span></span>}
 </span>
 
 <style>
