@@ -12,6 +12,8 @@ export interface Blocklist {
 	errorAnswers?: string[];
 	/** Answers that only mean "end-user IP range" (Spamhaus PBL), not "spam seen". */
 	pblAnswers?: string[];
+	/** Positive list ("good reputation"): a hit is shown as a plus, never deducted. */
+	allow?: boolean;
 	delistUrl: string;
 }
 
@@ -56,11 +58,11 @@ function expandIpv6(ip: string): string {
 	return [...h, ...fill, ...t].map((g) => g.padStart(4, '0')).join(':');
 }
 
-type ListResult = { list: string; listed: boolean | null; answer?: string; pbl?: boolean; delistUrl: string; major: boolean };
+type ListResult = { list: string; listed: boolean | null; answer?: string; pbl?: boolean; delistUrl: string; major: boolean; allow?: boolean };
 
 async function queryList(resolve: DnsResolver, ip: string, list: Blocklist): Promise<ListResult> {
 	const name = `${reverseIp(ip)}.${list.zone}`;
-	const out = { list: list.name, delistUrl: list.delistUrl, major: list.major };
+	const out = { list: list.name, delistUrl: list.delistUrl, major: list.major, ...(list.allow ? { allow: true } : {}) };
 	try {
 		const answers: string[] = await resolve(name, 'A');
 		const real = answers.filter((a) => a.startsWith('127.') && !(list.errorAnswers ?? []).includes(a));
@@ -92,7 +94,21 @@ async function checkPtr(resolve: DnsResolver, ip: string): Promise<{ ptr: string
 	return { ptr: names[0] ?? null, matches: false };
 }
 
-export async function checkReputation(ip: string, resolve: DnsResolver, lists: Blocklist[] = BLOCKLISTS): Promise<Finding> {
+/** HELO name the server introduced itself with: does it match the rDNS name or point back to the IP? */
+async function checkHelo(resolve: DnsResolver, helo: string | undefined, ip: string, ptr: string | null): Promise<{ name: string | null; matches: boolean }> {
+	const name = (helo ?? '').trim().toLowerCase().replace(/\.$/, '');
+	if (!name) return { name: null, matches: false };
+	if (ptr && name === ptr.toLowerCase()) return { name, matches: true };
+	try {
+		const v = ip.replace(/^::ffff:/i, '');
+		const addrs: string[] = await resolve(name, isIP(v) === 4 ? 'A' : 'AAAA');
+		return { name, matches: addrs.some((a) => a.toLowerCase() === v.toLowerCase()) };
+	} catch {
+		return { name, matches: false };
+	}
+}
+
+export async function checkReputation(ip: string, resolve: DnsResolver, lists: Blocklist[] = BLOCKLISTS, helo?: string): Promise<Finding> {
 	const base = { id: 'reputation' as const, tech: 'Sperrlisten & rDNS' };
 	if (!isIP(ip.replace(/^::ffff:/i, '')) || isPrivateIp(ip)) {
 		return {
@@ -105,7 +121,10 @@ export async function checkReputation(ip: string, resolve: DnsResolver, lists: B
 		};
 	}
 	const v6 = isIP(ip.replace(/^::ffff:/i, '')) === 6;
-	const [ptr, ...results] = await Promise.all([checkPtr(resolve, ip), ...lists.filter((l) => !v6 || l.ipv6).map((l) => queryList(resolve, ip, l))]);
+	const [ptr, ...all] = await Promise.all([checkPtr(resolve, ip), ...lists.filter((l) => !v6 || l.ipv6).map((l) => queryList(resolve, ip, l))]);
+	const results = all.filter((r) => !r.allow);
+	const allowLists = all.filter((r) => r.allow);
+	const helo_ = await checkHelo(resolve, helo, ip, ptr.ptr);
 	const listed = results.filter((r) => r.listed === true);
 	const deductions = [];
 	let listPoints = 0;
@@ -116,7 +135,7 @@ export async function checkReputation(ip: string, resolve: DnsResolver, lists: B
 	if (!ptr.ptr) deductions.push({ reason: 'Kein rDNS-Eintrag (PTR)', points: POINTS.reputation.noPtr });
 	else if (!ptr.matches) deductions.push({ reason: 'rDNS passt nicht zur IP', points: POINTS.reputation.ptrMismatch });
 
-	const raw = { ip, ptr: ptr.ptr, ptrMatches: ptr.matches, lists: results };
+	const raw = { ip, ptr: ptr.ptr, ptrMatches: ptr.matches, helo: helo_.name, heloMatches: helo_.matches, lists: results, allowLists };
 	// Only Spamhaus PBL: an ordinary internet connection sends straight to the recipient.
 	// Not an accusation of spam, but big providers refuse it, so the points stay.
 	if (listed.length > 0 && listed.every((r) => r.pbl)) {
