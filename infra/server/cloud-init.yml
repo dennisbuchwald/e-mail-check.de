@@ -1,11 +1,9 @@
 #cloud-config
-# Hetzner Cloud: paste into "Cloud config" when creating the server (Ubuntu 24.04).
+# Hetzner Cloud: paste into "Cloud config" when creating the server (Ubuntu 24.04 or 26.04).
 # Creates user "deploy" (same SSH key as root), Docker, firewall, automatic security updates.
 package_update: true
 package_upgrade: true
 packages:
-  - docker.io
-  - docker-compose-v2
   - ufw
   - fail2ban
   - unattended-upgrades
@@ -14,7 +12,6 @@ packages:
 users:
   - default
   - name: deploy
-    groups: [docker]
     shell: /bin/bash
     sudo: "ALL=(ALL) NOPASSWD:ALL"
 
@@ -38,6 +35,9 @@ write_files:
       APT::Periodic::Unattended-Upgrade "1";
 
 runcmd:
+  # Docker from the Ubuntu archive; the compose plugin package name differs between releases.
+  - apt-get install -y docker.io && (apt-get install -y docker-compose-v2 || apt-get install -y docker-compose-plugin)
+  - usermod -aG docker deploy
   - mkdir -p /home/deploy/.ssh && cp /root/.ssh/authorized_keys /home/deploy/.ssh/ && chown -R deploy:deploy /home/deploy/.ssh && chmod 700 /home/deploy/.ssh && chmod 600 /home/deploy/.ssh/authorized_keys
   - mkdir -p /opt/e-mail-check && chown deploy:deploy /opt/e-mail-check
   - ufw default deny incoming
