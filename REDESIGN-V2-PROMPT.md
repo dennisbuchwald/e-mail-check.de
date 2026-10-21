@@ -52,6 +52,14 @@ Er ersetzt den V1-Hero mit Aura. Die Aura komplett entfernen, aus dem Code und a
   - Die bestehende Logik bleibt: Adresse erzeugen, SSE und Polling, Prüf-Modus.
 - **Vertrauenszeile:** grüne Kreise 18 px `#02CA50` mit Ink-Häkchen. Texte: „Server in Deutschland“, „Testmail sofort gelöscht“, „Keine Cookies, kein Konto“. Nur stehen lassen, was technisch stimmt.
 - Unten „So funktioniert's ⌄“ mit wippendem Pfeil, Anker auf die Sektion.
+- **Grüner Schein hinter dem Mail-Fenster (Ergänzung 21.10.2026):**
+  - Liegt unter der Card und über dem Punktraster: ellipsenförmig, ca. 760 × 300 px, zentriert unter der Card und leicht nach unten versetzt, damit er unten herausschimmert. Mobil ca. 420 × 220 px.
+  - CSS: `radial-gradient(closest-side, rgba(2,202,80,0.14), rgba(2,202,80,0))`, `filter: blur(30px)`, `pointer-events: none`.
+  - Ruhezustand: keine Bewegung.
+  - Prüf-Modus: Solange geprüft wird, atmet der Schein (opacity 0,7 → 1, scale 0,96 → 1,04, 2,4 s ease-in-out, alternate, infinite). Nur transform/opacity.
+  - Ergebnis: Der Schein nimmt kurz die Ergebnisfarbe an (Grün/Orange/Rot, gleiche Deckkraft) und blendet dann über 1,5 s auf 0 aus.
+  - `prefers-reduced-motion`: statisch, kein Atmen.
+  - Kein Ersatz für die Aura aus V1, die bleibt entfernt. Nur dieser eine Schein.
 - **Mobil (390 px):** Adresse darf umbrechen oder wird kleiner, nie abgeschnitten. Buttons volle Breite.
 
 ## 4. Wortmarke „mail / check“
