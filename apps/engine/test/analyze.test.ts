@@ -10,7 +10,7 @@ async function run(name: string, opts: { ip?: string; sender?: string; deps?: Pa
 	const steps: StepId[] = [];
 	const msg = fixture(name);
 	const from = /From: .*<([^>]+)>/.exec(msg.toString())![1];
-	const result = await analyzeMessage(msg, { ip: opts.ip ?? GOOD_IP, helo: 'mail.gut.example.test', sender: opts.sender ?? from }, 'k7m2x9qa@test.e-mail-check.de', { ...deps, ...opts.deps }, (s) => steps.push(s));
+	const result = await analyzeMessage(msg, { ip: opts.ip ?? GOOD_IP, helo: 'mail.gut.example.test', sender: opts.sender ?? from, tls: { version: 'TLSv1.3' } }, 'k7m2x9qa@test.e-mail-check.de', { ...deps, ...opts.deps }, (s) => steps.push(s));
 	return { result, steps };
 }
 
@@ -35,7 +35,8 @@ describe('analyzeMessage', () => {
 	it('rates a clean mail 10/10 and reports every step', async () => {
 		const { result, steps } = await run('gut.eml');
 		expect(steps).toEqual(['received', 'spf', 'dkim', 'dmarc', 'reputation', 'content']);
-		expect(result.findings.map((f) => f.status)).toEqual(['ok', 'ok', 'ok', 'ok', 'ok']);
+		expect(result.findings.map((f) => f.status)).toEqual(['ok', 'ok', 'ok', 'ok', 'ok', 'ok', 'ok']);
+		expect(result.verdict).toEqual({ line1: 'Deine Mail kam sauber an.', line2: 'Jede Station grün.' });
 		expect(result.score).toBe(10);
 		expect(result.light).toBe('ok');
 		expect(result.fromDomain).toBe('gut.example.test');
@@ -65,7 +66,7 @@ describe('analyzeMessage', () => {
 		expect(dmarc.status).toBe('bad');
 		expect(dmarc.title).toBe('Schutzregel fehlt');
 		expect(dmarc.suggestion).toEqual({ type: 'TXT', host: '_dmarc.ohne-dmarc.example.test', value: 'v=DMARC1; p=none; rua=mailto:dmarc@ohne-dmarc.example.test' });
-		expect(result.headline).toBe('Fast geschafft. Eine Sache hält dich von der 10 ab.');
+		expect(result.verdict).toEqual({ line1: 'Deine Mail kommt an, aber nicht überall.', line2: 'Eine Sache solltest du beheben.' });
 		expect(result.band).toBe('solid');
 		expect(result.authWarning).toBe(true);
 		expect(result.findings[0].gain).toBe(1.5);

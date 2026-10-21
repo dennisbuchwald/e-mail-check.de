@@ -37,6 +37,10 @@ txt('_dmarc.ohne-spf.example.test', 'v=DMARC1; p=quarantine');
 txt('_dmarc.ohne-dkim.example.test', 'v=DMARC1; p=none');
 txt('_dmarc.dkim-kaputt.example.test', 'v=DMARC1; p=reject');
 txt('_dmarc.softfail.example.test', 'v=DMARC1; p=reject');
+// Freemail case like a real iCloud test (test-only zone, the real icloud.com is never queried in tests).
+txt('icloud.com', 'v=spf1 ip4:203.0.113.0/24 -all');
+txt('s1._domainkey.icloud.com', dkimTxt);
+txt('_dmarc.icloud.com', 'v=DMARC1; p=quarantine; sp=quarantine');
 // PTR + forward confirmation for the sending IPs.
 zone['10.113.0.203.in-addr.arpa PTR'] = ['mail.gut.example.test'];
 zone['mail.gut.example.test A'] = [GOOD_IP];
@@ -84,6 +88,14 @@ const fixtures: Record<string, string> = {
 		'gut.example.test',
 	),
 	'sperrliste.eml': await sign(mail('max@gut.example.test', 'Angebot Website', body), 'gut.example.test'),
+	// Freemail sender with a real-looking delivery chain (Received headers, newest first).
+	'freemail.eml':
+		[
+			'Received: from outbound.mr.icloud.com by mr-2004c.eps.apple.com (Postfix) with ESMTPS id 4c1; Tue, 20 Oct 2026 10:00:10 +0200',
+			'Received: from [192.168.1.20] by p00-icloudmta-asmtp.me.com (Postfix) with ESMTPSA id 9a2; Tue, 20 Oct 2026 10:00:08 +0200',
+		].join('\r\n') +
+		'\r\n' +
+		(await sign(mail('max.muster@icloud.com', 'Angebot Website', body), 'icloud.com')),
 };
 for (const [name, content] of Object.entries(fixtures)) writeFileSync(join(dir, name), content);
 console.log(`Wrote ${Object.keys(fixtures).length} fixtures + dns.json to ${dir}`);

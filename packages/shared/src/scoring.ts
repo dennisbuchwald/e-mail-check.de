@@ -5,8 +5,13 @@ export const POINTS = {
 	spf: { none: 1.5, fail: 2, softfail: 1, neutral: 0.5, permerror: 1.5, temperror: 0.5 },
 	dkim: { none: 2, fail: 2.5, notAligned: 0.5, temperror: 0.5 },
 	dmarc: { none: 1.5, fail: 2.5, monitorOnly: 0.2, temperror: 0.5 },
+	/** Freemail sender (gmail, icloud, gmx …): a hint, not a problem. */
+	sender: { freemail: 0.2 },
 	reputation: { majorList: 3, otherList: 1, listCap: 4, noPtr: 1, ptrMismatch: 0.5 },
-	content: { cap: 4, deadLink: 0.5, deadLinkCap: 1, shortener: 0.5, noUnsubscribeHeader: 0.5 },
+	/** Transport to us: no TLS or outdated TLS. */
+	transport: { noTls: 0.5, oldTls: 0.2 },
+	/** Own content hints only count if rspamd did not already flag the same thing. */
+	content: { cap: 4, shortener: 0.5, noUnsubscribeHeader: 0.3, imageOnly: 0.3, lowText: 0.2 },
 } as const;
 
 /** rspamd content score → deduction. Up to 1 point is normal for legitimate mail. */
@@ -60,9 +65,9 @@ export function trafficLight(score: number, findings: Pick<Finding, 'id' | 'stat
 
 /** Highest possible deduction per area, used to turn deductions into a percentage. */
 export const AREA_MAX = {
-	auth: POINTS.spf.fail + POINTS.dkim.fail + POINTS.dmarc.fail,
-	reputation: POINTS.reputation.listCap + POINTS.reputation.noPtr,
-	content: POINTS.content.cap + POINTS.content.deadLinkCap + POINTS.content.shortener + POINTS.content.noUnsubscribeHeader,
+	auth: POINTS.spf.fail + POINTS.sender.freemail + POINTS.dkim.fail + POINTS.dmarc.fail,
+	reputation: POINTS.reputation.listCap + POINTS.reputation.noPtr + POINTS.transport.noTls,
+	content: POINTS.content.cap + POINTS.content.shortener + POINTS.content.noUnsubscribeHeader + POINTS.content.imageOnly + POINTS.content.lowText,
 } as const;
 
 export function subScores(findings: Finding[]): SubScores {
@@ -72,7 +77,7 @@ export function subScores(findings: Finding[]): SubScores {
 		const ded = fs.reduce((s, f) => s + f.deductions.reduce((x, d) => x + d.points, 0), 0);
 		return Math.max(0, Math.round(100 * (1 - ded / max)));
 	};
-	return { auth: area([...AUTH_IDS], AREA_MAX.auth), reputation: area(['reputation'], AREA_MAX.reputation), content: area(['content'], AREA_MAX.content) };
+	return { auth: area([...AUTH_IDS, 'sender'], AREA_MAX.auth), reputation: area(['reputation', 'transport'], AREA_MAX.reputation), content: area(['content'], AREA_MAX.content) };
 }
 
 export function impactFor(gain: number): Impact {
@@ -90,15 +95,22 @@ export function enrichFindings(findings: Finding[]): Finding[] {
 	return enriched.sort((a, b) => ORDER[a.status] - ORDER[b.status] || (b.gain ?? 0) - (a.gain ?? 0));
 }
 
-/** Verdict headline and "what this means" text. */
-export function summarize(score: number, findings: Finding[]): { headline: string; sub: string } {
+const WORDS = ['Null', 'Eine', 'Zwei', 'Drei', 'Vier', 'Fünf', 'Sechs'];
+
+/** Two-line verdict (design/redesign/ergebnis-v2-prototyp.html, tab D): line 1 ink, line 2 grey. */
+export function verdictFor(score: number, findings: Pick<Finding, 'status'>[]): { line1: string; line2: string } {
+	const bad = findings.filter((f) => f.status === 'bad').length;
+	const warn = findings.filter((f) => f.status === 'warn').length;
+	if (bandFor(score) === 'risk') return { line1: 'Hier landet viel im Spam.', line2: 'So behebst du es.' };
+	if (bad > 0) return { line1: 'Deine Mail kommt an, aber nicht überall.', line2: bad === 1 ? 'Eine Sache solltest du beheben.' : `${bad} Dinge solltest du beheben.` };
+	if (warn > 0) return { line1: 'Deine Mail kam sauber an.', line2: warn === 1 ? 'Ein Tipp für die letzte Stufe.' : `${WORDS[warn] ?? warn} Tipps für die letzte Stufe.` };
+	return { line1: 'Deine Mail kam sauber an.', line2: 'Jede Station grün.' };
+}
+
+/** "Was das für dich bedeutet" text, by band. */
+export function summarize(score: number, findings: Finding[]): { sub: string } {
 	const band = bandFor(score);
 	const todo = findings.filter((f) => f.status === 'bad' || (f.status === 'warn' && (f.gain ?? 0) > 0));
-	let headline: string;
-	if (todo.length === 0) headline = band === 'good' ? 'Alles im grünen Bereich.' : 'Solide. Mehr geht hier kaum.';
-	else if (band === 'risk') headline = 'Hier landet viel im Spam. So behebst du es.';
-	else if (todo.length === 1) headline = 'Fast geschafft. Eine Sache hält dich von der 10 ab.';
-	else headline = `${todo.length === 2 ? 'Zwei' : todo.length === 3 ? 'Drei' : todo.length === 4 ? 'Vier' : 'Fünf'} Dinge halten dich von der 10 ab.`;
 	const sub: Record<Band, string> = {
 		good: todo.length ? 'Deine Mails kommen an. Mit dem Feinschliff unten bist du auf der sicheren Seite.' : 'Deine Mails kommen an, und deine Domain ist sauber eingerichtet. Mehr geht nicht.',
 		solid: 'Deine Mails kommen meistens an. Mit den Punkten unten wird es verlässlicher, besonders bei Gmail und Outlook.',
@@ -106,5 +118,5 @@ export function summarize(score: number, findings: Finding[]): { headline: strin
 		risk: 'Viele deiner Mails landen im Spam oder werden abgelehnt. Erst beheben, dann wieder versenden.',
 	};
 	// The exception rule (hasAuthFailure) is shown as its own notice in the UI, not repeated here.
-	return { headline, sub: sub[band] };
+	return { sub: sub[band] };
 }

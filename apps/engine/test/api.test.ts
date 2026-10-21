@@ -26,7 +26,7 @@ describe('API', () => {
 		const test = await res.json();
 		expect(test.address).toMatch(/^[a-z2-9]{8}@test\.e-mail-check\.de$/);
 
-		await service.handleMessage(test.address, fixture('gut.eml'), { ip: GOOD_IP, helo: 'mail.gut.example.test', sender: 'max@gut.example.test' });
+		await service.handleMessage(test.address, fixture('gut.eml'), { ip: GOOD_IP, helo: 'mail.gut.example.test', sender: 'max@gut.example.test', tls: { version: 'TLSv1.3' } });
 		const status = await (await app.request(`/api/tests/${test.id}`)).json();
 		expect(status.state).toBe('done');
 
@@ -41,7 +41,7 @@ describe('API', () => {
 	it('keeps subject and From address in RAM only, never in the database', async () => {
 		const { app, service, store } = setup();
 		const test = await (await app.request('/api/tests', { method: 'POST' })).json();
-		const res = (await service.handleMessage(test.address, fixture('gut.eml'), { ip: GOOD_IP, helo: 'x', sender: 'max@gut.example.test' }))!;
+		const res = (await service.handleMessage(test.address, fixture('gut.eml'), { ip: GOOD_IP, helo: 'x', sender: 'max@gut.example.test', tls: { version: 'TLSv1.3' } }))!;
 		const stored = store.getResult(res.id)!;
 		expect(stored.mail.subject).toBeNull();
 		expect(stored.mail.from).toBeNull();
@@ -53,7 +53,7 @@ describe('API', () => {
 	it('streams progress via SSE, replaying finished steps', async () => {
 		const { app, service } = setup();
 		const test = service.createTest();
-		await service.handleMessage(test.address, fixture('gut.eml'), { ip: GOOD_IP, helo: 'x', sender: 'max@gut.example.test' });
+		await service.handleMessage(test.address, fixture('gut.eml'), { ip: GOOD_IP, helo: 'x', sender: 'max@gut.example.test', tls: { version: 'TLSv1.3' } });
 		const res = await app.request(`/api/tests/${test.id}/events`);
 		expect(res.headers.get('content-type')).toContain('text/event-stream');
 		const text = await res.text();
@@ -69,7 +69,7 @@ describe('API', () => {
 	it('serves the public counter without any number below 100', async () => {
 		const { app, service } = setup();
 		const test = service.createTest();
-		await service.handleMessage(test.address, fixture('gut.eml'), { ip: GOOD_IP, helo: 'x', sender: 'max@gut.example.test' });
+		await service.handleMessage(test.address, fixture('gut.eml'), { ip: GOOD_IP, helo: 'x', sender: 'max@gut.example.test', tls: { version: 'TLSv1.3' } });
 		const res = await app.request('/api/stats');
 		expect(res.status).toBe(200);
 		expect(await res.json()).toEqual({ mailsChecked: null });
@@ -87,7 +87,7 @@ describe('API', () => {
 		let t = new Date('2026-10-21T10:00:00Z');
 		const { app, service, store } = setup(() => t);
 		const test = service.createTest();
-		const result = (await service.handleMessage(test.address, fixture('gut.eml'), { ip: GOOD_IP, helo: 'x', sender: 'max@gut.example.test' }))!;
+		const result = (await service.handleMessage(test.address, fixture('gut.eml'), { ip: GOOD_IP, helo: 'x', sender: 'max@gut.example.test', tls: { version: 'TLSv1.3' } }))!;
 		expect((await app.request(`/api/results/${result.id}`)).status).toBe(200);
 		t = new Date('2026-10-28T10:00:01Z');
 		expect((await app.request(`/api/results/${result.id}`)).status).toBe(404);

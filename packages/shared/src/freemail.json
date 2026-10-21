@@ -1,0 +1,17 @@
+{
+	"_quelle": "Gängige kostenlose Mail-Anbieter (DE/AT/CH und international). Absender mit diesen Domains bekommen einen Hinweis: Für Kunden- und Firmenmails eine eigene Domain nutzen.",
+	"domains": [
+		"gmail.com", "googlemail.com", "icloud.com", "me.com", "mac.com",
+		"gmx.de", "gmx.net", "gmx.at", "gmx.ch", "gmx.com",
+		"web.de", "t-online.de", "magenta.de", "freenet.de", "online.de",
+		"outlook.com", "outlook.de", "hotmail.com", "hotmail.de", "live.com", "live.de", "msn.com",
+		"yahoo.com", "yahoo.de", "ymail.com", "rocketmail.com",
+		"aol.com", "aol.de", "aim.com",
+		"posteo.de", "posteo.net", "mail.de", "mailbox.org",
+		"proton.me", "protonmail.com", "protonmail.ch", "pm.me",
+		"arcor.de", "vodafone.de", "1und1.de", "email.de", "kabelmail.de", "unitybox.de",
+		"bluewin.ch", "gmx.li", "hispeed.ch", "sunrise.ch",
+		"tutanota.com", "tutanota.de", "tuta.io", "tuta.com",
+		"zoho.com", "yandex.com", "yandex.ru", "mail.ru", "gmx.fr", "laposte.net", "orange.fr", "free.fr", "libero.it", "seznam.cz", "wp.pl", "o2.pl", "onet.pl"
+	]
+}

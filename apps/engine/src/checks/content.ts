@@ -1,7 +1,7 @@
 // Content score via rspamd. Authentication and IP reputation symbols are ignored,
 // because SPF/DKIM/DMARC/blocklists are scored by our own checks.
-import { contentDeduction, POINTS, round1, type Deduction, type Finding } from '@emc/shared';
-import type { LinkReport } from './links.ts';
+import { contentDeduction, POINTS, round1, RSPAMD_SYMBOLE, type Deduction, type Finding } from '@emc/shared';
+import type { LinkSummary } from './links.ts';
 import type { UnsubscribeReport } from './unsubscribe.ts';
 import type { SmtpEnvelope } from './auth.ts';
 
@@ -20,59 +20,8 @@ const IGNORED = [
 /** Symbols caused by common mail programs, not by the sender: never shown as a tip. */
 const CLIENT_QUIRKS = new Set(['MV_CASE']);
 
-/** Plain-language explanations for common content symbols. */
-const TEXTS: Record<string, string> = {
-	MISSING_MIME_VERSION: 'Der Mail fehlt die technische Angabe „MIME-Version“. Das passiert meist bei selbst gebauten Formularen oder Skripten.',
-	MIME_HEADER_CTYPE_ONLY: 'Die Mail hat nur eine unvollständige technische Formatangabe. Typisch für selbst gebaute Versand-Skripte.',
-	URL_NUMERIC_IP: 'Ein Link zeigt auf eine nackte IP-Adresse statt auf einen Domainnamen. Das ist typisch für Spam.',
-	URL_NUMERIC_IP_USER: 'Ein Link zeigt auf eine nackte IP-Adresse statt auf einen Domainnamen. Das ist typisch für Spam.',
-	R_SUSPICIOUS_URL: 'Ein Link sieht verdächtig aus, z. B. eine nackte IP-Adresse statt eines Namens.',
-	HAS_IPFS_GATEWAY_URL: 'Ein Link führt auf einen IPFS-Speicher, den Betrüger oft für Phishing nutzen.',
-	OMOGRAPH_URL: 'Ein Link nutzt Buchstaben, die bekannten Namen nur ähneln (z. B. kyrillisches „а“).',
-	REDIRECTOR_URL: 'Die Mail enthält einen Weiterleitungs-Link. Spamfilter mögen keine versteckten Ziele.',
-	FROM_DN_EQ_ADDR: 'Der Absendername ist identisch mit der Mailadresse. Setz lieber einen echten Namen.',
-	SUBJECT_ENDS_EXCLAIM: 'Der Betreff endet mit einem Ausrufezeichen. Das ist ein leichtes Spam-Signal.',
-	SUBJECT_HAS_EXCLAIM: 'Der Betreff enthält Ausrufezeichen. Das ist ein leichtes Spam-Signal.',
-	SUBJECT_HAS_CURRENCY: 'Der Betreff enthält ein Währungszeichen. Das ist ein leichtes Spam-Signal.',
-	HTML_SHORT_LINK_IMG_1: 'Die Mail enthält ein verlinktes Bild bei sehr wenig Text.',
-	SUBJ_ALL_CAPS: 'Der Betreff steht komplett in Großbuchstaben. Das wirkt auf Spamfilter verdächtig.',
-	MISSING_SUBJECT: 'Die Mail hat keinen Betreff.',
-	EMPTY_SUBJECT: 'Der Betreff ist leer.',
-	MISSING_DATE: 'Der Mail fehlt das Datum. Das passiert meist bei selbst gebauten Formularen.',
-	MISSING_MID: 'Der Mail fehlt die Nachrichten-ID (Message-ID). Das passiert meist bei selbst gebauten Formularen.',
-	MID_RHS_NOT_FQDN: 'Die Nachrichten-ID enthält keinen richtigen Servernamen.',
-	MISSING_TO: 'Die Mail hat keinen Empfänger im „An“-Feld.',
-	MIME_HTML_ONLY: 'Die Mail besteht nur aus HTML, ohne reine Textfassung. Spamfilter mögen das nicht.',
-	R_SUSPICIOUS_IMAGES: 'Die Mail besteht fast nur aus Bildern und hat kaum Text.',
-	HTML_SHORT_LINK_IMG_2: 'Die Mail enthält verlinkte Bilder bei sehr wenig Text.',
-	HTML_SHORT_LINK_IMG_3: 'Die Mail enthält verlinkte Bilder bei sehr wenig Text.',
-	MANY_INVISIBLE_PARTS: 'Die Mail enthält viele unsichtbare Textteile. Das ist ein typischer Spam-Trick.',
-	FROM_NAME_HAS_TITLE: 'Der Absendername enthält einen Titel wie „Dr.“ oder „Mr.“, ein häufiges Spam-Muster.',
-	FROM_EXCESS_BASE64: 'Der Absendername ist unnötig codiert.',
-	SUBJ_EXCESS_BASE64: 'Der Betreff ist unnötig codiert.',
-	SUBJ_EXCESS_QP: 'Der Betreff ist unnötig codiert.',
-	GTUBE: 'Die Mail enthält das offizielle Spam-Testmuster (GTUBE).',
-	DBL_SPAM: 'Ein Link in deiner Mail führt auf eine Domain, die auf einer Sperrliste steht.',
-	DBL_PHISH: 'Ein Link in deiner Mail führt auf eine bekannte Phishing-Domain.',
-	DBL_ABUSE_REDIR: 'Ein Link in deiner Mail nutzt eine missbrauchte Weiterleitung.',
-	URIBL_BLACK: 'Ein Link in deiner Mail steht auf einer Sperrliste.',
-	SURBL_MULTI: 'Ein Link in deiner Mail steht auf einer Sperrliste.',
-	PHISHING: 'Ein Link zeigt einen anderen Text an, als er wirklich öffnet. Das ist ein typisches Phishing-Muster.',
-	REPLYTO_ADDR_EQ_FROM: 'Die Antwortadresse ist identisch mit der Absenderadresse und dabei unnötig gesetzt.',
-	FREEMAIL_REPLYTO: 'Antworten gehen an eine Freemail-Adresse (z. B. Gmail), obwohl du von deiner Domain sendest.',
-	R_BAD_CTE_7BIT: 'Die Mail enthält Sonderzeichen, ist aber als reiner ASCII-Text gekennzeichnet.',
-	BROKEN_CONTENT_TYPE: 'Der technische Aufbau der Mail (Content-Type) ist fehlerhaft.',
-	MV_CASE: 'Ein technischer Kopfeintrag ist ungewöhnlich geschrieben.',
-	R_NO_SPACE_IN_FROM: 'Im Absender fehlt das Leerzeichen zwischen Name und Adresse.',
-	HAS_DATA_URI: 'Die Mail enthält eingebettete Daten-Links, die Spamfilter misstrauisch machen.',
-	SHORT_PART_BAD_HEADERS: 'Ein Teil der Mail hat fehlerhafte technische Angaben.',
-	MIME_BAD_ATTACHMENT: 'Die Mail hat einen Anhang mit riskantem Dateityp.',
-	MIME_DOUBLE_BAD_EXTENSION: 'Ein Anhang tarnt seinen Dateityp mit einer doppelten Endung.',
-	CTYPE_MIXED_BOGUS: 'Die Mail ist als „mit Anhang“ gekennzeichnet, hat aber keinen.',
-	DATE_IN_FUTURE: 'Das Datum der Mail liegt in der Zukunft. Prüf die Uhrzeit deines Servers.',
-	DATE_IN_PAST: 'Das Datum der Mail liegt weit in der Vergangenheit. Prüf die Uhrzeit deines Servers.',
-	INVALID_DATE: 'Das Datum der Mail hat ein ungültiges Format.',
-};
+/** German names and explanations: packages/shared/src/rspamd-symbole.de.json (unknown rules keep their name). */
+const TEXTS: Record<string, string> = Object.fromEntries(Object.entries(RSPAMD_SYMBOLE).map(([k, v]) => [k, v.text]));
 
 export interface ContentAnalysis {
 	score: number;
@@ -99,18 +48,73 @@ export async function scanWithRspamd(url: string, message: Buffer, env: SmtpEnve
 	return { score, symbols };
 }
 
+/** Counts from the parsed mail, never its text. */
+export interface BodyStats {
+	/** Words in the readable text (text part, or HTML without tags). */
+	words: number;
+	images: number;
+	hasHtml: boolean;
+	hasText: boolean;
+	/** Length of the HTML source in characters. */
+	htmlChars: number;
+}
+
 export interface ContentExtras {
 	error?: string;
-	links?: LinkReport | null;
+	links?: LinkSummary | null;
 	unsubscribe?: UnsubscribeReport | null;
+	body?: BodyStats | null;
+}
+
+/** One own content check, shown at station 6 next to the spam filter rules. */
+export interface ContentCheck {
+	id: string;
+	status: 'ok' | 'warn' | 'info';
+	title: string;
+	text: string;
+	points: number;
+}
+
+const has = (analysis: ContentAnalysis | null, names: RegExp) => !!analysis?.symbols.some((s) => names.test(s.name) && s.score > 0);
+
+/** Own checks for things rspamd does not weigh. Points only where rspamd did not already flag the same thing. */
+export function ownContentChecks(analysis: ContentAnalysis | null, extras: ContentExtras): ContentCheck[] {
+	const { links, unsubscribe, body } = extras;
+	const out: ContentCheck[] = [];
+	if (links?.shorteners.length) {
+		out.push({ id: 'shortener', status: 'warn', title: 'Kurz-Links', text: `Die Mail enthält Kurz-Links (${links.shorteners.join(', ')}). Spamfilter misstrauen ihnen, weil sie das Ziel verstecken. Verlinke lieber direkt auf deine Seite.`, points: POINTS.content.shortener });
+	}
+	if (unsubscribe?.bulk && !unsubscribe.header) {
+		out.push({ id: 'unsubscribe', status: 'warn', title: 'Abmelde-Link im Header fehlt', text: 'Das sieht nach einem Newsletter aus. Für Newsletter verlangen Gmail und Yahoo einen Abmelde-Link im Header (List-Unsubscribe). In den meisten Newsletter-Tools ist das eine Einstellung.', points: POINTS.content.noUnsubscribeHeader });
+	} else if (unsubscribe?.bulk && !unsubscribe.oneClick) {
+		out.push({ id: 'one-click', status: 'warn', title: 'Abmeldung mit einem Klick fehlt', text: 'Ergänze die Abmeldung mit einem Klick (List-Unsubscribe-Post, RFC 8058). Gmail und Yahoo erwarten sie von Massenversendern.', points: 0 });
+	} else if (unsubscribe?.bulk && unsubscribe.oneClick) {
+		out.push({ id: 'one-click', status: 'ok', title: 'Abmeldung mit einem Klick', text: 'List-Unsubscribe und List-Unsubscribe-Post sind korrekt gesetzt.', points: 0 });
+	}
+	if (body) {
+		if (body.images > 0 && body.words < 10) {
+			out.push({ id: 'image-only', status: 'warn', title: 'Fast nur ein Bild', text: 'Die Mail besteht fast nur aus Bildern. Spamfilter können Bilder nicht lesen und werden misstrauisch. Schreib die wichtigste Aussage als Text dazu.', points: has(analysis, /^(R_SUSPICIOUS_IMAGES|HTML_SHORT_LINK_IMG_\d|R_EMPTY_IMAGE)$/) ? 0 : POINTS.content.imageOnly });
+		} else if (body.hasHtml && body.htmlChars > 3000 && body.words < 60) {
+			out.push({ id: 'low-text', status: 'warn', title: 'Wenig Text, viel HTML', text: 'Die Mail hat viel HTML-Code, aber kaum lesbaren Text. Ein ausgewogenes Verhältnis wirkt auf Spamfilter vertrauenswürdiger.', points: POINTS.content.lowText });
+		}
+		if (body.hasHtml && !body.hasText) {
+			out.push({ id: 'html-only', status: 'warn', title: 'Keine Textfassung', text: 'Die Mail hat nur eine HTML-Fassung. Eine zusätzliche reine Textfassung (multipart/alternative) mögen Spamfilter und Screenreader.', points: 0 });
+		}
+		if (body.words > 0 && body.words < 15) {
+			out.push({ id: 'short', status: 'info', title: 'Sehr kurze Mail', text: 'Die Testmail ist sehr kurz. Für ein aussagekräftiges Ergebnis schick eine Mail, wie du sie sonst auch schreibst.', points: 0 });
+		}
+	}
+	return out;
 }
 
 export function contentFinding(analysis: ContentAnalysis | null, extras: ContentExtras = {}): Finding {
-	const base = { id: 'content' as const, tech: 'Spam-Score, Links, Abmelde-Link' };
-	const { links, unsubscribe } = extras;
+	const base = { id: 'content' as const, tech: 'Spamfilter, Inhalt, Links' };
+	const { links, unsubscribe, body } = extras;
 	const deductions: Deduction[] = [];
 	const problems: string[] = [];
 	const tips: string[] = [];
+	/** Hints from rspamd rules with 0 points: mentioned, but they do not turn the station orange. */
+	const softTips: string[] = [];
 
 	// 1. Spam filter (rspamd)
 	const rspamdPoints = analysis ? contentDeduction(analysis.score) : 0;
@@ -124,56 +128,39 @@ export function contentFinding(analysis: ContentAnalysis | null, extras: Content
 			// Tips only for things the sender can change. Quirks of the mail program itself
 			// (e.g. Apple Mail writes "Mime-Version") stay in the raw data.
 			const tip = hits.find((s) => s.score >= 0.3 && TEXTS[s.name] && !CLIENT_QUIRKS.has(s.name));
-			if (tip) tips.push(TEXTS[tip.name]);
+			if (tip) softTips.push(TEXTS[tip.name]);
 		}
 	}
 
-	// 2. Links
-	if (links?.dead.length) {
-		const n = links.dead.length;
-		deductions.push({ reason: `${n} ${n === 1 ? 'Link funktioniert' : 'Links funktionieren'} nicht`, points: round1(Math.min(POINTS.content.deadLinkCap, n * POINTS.content.deadLink)) });
-		problems.push(`${n === 1 ? 'Ein Link führt' : `${n} Links führen`} ins Leere: ${links.dead.map((d) => `${d.host}, ${d.reason}`).join('; ')}. Tote Links wirken auf Spamfilter und Leser unseriös.`);
-	}
-	if (links?.shorteners.length) {
-		deductions.push({ reason: 'Kurz-Links', points: POINTS.content.shortener });
-		problems.push(`Die Mail enthält Kurz-Links (${links.shorteners.join(', ')}). Spamfilter misstrauen ihnen, weil sie das Ziel verstecken. Verlinke lieber direkt auf deine Seite.`);
-	}
-
-	// 3. Newsletter: List-Unsubscribe
-	if (unsubscribe?.bulk && !unsubscribe.header) {
-		deductions.push({ reason: 'Newsletter ohne Abmelde-Kopfzeile', points: POINTS.content.noUnsubscribeHeader });
-		problems.push('Das sieht nach einem Newsletter aus, aber die Abmelde-Kopfzeile (List-Unsubscribe) fehlt. Gmail und Yahoo verlangen sie seit 2024 von Massenversendern. In den meisten Newsletter-Tools ist das eine Einstellung.');
-	} else if (unsubscribe?.bulk && !unsubscribe.oneClick) {
-		tips.push('Ergänze die Abmeldung mit einem Klick (List-Unsubscribe-Post). Gmail und Yahoo erwarten sie von Massenversendern.');
+	// 2. Own checks (links, newsletter header, text vs. images)
+	const checks = ownContentChecks(analysis, extras);
+	for (const c of checks) {
+		if (c.points > 0) {
+			deductions.push({ reason: c.title, points: c.points });
+			problems.push(c.text);
+		} else if (c.status === 'warn') tips.push(c.text);
 	}
 
 	const raw = {
 		rspamdScore: analysis?.score ?? null,
 		symbols: analysis?.symbols ?? [],
 		...(analysis ? {} : { spamfilterError: extras.error ?? 'unavailable' }),
-		links: links ? { found: links.total, checked: links.checked, dead: links.dead, shorteners: links.shorteners } : null,
+		links: links ? { total: links.total, domains: links.domains, shorteners: links.shorteners } : null,
 		unsubscribe: unsubscribe ?? null,
+		body: body ?? null,
+		checks,
 	};
-	const linkNote = links && links.checked > 0 && !links.dead.length ? ` Alle ${links.checked} geprüften Links funktionieren.` : '';
-	const tipText = tips.length ? ` Tipp: ${tips.join(' ')}` : '';
+	const tipText = [...tips, ...softTips].length ? ` Tipp: ${[...tips, ...softTips].join(' ')}` : '';
 
 	if (!analysis && problems.length === 0) {
-		return {
-			...base,
-			status: 'skip',
-			title: 'Inhalt nicht geprüft',
-			text: `Der Spamfilter war gerade nicht erreichbar. Die anderen Prüfungen sind davon nicht betroffen.${linkNote}${tipText}`,
-			deductions,
-			raw,
-		};
+		return { ...base, status: 'skip', title: 'Inhalt nicht geprüft', text: `Der Spamfilter war gerade nicht erreichbar. Die anderen Prüfungen sind davon nicht betroffen.${tipText}`, deductions, raw };
 	}
 	if (problems.length === 0) {
-		const good = unsubscribe?.bulk && unsubscribe.oneClick ? ' Die Abmeldung mit einem Klick ist korrekt eingerichtet.' : '';
 		return {
 			...base,
-			status: 'ok',
-			title: 'Inhalt unauffällig',
-			text: `Der Spamfilter hat in Betreff, Text und Links nichts Verdächtiges gefunden.${linkNote}${good}${tipText}`,
+			status: tips.length ? 'warn' : 'ok',
+			title: tips.length ? 'Inhalt: ein Tipp' : 'Inhalt unauffällig',
+			text: `Der Spamfilter hat in Betreff, Text und Links nichts Verdächtiges gefunden.${tipText}`,
 			deductions,
 			raw,
 		};

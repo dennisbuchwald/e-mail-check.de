@@ -1,0 +1,27 @@
+Received: from outbound.mr.icloud.com by mr-2004c.eps.apple.com (Postfix) with ESMTPS id 4c1; Tue, 20 Oct 2026 10:00:10 +0200
+Received: from [192.168.1.20] by p00-icloudmta-asmtp.me.com (Postfix) with ESMTPSA id 9a2; Tue, 20 Oct 2026 10:00:08 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=icloud.com;
+ h=Content-Transfer-Encoding: Content-Type: MIME-Version: Message-ID: Date:
+ Subject: To: From; q=dns/txt; s=s1; t=1792483200;
+ bh=a5Ghxo3HjTa1iBGuCqw7X0Qx+CePkN4AKVkzL8dTOds=;
+ b=ES/vKYV65CMtgMFtwgfsZAqcL4Eps1//J/nHeBOTIGbGGFJ4IvNo2sbAV0BhiupxiF9afCzzE
+ s/IXXn4/cIY8mXTh5zJ1X58uNeqdmeCzbkbfo1CvL2g3SSZQZQewLYwhIhGtEiDM6Y5q3XOPxUI
+ zavG3X5ta1YJA7rg0yQjwPBHCCE1LpTpEa1q6LLZgb8KVGfJVpJHqmtTZqVm74+AnisFDwjrQjA
+ 1BjR7ZMkYkTi7qt6B5v240KtTT0bvugPgcShGia8Psl7tI6wMyD+pykP0GsJ2cTzvuHmjPKWAg4
+ Cas+3ZzecLwM939ldJxd5PbsAUZ08Y9ck364ueRtZnbw==
+From: Max Mustermann <max.muster@icloud.com>
+To: k7m2x9qa@test.e-mail-check.de
+Subject: Angebot Website
+Date: Tue, 20 Oct 2026 10:00:00 +0200
+Message-ID: <15.maxmustericloudcom@example.test>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+
+Hallo,
+
+anbei wie besprochen das Angebot für die neue Website.
+Meld dich gern, wenn du Fragen hast.
+
+Viele Grüße
+Max

@@ -11,13 +11,13 @@ export interface UnsubscribeReport {
 
 const BULK_HEADERS = /^(list-id|x-campaign|x-campaignid|x-mc-user|x-mailchimp|x-sib-id|x-mailjet-campaign|x-cr-|x-newsletter|x-rpcampaign|x-mailer-recptid|x-ems-|x-csa-complaints)/i;
 
-/** headerLines: raw header lines as [lowercased key, value]. */
-export function analyzeUnsubscribe(headerLines: [string, string][], hasUnsubscribeLink: boolean): UnsubscribeReport {
+/** headerLines: raw header lines as [lowercased key, value]. A designed HTML mail with many links counts as a newsletter too. */
+export function analyzeUnsubscribe(headerLines: [string, string][], hasUnsubscribeLink: boolean, layout: { links: number; html: boolean } = { links: 0, html: false }): UnsubscribeReport {
 	const get = (key: string) => headerLines.find(([k]) => k === key)?.[1] ?? '';
 	const listUnsub = get('list-unsubscribe');
 	const post = get('list-unsubscribe-post');
 	const precedence = get('precedence').toLowerCase();
-	const bulk = !!listUnsub || /bulk|list/.test(precedence) || headerLines.some(([k]) => BULK_HEADERS.test(k)) || hasUnsubscribeLink;
+	const bulk = !!listUnsub || /bulk|list/.test(precedence) || headerLines.some(([k]) => BULK_HEADERS.test(k)) || hasUnsubscribeLink || (layout.html && layout.links >= 8);
 	return {
 		bulk,
 		header: !!listUnsub,

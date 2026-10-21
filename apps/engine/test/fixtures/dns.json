@@ -69,6 +69,21 @@
 			"v=DMARC1; p=reject"
 		]
 	],
+	"icloud.com TXT": [
+		[
+			"v=spf1 ip4:203.0.113.0/24 -all"
+		]
+	],
+	"s1._domainkey.icloud.com TXT": [
+		[
+			"v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApgg9TZYDKjnxGehrmH42uYZPGx8fH33b0UibL7X8t0DnXy25Re5c4o7KbM/xtkfJ/J1eTgfFmdhU1u5nvTrLQ1e38BDB5rkcchH+yQr2lwZwv6UXEDUf2h3VbLHCEoPMJZMeROg1DdbHXzK9YiY/oWsjsUzWa5YdjQUGAY2Hgj5T4vzciT3bXW4cLh3TS2fHAJNh4dtItlOFGRIdvaUhzpdwFWeq4x7PquhWn3xVtd8DZLfzVf33kLedITykFC5qyGvhOjQRD/KvPTRNPQ6/1YxUy8+07wZypdlv8KdKBEW2trrsQ7LkCe93xP+h8P8Nt8O47kOhKM373kEuEhCT+QIDAQAB"
+		]
+	],
+	"_dmarc.icloud.com TXT": [
+		[
+			"v=DMARC1; p=quarantine; sp=quarantine"
+		]
+	],
 	"10.113.0.203.in-addr.arpa PTR": [
 		"mail.gut.example.test"
 	],

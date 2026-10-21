@@ -1,12 +1,14 @@
 // Runs all checks on one message and reports each finished step.
 // The message buffer is only held for the duration of this call.
 import { randomBytes } from 'node:crypto';
-import { bandFor, computeScore, enrichFindings, hasAuthFailure, subScores, summarize, trafficLight, type Finding, type MailMeta, type MailResult, type StepId, type StepInfo } from '@emc/shared';
+import { bandFor, computeScore, enrichFindings, hasAuthFailure, stationsOf, subScores, summarize, trafficLight, verdictFor, type Finding, type MailMeta, type MailResult, type StepId, type StepInfo } from '@emc/shared';
 import { checkAuth, type SmtpEnvelope } from './checks/auth.ts';
 import { checkReputation } from './checks/reputation.ts';
-import { contentFinding, scanWithRspamd, type ContentAnalysis } from './checks/content.ts';
+import { contentFinding, scanWithRspamd, type BodyStats, type ContentAnalysis } from './checks/content.ts';
 import { simpleParser, type ParsedMail } from 'mailparser';
-import { checkLinks, extractLinks, type LinkReport } from './checks/links.ts';
+import { extractLinks, summarizeLinks } from './checks/links.ts';
+import { senderFinding } from './checks/sender.ts';
+import { transportFinding } from './checks/transport.ts';
 import { analyzeUnsubscribe } from './checks/unsubscribe.ts';
 import type { DnsResolver } from './dns.ts';
 
@@ -16,8 +18,6 @@ export interface AnalyzeDeps {
 	resultTtlDays: number;
 	/** Content scanner; null skips the content check. */
 	scanContent: ((message: Buffer, env: SmtpEnvelope, rcpt: string) => Promise<ContentAnalysis>) | null;
-	/** Link probe override for tests; false disables the link check. Default: real, SSRF-guarded requests. */
-	linkProbe?: ((url: string) => Promise<{ status: number } | { error: 'nxdomain' | 'refused' | 'blocked' | 'timeout' | 'other' }>) | false;
 	now?: () => Date;
 }
 
@@ -57,9 +57,14 @@ export async function analyzeMessage(message: Buffer, env: SmtpEnvelope, rcpt: s
 	const cont = await content;
 	onStep('content', stepInfo(cont));
 
-	const findings = enrichFindings([auth.spf, auth.dkim, auth.dmarc, rep, cont]);
+	const sender = senderFinding(auth.fromDomain);
+	const received = parsed ? parsed.headerLines.filter((h) => h.key.toLowerCase() === 'received').map((h) => h.line.slice(h.line.indexOf(':') + 1).replace(/\s+/g, ' ').trim()) : [];
+	const transport = transportFinding(env.tls, received, deps.mta, now);
+	const findings = enrichFindings([auth.spf, sender, auth.dkim, auth.dmarc, rep, transport, cont]);
 	const score = computeScore(findings);
-	const { headline, sub } = summarize(score, findings);
+	const { sub } = summarize(score, findings);
+	const verdict = verdictFor(score, stationsOf(findings));
+	const headline = `${verdict.line1} ${verdict.line2}`;
 	return {
 		id: newId(),
 		createdAt: now.toISOString(),
@@ -70,6 +75,7 @@ export async function analyzeMessage(message: Buffer, env: SmtpEnvelope, rcpt: s
 		authWarning: hasAuthFailure(findings),
 		subScores: subScores(findings),
 		headline,
+		verdict,
 		sub,
 		mail: meta,
 		fromDomain: auth.fromDomain,
@@ -99,7 +105,7 @@ export function stepInfo(f: Finding): StepInfo {
 			const hits = asked.filter((l: { listed: boolean | null }) => l.listed);
 			detail = hits.length ? `Auf ${hits.length} von ${asked.length} Sperrlisten: ${hits.map((l: { list: string; pbl?: boolean }) => (l.pbl ? 'Spamhaus PBL (Internetanschluss)' : l.list)).join(', ')}` : `${asked.length} Sperrlisten abgefragt, alle sauber`;
 		} else if (f.id === 'content' && typeof raw.rspamdScore === 'number') {
-			const links = raw.links?.checked ? ` · ${raw.links.checked} ${raw.links.checked === 1 ? 'Link' : 'Links'} geprüft` : '';
+			const links = raw.links?.total ? ` · ${raw.links.total} ${raw.links.total === 1 ? 'Link' : 'Links'} gelesen` : '';
 			detail = `Spam-Score ${fmt(raw.rspamdScore)}${links}`;
 		}
 	}
@@ -117,7 +123,24 @@ function mailMeta(parsed: ParsedMail | null, env: SmtpEnvelope, now: Date): Mail
 	};
 }
 
-/** Spam filter, link check and newsletter headers run in parallel; the parsed mail only lives in this call. */
+/** Words, images and parts of the mail: counts only, the text itself is not kept. */
+export function bodyStats(parsed: ParsedMail | null, message: Buffer): BodyStats | null {
+	if (!parsed) return null;
+	const html = typeof parsed.html === 'string' ? parsed.html : '';
+	const hasText = !html || /content-type:\s*text\/plain/i.test(message.toString('latin1'));
+	// With a real text part count that; otherwise the HTML without tags (mailparser's own text would add link and image markers).
+	const readable = hasText ? (parsed.text ?? '') : html.replace(/<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&[a-z#0-9]+;/gi, ' ');
+	return {
+		words: (readable.match(/[\p{L}\p{N}]{2,}/gu) ?? []).length,
+		images: (html.match(/<img\b/gi) ?? []).length,
+		hasHtml: html.length > 0,
+		// mailparser fills `text` from the HTML when there is no text part, so the MIME structure decides.
+		hasText,
+		htmlChars: html.length,
+	};
+}
+
+/** Spam filter and textual checks (links, newsletter headers, text vs. images). Links are never requested. */
 async function runContentChecks(message: Buffer, parsed: ParsedMail | null, env: SmtpEnvelope, rcpt: string, deps: AnalyzeDeps): Promise<Finding> {
 	const spam = deps.scanContent
 		? deps.scanContent(message, env, rcpt).then((a) => ({ a, error: undefined }), (err: Error) => ({ a: null, error: err.message }))
@@ -128,11 +151,9 @@ async function runContentChecks(message: Buffer, parsed: ParsedMail | null, env:
 		headerLines = parsed.headerLines.map((h) => [h.key.toLowerCase(), h.line.slice(h.line.indexOf(':') + 1).trim()]);
 		links = extractLinks(typeof parsed.html === 'string' ? parsed.html : undefined, parsed.text);
 	}
-	const linkReport: Promise<LinkReport | null> =
-		deps.linkProbe === false
-			? Promise.resolve(null)
-			: checkLinks(links, { resolve: deps.resolver, probe: deps.linkProbe }).catch(() => null);
-	const [{ a, error }, report] = await Promise.all([spam, linkReport]);
-	const unsubscribe = analyzeUnsubscribe(headerLines, report?.hasUnsubscribeLink ?? links.some((u) => /unsubscribe|abmeld/i.test(u)));
-	return contentFinding(a, { error, links: report, unsubscribe });
+	const summary = summarizeLinks(links);
+	const body = bodyStats(parsed, message);
+	const { a, error } = await spam;
+	const unsubscribe = analyzeUnsubscribe(headerLines, summary.hasUnsubscribeLink, { links: summary.total, html: !!body?.hasHtml });
+	return contentFinding(a, { error, links: summary, unsubscribe, body });
 }
