@@ -6,7 +6,7 @@ Moderner, massiver Brief (Lasche ausgespart) mit grünem Prüf-Kreis (#02CA50) o
 |---|---|
 | `logo-mark.svg` | Bildmarke dunkel, transparenter Hintergrund (Standard, Header) |
 | `logo-mark-weiss.svg` | Bildmarke hell für dunkle Flächen |
-| `favicon.svg`, `favicon.ico`, `favicon-16.png`, `favicon-32.png` | Browser-Tab |
+| `favicon.svg`, `favicon.ico`, `favicon-16.png`, `favicon-32.png` | Browser-Tab: weiße Kachel mit abgerundeten Ecken, damit der Brief auch in dunklen Tabs sichtbar ist |
 | `app-icon.svg`, `apple-touch-icon.png` (180), `icon-192.png`, `icon-512.png` | Homescreen / Web-App-Manifest |
 | `logo-mark-512.png`, `logo-mark-weiss-512.png` | Social, Presse, OG-Bilder |
 
