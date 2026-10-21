@@ -29,10 +29,11 @@ export function computeScore(findings: Finding[]): number {
 	return round1(Math.max(0, 10 - total));
 }
 
-const ORDER = { bad: 0, warn: 1, ok: 2, skip: 3 } as const;
+/** One ranking for status everywhere (scoring, stations, result view): higher is worse. */
+export const STATUS_RANK = { bad: 3, warn: 2, ok: 1, skip: 0 } as const;
 
 export function sortFindings<T extends Pick<Finding, 'status'>>(findings: T[]): T[] {
-	return findings.slice().sort((a, b) => ORDER[a.status] - ORDER[b.status]);
+	return findings.slice().sort((a, b) => STATUS_RANK[b.status] - STATUS_RANK[a.status]);
 }
 
 export const BANDS: Record<Band, { label: string; from: number; to: number; text: string }> = {
@@ -57,8 +58,8 @@ export function hasAuthFailure(findings: Pick<Finding, 'id' | 'status'>[]): bool
 }
 
 export function trafficLight(score: number, findings: Pick<Finding, 'id' | 'status'>[]): 'ok' | 'warn' | 'bad' {
+	// A failing SPF/DKIM/DMARC is "bad" whatever the score (exception rule, docs/scoring.md).
 	if (score < 5 || findings.some((f) => f.status === 'bad')) return 'bad';
-	if (score < 7 || hasAuthFailure(findings)) return 'warn';
 	if (score < 9 || findings.some((f) => f.status === 'warn')) return 'warn';
 	return 'ok';
 }
@@ -92,7 +93,7 @@ export function enrichFindings(findings: Finding[]): Finding[] {
 		const gain = round1(f.deductions.reduce((s, d) => s + d.points, 0));
 		return { ...f, gain, impact: impactFor(gain) };
 	});
-	return enriched.sort((a, b) => ORDER[a.status] - ORDER[b.status] || (b.gain ?? 0) - (a.gain ?? 0));
+	return enriched.sort((a, b) => STATUS_RANK[b.status] - STATUS_RANK[a.status] || (b.gain ?? 0) - (a.gain ?? 0));
 }
 
 const WORDS = ['Null', 'Eine', 'Zwei', 'Drei', 'Vier', 'Fünf', 'Sechs'];

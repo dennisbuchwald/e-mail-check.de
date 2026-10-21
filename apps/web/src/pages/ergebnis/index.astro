@@ -2,6 +2,8 @@
 // Shared result shell. Caddy serves this file for /ergebnis/<id> and fills in the server-rendered result (infra/caddy/site.caddy).
 import Base from '../../layouts/Base.astro';
 import Tool from '../../components/Tool.astro';
+// The server-rendered result is in the HTML, so its styles come with the page (on the start page they load later).
+import '../../styles/result.css';
 ---
 
 <Base title="Ergebnis des Mail-Tests | e-mail-check.de" description="Ergebnis eines Mail-Tests auf e-mail-check.de." path="/ergebnis" noindex tool="result">

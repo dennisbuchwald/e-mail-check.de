@@ -101,6 +101,8 @@ export interface TestStatus {
 	/** Steps already finished, in order of completion. */
 	done: StepId[];
 	resultId: string | null;
+	/** When the address was created; with expiresAt it gives the real validity (not a fixed 60 minutes in the browser). */
+	createdAt: string;
 	expiresAt: string;
 }
 

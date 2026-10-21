@@ -2,7 +2,7 @@
 // Used by the browser after a live test and by the engine for shared links (server-side, via Caddy templates),
 // so everything is visible without JavaScript. JS only switches stations and runs the animations.
 import { ruleTitle } from './rspamd.ts';
-import { BANDS, verdictFor } from './scoring.ts';
+import { BANDS, STATUS_RANK, verdictFor } from './scoring.ts';
 import { initialStation, stationsOf, type Station, type StationId } from './stations.ts';
 import type { MailResult, Status } from './types.ts';
 
@@ -17,10 +17,11 @@ export function esc(s: unknown): string {
 	return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 }
 
-const fmt1 = (n: number) => n.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+/** A score or points with one decimal, German style (also used by the web app). */
+export const fmt1 = (n: number) => n.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const fmt = (n: number) => n.toLocaleString('de-DE', { maximumFractionDigits: 1 });
 type Raw = Record<string, any>;
-const rawOf = (st: Station, id: string): Raw => (st.findings.find((f) => f.id === id)?.raw ?? {}) as Raw;
+const rawOf = (st: Station | undefined, id: string): Raw => (st?.findings.find((f) => f.id === id)?.raw ?? {}) as Raw;
 
 const STATUS_WORD: Record<Status, string> = { ok: 'bestanden', warn: 'Hinweis', bad: 'Problem', skip: 'nicht geprüft' };
 
@@ -40,7 +41,8 @@ const BADGE: Record<Status, string> = {
 	bad: svg('<path d="M7 7l10 10M17 7L7 17"/>', 10, 3.6),
 	skip: svg('<path d="M6 12h12"/>', 10, 3.6),
 };
-const COPY = svg('<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>', 16, 2);
+/** The copy icon of copy rows (also used by the provider guides in the web app). */
+export const COPY = svg('<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>', 16, 2);
 
 /** Short mono value under each station. */
 function stationValue(st: Station): string {
@@ -81,11 +83,11 @@ function stationHeading(st: Station): string {
 	const main = st.findings.filter((f) => f.status !== 'skip').sort((a, b) => rank(b.status) - rank(a.status))[0];
 	return main?.title ?? `${st.title}: nicht geprüft`;
 }
-const rank = (s: Status) => ({ bad: 3, warn: 2, ok: 1, skip: 0 })[s];
+const rank = (s: Status) => STATUS_RANK[s];
 
 function stationText(st: Station): string {
 	const checked = st.findings.filter((f) => f.status !== 'skip');
-	if (!checked.length) return st.findings[0]?.text ?? 'Diese Station konnten wir bei diesem Test nicht prüfen.';
+	if (!checked.length) return esc(st.findings[0]?.text ?? 'Diese Station konnten wir bei diesem Test nicht prüfen.');
 	// With a hint or problem, explain only that; the passed part of the station would just add noise.
 	const open = checked.filter((f) => f.status !== 'ok');
 	const fs = open.length ? open : checked;
@@ -186,6 +188,8 @@ function shortHost(h: string): string {
 function actionText(st: Station): string {
 	const f = st.findings.filter((x) => x.status === 'warn' || x.status === 'bad').sort((a, b) => rank(b.status) - rank(a.status))[0];
 	const raw = (f?.raw ?? {}) as Raw;
+	// A DNS hiccup is not a configuration problem: no "set up a record" advice for it.
+	if (f?.deductions.some((d) => /temperror/i.test(d.reason))) return 'Das war eine kurze DNS-Störung, nicht deine Einstellung. Teste in ein paar Minuten noch einmal.';
 	switch (f?.id) {
 		case 'sender':
 			return 'Richte eine Adresse mit deiner eigenen Domain ein (z. B. bei deinem Webhoster) und verschick Kunden- und Firmenmails von dort.';
@@ -196,6 +200,7 @@ function actionText(st: Station): string {
 		case 'dkim':
 			return 'Schalte bei dem Dienst, der deine Mails verschickt, die Unterschrift (DKIM) ein und trag den angezeigten Schlüssel in deine DNS-Einstellungen ein.';
 		case 'dmarc':
+			if (raw.result === undefined) return 'Gib deiner Mail eine gültige Absenderadresse (From) mit deiner eigenen Domain, im Mail-Programm oder im Versanddienst.';
 			if (!raw.policy) return 'Leg eine DMARC-Regel an. Den Wert unten kannst du direkt kopieren.';
 			if (raw.policy === 'none') return 'Wenn alle deine Dienste sauber unterschreiben, stell die Regel von p=none auf p=quarantine um.';
 			return 'Sorg dafür, dass SPF oder DKIM zu deiner Absenderadresse passen. Meist fehlt die Unterschrift des Versanddienstes für deine eigene Domain.';
@@ -223,7 +228,7 @@ function fixBox(st: Station, r: MailResult): string {
 	const copy = withSuggestion?.suggestion
 		? `<p class="rv-host">Neuer ${esc(withSuggestion.suggestion.type)}-Eintrag, Name/Host <code>${esc(withSuggestion.suggestion.host)}</code></p><div class="copyrow"><span class="mono">${esc(withSuggestion.suggestion.value)}</span><button type="button" class="copybtn" data-copy="${esc(withSuggestion.suggestion.value)}">${COPY}<span>Kopieren</span></button></div>`
 		: '';
-	const link = guide ? `<a class="rv-guide" href="/anleitung" data-fix="${guide}">Anleitung für deinen Anbieter ›</a>` : '';
+	const link = guide ? `<a class="rv-guide" href="/anleitung" data-fix="${esc(guide)}">Anleitung für deinen Anbieter ›</a>` : '';
 	return `<div class="rv-fix is-${st.status}"><div class="rv-fix-head"><b>Was tun</b>${st.gain > 0 ? `<span class="tag is-ok">+${fmt1(st.gain)} Pkt. bei Behebung</span>` : ''}</div><p>${esc(actionText(st))}</p>${copy}${link}</div>`;
 }
 
@@ -239,7 +244,7 @@ export function renderResultView(r: MailResult, opts: ResultViewOptions): string
 	const bandStatus = { risk: 'bad', endangered: 'warn', solid: 'skip', good: 'ok' }[r.band];
 	const at = new Date(r.mail?.receivedAt ?? r.createdAt);
 	const when = `${at.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Berlin' })} · ${at.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' })}`;
-	const duration = rawOf(stations[4], 'transport').durationSec;
+	const duration = rawOf(stations.find((s) => s.id === 'transport'), 'transport').durationSec;
 
 	const tabs = stations
 		.map(

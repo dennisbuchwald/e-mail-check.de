@@ -1,11 +1,11 @@
 ---
-import '@fontsource-variable/fraunces/opsz.css';
-import '@fontsource-variable/inter/wght.css';
 import '@fontsource/ibm-plex-mono/500.css';
 import '@fontsource/ibm-plex-mono/600.css';
 import '../styles/global.css';
-import frauncesUrl from '@fontsource-variable/fraunces/files/fraunces-latin-opsz-normal.woff2?url';
-import interUrl from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
+// Own subsets (audit I11): Fraunces only at 680 with opsz 24 to 72, Inter 400 to 700, Latin and German punctuation.
+// Built from the fontsource files with fonttools, see src/fonts/README.md. 57 KB instead of 115 KB.
+import frauncesUrl from '../fonts/fraunces-680-latin.woff2?url';
+import interUrl from '../fonts/inter-400-700-latin.woff2?url';
 import Wordmark from '../components/Wordmark.astro';
 import { FOOTER, RATGEBER, SITE } from '../data/site';
 

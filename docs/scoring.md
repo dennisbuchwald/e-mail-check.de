@@ -168,7 +168,7 @@ Die Ergebnisseite fasst die Befunde zu sechs Stationen zusammen (`packages/share
 
 | Lage | Urteil (Zeile 1 / Zeile 2) |
 |---|---|
-| rspamd ≥ 6 | Deine Mail landet im Spam. / Der Inhalt ist das Problem. |
+| rspamd ≥ 6 | Deine Mail landet im Spam. / Der Inhalt ist das Problem (bei mehr als einem Problem: das größte Problem). |
 | Score unter 5 | Hier landet viel im Spam. / So behebst du es. |
 | mindestens ein Problem | Deine Mail kommt an, aber nicht überall. / Eine Sache bzw. N Dinge solltest du beheben. |
 | nur Hinweise | Deine Mail kam sauber an. / Ein Tipp bzw. N Tipps für die letzte Stufe. |

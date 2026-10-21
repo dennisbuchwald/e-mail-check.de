@@ -1,6 +1,10 @@
-export function esc(s: string): string {
-	return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
-}
+// One escape function for the server-rendered and the browser-rendered markup.
+import { COPY, esc } from '@emc/shared';
+export { esc };
+
+/** A value with a copy button (DNS records in the guide and the result). */
+export const copyRow = (value: string, label = 'Kopieren') =>
+	`<div class="copyrow"><span class="mono">${esc(value)}</span><button type="button" class="copybtn" data-copy="${esc(value)}">${COPY}<span>${label}</span></button></div>`;
 
 /** Minimal inline markdown for guide steps: **bold** and `code`, after escaping. */
 export function inline(s: string): string {

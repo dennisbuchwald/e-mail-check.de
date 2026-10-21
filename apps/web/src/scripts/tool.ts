@@ -1,17 +1,12 @@
 // Mail test UI: drives the screens in Tool.astro from real API events (SSE, polling fallback).
+// The result behaviour lives in tool-result.ts, the provider guide in tool-guide.ts.
 import type { GuideTopic, MailPreview, MailResult, ProgressEvent, StepId, TestStatus } from '@emc/shared';
-import { renderResultView, STEPS } from '@emc/shared';
-import { copyText, esc, flash, inline } from './util';
+import { fmt1 as fmt, STEPS } from '@emc/shared';
+import { createGuide } from './tool-guide';
+import { createResultView, loadRender } from './tool-result';
+import { copyText, esc, flash } from './util';
 
 type Screen = 'start' | 'wait' | 'result' | 'guide' | 'msg';
-
-interface GuideStep {
-	text: string;
-	eintrag?: { typ: string; host: string; wert: string };
-}
-interface GuideData {
-	[provider: string]: { name: string; url: Partial<Record<GuideTopic, string>>; schritte: Partial<Record<GuideTopic, GuideStep[]>> };
-}
 
 const STORE_KEY = 'emc-test';
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -22,50 +17,10 @@ const STEP_MS = reduced ? 120 : 560;
 const WAIT_TIPS = [
 	'Tipp: Schick die Mail aus deinem echten Postfach, mit Signatur. Dann ist das Ergebnis ehrlich.',
 	'Tipp: Du kannst die Adresse auch in dein Kontaktformular oder Newsletter-Tool eintragen.',
-	'Wir prüfen gleich fünf Dinge: Absender, Unterschrift, Schutzregel, Server-Ruf und Inhalt.',
+	'Wir prüfen gleich sechs Stationen: Absender, Unterschrift, Schutzregel, Server-Ruf, Transport und Posteingang.',
 	'Gut zu wissen: Den Inhalt deiner Mail speichern wir nicht. Er wird direkt nach der Prüfung gelöscht.',
 ];
 const WAIT_HELP = 'Noch nichts da? Prüf, ob die Adresse genau stimmt. Manche Postfächer brauchen ein bis zwei Minuten.';
-
-const TOPIC_TITLES: Record<GuideTopic, { title: string; lead: string }> = {
-	spf: { title: 'Absender bestätigen', lead: 'Dauert etwa 5 Minuten. Fachbegriff: SPF-Eintrag.' },
-	dkim: { title: 'Unterschrift einrichten', lead: 'Dauert etwa 10 Minuten. Fachbegriff: DKIM.' },
-	dmarc: { title: 'Schutzregel einrichten', lead: 'Dauert etwa 3 Minuten. Fachbegriff: DMARC-Eintrag.' },
-};
-
-/** Generic steps for providers we have no guide for yet. */
-const GENERIC: Record<GuideTopic, GuideStep[]> = {
-	spf: [
-		{ text: 'Melde dich bei dem Anbieter an, bei dem deine **Domain** liegt, und öffne die **DNS-Einstellungen**.' },
-		{ text: 'Suche einen **TXT-Eintrag**, der mit `v=spf1` beginnt. Es darf nur einen davon geben.' },
-		{ text: 'Trag dort alle Dienste ein, die Mails für dich senden. Den passenden Baustein (`include:…`) nennt dir jeder Dienst in seiner Hilfe.' },
-		{ text: 'Speichern, ein paar Minuten warten und erneut testen.' },
-	],
-	dkim: [
-		{ text: 'Öffne bei dem Dienst, der deine Mails **verschickt** (Postfach-Anbieter oder Newsletter-Tool), die Einstellungen zu **DKIM** oder **Domain-Authentifizierung**.' },
-		{ text: 'Der Dienst zeigt dir einen oder zwei Einträge (TXT oder CNAME). Kopier Name und Wert.' },
-		{ text: 'Leg diese Einträge in den **DNS-Einstellungen** deiner Domain an.' },
-		{ text: 'Aktiviere DKIM danach beim Versand-Dienst und teste erneut.' },
-	],
-	dmarc: [
-		{ text: 'Öffne die **DNS-Einstellungen** deiner Domain.' },
-		{ text: 'Leg einen neuen **TXT-Eintrag** an. Als Name (Host) trägst du `_dmarc` ein.', eintrag: { typ: 'TXT', host: '_dmarc', wert: 'v=DMARC1; p=none; rua=mailto:dmarc@{domain}' } },
-		{ text: 'Speichern. Nach ein paar Wochen ohne Probleme stellst du `p=none` auf `p=quarantine` um.' },
-	],
-};
-
-/** Guess the provider from the SPF record, to preselect the right guide. */
-function guessProvider(result: MailResult): string | null {
-	const spf = result.findings.find((f) => f.id === 'spf');
-	const rec = String(spf?.raw?.record ?? '').toLowerCase();
-	if (rec.includes('spf.protection.outlook.com')) return 'microsoft-365';
-	if (rec.includes('_spf.google.com')) return 'google-workspace';
-	if (rec.includes('ionos') || rec.includes('kundenserver.de')) return 'ionos';
-	if (rec.includes('strato')) return 'strato';
-	if (rec.includes('kasserver.com') || rec.includes('all-inkl')) return 'all-inkl';
-	if (rec.includes('your-server.de') || rec.includes('hetzner')) return 'hetzner';
-	return null;
-}
 
 async function api<T>(path: string, init?: RequestInit): Promise<{ ok: boolean; status: number; data: T }> {
 	const res = await fetch(path, { ...init, headers: { Accept: 'application/json' } });
@@ -81,6 +36,9 @@ function storage(): Storage | null {
 	}
 }
 
+const validMinutes = (t: { createdAt?: string; expiresAt: string }) => (t.createdAt ? Math.round((new Date(t.expiresAt).getTime() - new Date(t.createdAt).getTime()) / 60_000) : 60);
+
+
 export function initTool(): void {
 	const root = document.getElementById('tool');
 	if (!root) return;
@@ -88,13 +46,13 @@ export function initTool(): void {
 	const $$ = (sel: string) => Array.from(root.querySelectorAll<HTMLElement>(sel));
 	const mode = root.dataset.mode as 'test' | 'result';
 
-	let test: Pick<TestStatus, 'id' | 'address' | 'expiresAt'> | null = null;
+	let test: Pick<TestStatus, 'id' | 'address' | 'expiresAt'> & { createdAt?: string } | null = null;
 	let result: MailResult | null = null;
 	let source: EventSource | null = null;
 	let pollTimer = 0;
 	let generation = 0; // invalidates callbacks of an old test after reset
-	let guideTopic: GuideTopic = 'dmarc';
-	let guides: GuideData | null = null;
+	/** The mail itself from the live done event. Only in this page's memory, never stored. */
+	let preview: MailPreview | null = null;
 	/** Subject and sender from the live "received" step: only in this page, never from the result link (audit C3). */
 	let liveMail: { from: string | null; subject: string | null } | null = null;
 
@@ -129,7 +87,7 @@ export function initTool(): void {
 			message('Gerade geht es nicht', res?.data?.message ?? 'Der Test-Server ist nicht erreichbar. Probier es in einer Minute noch einmal.');
 			return;
 		}
-		test = { id: res.data.id, address: res.data.address, expiresAt: res.data.expiresAt };
+		test = { id: res.data.id, address: res.data.address, createdAt: res.data.createdAt, expiresAt: res.data.expiresAt };
 		storage()?.setItem(STORE_KEY, JSON.stringify(test));
 		showAddress();
 		listen(gen);
@@ -226,7 +184,7 @@ export function initTool(): void {
 		if (e.type === 'expired') {
 			closeStream();
 			storage()?.removeItem(STORE_KEY);
-			return message('Diese Adresse ist abgelaufen', 'Testadressen gelten 60 Minuten und nehmen genau eine Mail an. Hol dir einfach eine neue.');
+			return message('Diese Adresse ist abgelaufen', `Testadressen gelten ${test ? validMinutes(test) : 60} Minuten und nehmen genau eine Mail an. Hol dir einfach eine neue.`);
 		}
 		if (e.type === 'error') {
 			closeStream();
@@ -285,7 +243,7 @@ export function initTool(): void {
 		stopWaitTicker();
 		if (!test) return;
 		waitStarted = Date.now();
-		const opened = new Date(test.expiresAt).getTime() - 60 * 60_000;
+		const opened = test.createdAt ? new Date(test.createdAt).getTime() : new Date(test.expiresAt).getTime() - 60 * 60_000;
 		const until = new Date(test.expiresAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 		const hint = $('[data-wait-hint]');
 		let tip = 0;
@@ -315,6 +273,7 @@ export function initTool(): void {
 	}
 
 	function goWait() {
+		void loadRender();
 		if (!$('[data-screen="wait"]').hidden) return;
 		show('wait');
 		if (!seen.has('received')) startWaitTicker();
@@ -406,144 +365,10 @@ export function initTool(): void {
 		renderResult(liveMail ? { ...res.data, mail: { ...res.data.mail, ...liveMail } } : res.data, true);
 	}
 
-	// ---- result (markup: packages/shared/src/result-view.ts, same as the server renders) ----
-	const fmt = (n: number) => n.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-	const COPY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
-	const BAND_LABEL: Record<MailResult['band'], string> = { risk: 'Hohes Risiko', endangered: 'Gefährdet', solid: 'Solide', good: 'Sehr gut' };
-	/** The mail itself from the live done event. Only in this page's memory, never stored. */
-	let preview: MailPreview | null = null;
-
-	const copyRow = (value: string, label = 'Kopieren') =>
-		`<div class="copyrow"><span class="mono">${esc(value)}</span><button type="button" class="copybtn" data-copy="${esc(value)}">${COPY_ICON}<span>${label}</span></button></div>`;
-
-	/** Calm count-up (2.4 s, ease-out); the width is reserved for "10,0", so nothing next to it moves. */
-	const COUNT_MS = 2400;
-	function countUp(el: HTMLElement, to: number) {
-		if (reduced) return void (el.textContent = fmt(to));
-		el.textContent = fmt(0);
-		const start = performance.now();
-		const tick = (now: number) => {
-			const t = Math.min(1, (now - start) / COUNT_MS);
-			const eased = 1 - Math.pow(1 - t, 3);
-			el.textContent = fmt(Math.round(to * eased * 10) / 10);
-			if (t < 1) requestAnimationFrame(tick);
-		};
-		requestAnimationFrame(tick);
-	}
-
-	function selectStation(i: number, focus = false) {
-		const tabs = $$('.rv-st');
-		if (!tabs[i]) return;
-		tabs.forEach((t, j) => {
-			t.setAttribute('aria-selected', String(j === i));
-			t.tabIndex = j === i ? 0 : -1;
-		});
-		for (const p of $$('[data-panel]')) {
-			const on = Number(p.dataset.panel) === i;
-			if (on && !p.hasAttribute('data-open')) {
-				// Restart the swap animation on the newly opened panel.
-				p.classList.remove('rv-swap');
-				void p.offsetWidth;
-				p.classList.add('rv-swap');
-			}
-			p.toggleAttribute('data-open', on);
-		}
-		if (focus) tabs[i].focus();
-	}
-
-	function fillPreview() {
-		const view = $('[data-result-view]');
-		if (!preview) return;
-		for (const m of view.querySelectorAll<HTMLElement>('[data-preview-missing]')) m.hidden = true;
-		const text = view.querySelector<HTMLElement>('[data-preview-text]');
-		if (text) {
-			text.textContent = preview.text ?? '(Die Mail hat keine Textfassung.)';
-			text.hidden = false;
-		}
-		const headers = view.querySelector<HTMLElement>('[data-preview-headers]');
-		if (headers) {
-			headers.textContent = preview.headers + (preview.truncated ? '\n\n(gekürzt)' : '');
-			headers.hidden = false;
-		}
-		const frame = view.querySelector<HTMLIFrameElement>('[data-preview-html]');
-		if (frame) {
-			// sandbox="" blocks scripts and forms; the CSP inside blocks every external load (images, fonts, tracking pixels).
-			const csp = '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; img-src data:">';
-			frame.srcdoc = preview.html ? csp + preview.html : `${csp}<p style="font:14px system-ui;color:#555">Die Mail hat keine HTML-Fassung.</p>`;
-			frame.hidden = false;
-		}
-	}
-
-	/** Behaviour for the result markup, whether the browser or the server rendered it. */
-	function hydrate(r: MailResult | null, animate: boolean) {
-		const view = $('[data-result-view]');
-		const rv = view.querySelector<HTMLElement>('[data-rv]');
-		if (!rv) return;
-		rv.dataset.js = '';
-		if (animate && !reduced) rv.classList.add('rv-anim');
-		const value = rv.querySelector<HTMLElement>('[data-score-value]');
-		if (value && animate) countUp(value, Number(rv.dataset.final));
-		selectStation(Number(rv.dataset.open ?? 0));
-		fillPreview();
-		if (r) result = r;
-	}
-
-	function renderResult(r: MailResult, live = false) {
-		result = r;
-		$('[data-result-view]').innerHTML = renderResultView(r, { shareUrl: `${location.origin}/ergebnis/${r.id}`, setupUrl: root!.dataset.setupUrl });
-		hydrate(r, true);
-		show('result');
-		window.scrollTo({ top: 0 });
-		const v = r.verdict ?? { line1: r.headline, line2: '' };
-		announce(`Ergebnis: ${fmt(r.score)} von 10, ${BAND_LABEL[r.band]}. ${v.line1} ${v.line2}`);
-		$('[data-headline]').focus({ preventScroll: true });
-		// Only right after a live test: browsers block vibration before the first tap anyway.
-		if (live && !reduced && 'vibrate' in navigator && matchMedia('(pointer: coarse)').matches) navigator.vibrate?.([12, 40, 18]);
-	}
-
-	// ---- guide ----
-	async function openGuide(topic: GuideTopic) {
-		guideTopic = topic;
-		$('[data-guide-title]').textContent = TOPIC_TITLES[topic].title;
-		$('[data-guide-lead]').textContent = TOPIC_TITLES[topic].lead;
-		$('#provider-label').textContent = topic === 'dkim' ? 'Wer verschickt deine Mails?' : 'Wo liegt deine Domain?';
-		show('guide');
-		$('[data-guide-title]').focus({ preventScroll: true });
-		window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
-		if (!guides) guides = await fetch('/anleitungen.json').then((r) => r.json() as Promise<GuideData>).catch(() => ({}));
-		let provider: string | null = null;
-		try {
-			provider = localStorage.getItem('emc-provider');
-		} catch {
-			/* no storage */
-		}
-		provider = (result && guessProvider(result)) ?? provider ?? 'ionos';
-		pickProvider(provider);
-	}
-
-	function pickProvider(provider: string) {
-		for (const chip of $$('[data-provider]')) chip.setAttribute('aria-pressed', String(chip.dataset.provider === provider));
-		try {
-			localStorage.setItem('emc-provider', provider);
-		} catch {
-			/* no storage */
-		}
-		const g = guides?.[provider];
-		const steps = g?.schritte[guideTopic] ?? GENERIC[guideTopic];
-		const domain = result?.fromDomain ?? 'deine-domain.de';
-		$('[data-guide-steps]').innerHTML = steps
-			.map((s, i) => {
-				const fill = (v: string) => v.replaceAll('{domain}', domain);
-				const box = s.eintrag
-					? `<div class="copybox"><p class="copybox-host">Typ <code>${esc(s.eintrag.typ)}</code> · Name/Host <code>${esc(fill(s.eintrag.host))}</code></p>${copyRow(fill(s.eintrag.wert))}</div>`
-					: '';
-				return `<li class="gstep"><span class="gnum" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span><div class="gtext"><p>${inline(s.text)}</p>${box}</div></li>`;
-			})
-			.join('');
-		const link = $<HTMLAnchorElement>('[data-guide-link]');
-		link.href = g?.url[guideTopic] ?? `/wissen/${guideTopic}`;
-		link.textContent = g ? `Ausführliche Anleitung für ${g.name}` : 'Ausführlich erklärt';
-	}
+	const view = createResultView({ $, $$, show, announce, mode, setupUrl: root.dataset.setupUrl, reduced, preview: () => preview, setResult: (r) => (result = r) });
+	const { hydrate, selectStation } = view;
+	const renderResult = view.render;
+	const guide = createGuide({ $, $$, show, result: () => result, reduced });
 
 	// ---- actions ----
 	root.addEventListener('click', async (ev) => {
@@ -593,9 +418,9 @@ export function initTool(): void {
 			show('result');
 			$('[data-headline]').focus();
 		} else if (btn.dataset.fix) {
-			openGuide(btn.dataset.fix as GuideTopic);
+			guide.open(btn.dataset.fix as GuideTopic);
 		} else if (btn.dataset.provider) {
-			pickProvider(btn.dataset.provider);
+			guide.pick(btn.dataset.provider);
 		} else if (btn.dataset.copy !== undefined) {
 			await copyText(btn.dataset.copy);
 			flash(btn, 'Kopiert');

@@ -81,7 +81,7 @@ export class TestService {
 		const local = newLocalPart();
 		const expiresAt = new Date(now.getTime() + this.opts.testTtlMinutes * 60_000).toISOString();
 		this.opts.store.createTest({ id, local, createdAt: now.toISOString(), expiresAt });
-		return { id, address: `${local}@${this.opts.testDomain}`, state: 'waiting', done: [], resultId: null, expiresAt };
+		return { id, address: `${local}@${this.opts.testDomain}`, state: 'waiting', done: [], resultId: null, createdAt: now.toISOString(), expiresAt };
 	}
 
 	status(id: string): TestStatus | undefined {
@@ -94,6 +94,7 @@ export class TestService {
 			state: expired ? 'expired' : t.state,
 			done: t.state === 'done' ? [...STEPS] : (this.progress.get(t.id)?.map((e) => e.step) ?? []),
 			resultId: t.resultId,
+			createdAt: t.createdAt,
 			expiresAt: t.expiresAt,
 		};
 	}

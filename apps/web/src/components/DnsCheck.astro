@@ -110,7 +110,8 @@ const { topic, title, intro } = Astro.props;
 		if (sel) params.set('selector', sel);
 		try {
 			const res = await fetch(`/api/dns?${params}`);
-			const json = await res.json();
+			// A 502 from the proxy has no JSON body: no English SyntaxError for the reader.
+			const json = await res.json().catch(() => ({}));
 			if (!res.ok) throw new Error(json.message ?? 'Die Prüfung ist fehlgeschlagen.');
 			render(json as DnsCheckResult);
 			history.replaceState(null, '', `?domain=${encodeURIComponent(json.domain)}`);

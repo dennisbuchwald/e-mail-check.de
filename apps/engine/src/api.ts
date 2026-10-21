@@ -2,7 +2,7 @@
 import { Hono, type Context } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import { getConnInfo } from '@hono/node-server/conninfo';
-import { renderResultMissing, renderResultView, type ProgressEvent } from '@emc/shared';
+import { renderResultMissing, renderResultView, type MailResult, type ProgressEvent } from '@emc/shared';
 import { dnsCheck, normalizeDomain } from './dnscheck.ts';
 import type { DnsResolver } from './dns.ts';
 import { RateLimiter } from './ratelimit.ts';
@@ -20,6 +20,30 @@ export interface ApiOptions {
 }
 
 const ID = /^[\w-]{22}$/;
+
+/** Open live streams per client IP (audit: SSE had no limit). */
+const MAX_STREAMS_PER_IP = 5;
+
+/**
+ * Caddy runs the included fragment as a template (delimiters <!--emc{ … }emc-->). Everything in it is escaped
+ * already, but a future unescaped field must never become template code (env, readFile): break the delimiters.
+ */
+export function inertForTemplates(html: string): string {
+	return html.replaceAll('<!--emc{', '&lt;!--emc{').replaceAll('}emc-->', '}emc--&gt;');
+}
+
+/**
+ * The share link is public for 7 days. When the sending IP is a home connection (Spamhaus PBL), it is
+ * the address of a person, not of a mail server: show it only up to the network part (audit, 21.10.2026).
+ */
+export function maskHomeIp(result: MailResult): MailResult {
+	const rep = result.findings.find((f) => f.id === 'reputation');
+	const lists = ((rep?.raw as { lists?: { listed?: boolean | null; pbl?: boolean }[] } | undefined)?.lists ?? []).filter((l) => l.listed);
+	const ip = (rep?.raw as { ip?: string } | undefined)?.ip;
+	if (!ip || !lists.length || !lists.every((l) => l.pbl)) return result;
+	const masked = ip.includes(':') ? `${ip.split(':').slice(0, 4).join(':')}::…` : ip.replace(/\.\d+$/, '.…');
+	return JSON.parse(JSON.stringify(result).replaceAll(ip, masked)) as MailResult;
+}
 
 export function createApi(opts: ApiOptions): Hono {
 	const app = new Hono().basePath('/api');
@@ -41,7 +65,7 @@ export function createApi(opts: ApiOptions): Hono {
 
 	app.use('*', async (c, next) => {
 		await next();
-		c.header('Cache-Control', 'no-store');
+		if (!c.res.headers.has('Cache-Control')) c.header('Cache-Control', 'no-store');
 		c.header('X-Robots-Tag', 'noindex, nofollow');
 		c.header('X-Content-Type-Options', 'nosniff');
 	});
@@ -57,6 +81,8 @@ export function createApi(opts: ApiOptions): Hono {
 	app.get('/stats', (c) => {
 		const wait = statsLimit.hit(ipOf(c));
 		if (wait) return tooMany(c, wait);
+		// One public number: browsers and Caddy may keep it for a minute (the engine caches it for 60 s anyway).
+		c.header('Cache-Control', 'public, max-age=60');
 		return c.json({ mailsChecked: opts.service.mailsChecked() });
 	});
 
@@ -72,61 +98,79 @@ export function createApi(opts: ApiOptions): Hono {
 		return status ? c.json(status) : c.json({ error: 'not_found' }, 404);
 	});
 
+	const streams = new Map<string, number>();
 	app.get('/tests/:id/events', (c) => {
 		const id = c.req.param('id');
 		const status = ID.test(id) ? opts.service.status(id) : undefined;
 		if (!status) return c.json({ error: 'not_found' }, 404);
+		const ip = ipOf(c);
+		if ((streams.get(ip) ?? 0) >= MAX_STREAMS_PER_IP) return c.json({ error: 'too_many_streams' }, 429);
+		streams.set(ip, (streams.get(ip) ?? 0) + 1);
+		const release = () => {
+			const n = (streams.get(ip) ?? 1) - 1;
+			if (n <= 0) streams.delete(ip);
+			else streams.set(ip, n);
+		};
 		return streamSSE(c, async (stream) => {
-			const send = (e: ProgressEvent) => stream.writeSSE({ event: e.type, data: JSON.stringify(e) });
-			const queue: ProgressEvent[] = [];
-			let wake: (() => void) | null = null;
-			const unsubscribe = opts.service.subscribe(id, (e) => {
-				queue.push(e);
-				wake?.();
-			});
-			stream.onAbort(() => {
-				unsubscribe();
-				wake?.();
-			});
-			// Replay what already happened, so late subscribers see the full progress.
-			const now = opts.service.status(id)!;
-			const replay = opts.service.stepEvents(id);
-			for (const step of now.done) await send(replay.find((e) => e.step === step) ?? { type: 'step', step });
-			if (now.state === 'done' && now.resultId) await send({ type: 'done', resultId: now.resultId });
-			if (now.state === 'expired') await send({ type: 'expired' });
-			if (now.state === 'error') await send({ type: 'error', message: 'Die Auswertung ist fehlgeschlagen.' });
-			let finished = ['done', 'expired', 'error'].includes(now.state);
-			const deadline = Date.now() + 30 * 60_000;
-			while (!finished && !stream.aborted && Date.now() < deadline) {
-				if (queue.length === 0) {
-					// Heartbeat every 20 s keeps proxies from closing the connection.
-					await new Promise<void>((resolve) => {
-						wake = resolve;
-						setTimeout(resolve, 20_000);
-					});
-					wake = null;
-					if (queue.length === 0 && !stream.aborted) {
-						await stream.write(': ping\n\n');
-						if (opts.service.status(id)?.state === 'expired') {
-							await send({ type: 'expired' });
-							finished = true;
+			try {
+				const send = (e: ProgressEvent) => stream.writeSSE({ event: e.type, data: JSON.stringify(e) });
+				const queue: ProgressEvent[] = [];
+				let wake: (() => void) | null = null;
+				const unsubscribe = opts.service.subscribe(id, (e) => {
+					queue.push(e);
+					wake?.();
+				});
+				stream.onAbort(() => {
+					unsubscribe();
+					wake?.();
+				});
+				// Replay what already happened, so late subscribers see the full progress.
+				const now = opts.service.status(id)!;
+				const replay = opts.service.stepEvents(id);
+				for (const step of now.done) await send(replay.find((e) => e.step === step) ?? { type: 'step', step });
+				if (now.state === 'done' && now.resultId) await send({ type: 'done', resultId: now.resultId });
+				if (now.state === 'expired') await send({ type: 'expired' });
+				if (now.state === 'error') await send({ type: 'error', message: 'Die Auswertung ist fehlgeschlagen.' });
+				let finished = ['done', 'expired', 'error'].includes(now.state);
+				// The stream lives as long as the address accepts mail (plus a short analysis), not a fixed half hour.
+				const deadline = Math.min(Date.now() + 70 * 60_000, new Date(now.expiresAt).getTime() + 2 * 60_000);
+				while (!finished && !stream.aborted && Date.now() < deadline) {
+					if (queue.length === 0) {
+						// Heartbeat every 20 s keeps proxies from closing the connection; wake up exactly at expiry too.
+						const untilExpiry = new Date(now.expiresAt).getTime() - Date.now() + 50;
+						await new Promise<void>((resolve) => {
+							const t = setTimeout(resolve, Math.max(50, Math.min(20_000, untilExpiry > 50 ? untilExpiry : 20_000)));
+							wake = () => {
+								clearTimeout(t);
+								resolve();
+							};
+						});
+						wake = null;
+						if (queue.length === 0 && !stream.aborted) {
+							await stream.write(': ping\n\n');
+							if (opts.service.status(id)?.state === 'expired') {
+								await send({ type: 'expired' });
+								finished = true;
+							}
 						}
+						continue;
 					}
-					continue;
+					const e = queue.shift()!;
+					if (e.type === 'step' && now.done.includes(e.step)) continue;
+					await send(e);
+					if (e.type !== 'step') finished = true;
 				}
-				const e = queue.shift()!;
-				if (e.type === 'step' && now.done.includes(e.step)) continue;
-				await send(e);
-				if (e.type !== 'step') finished = true;
+				unsubscribe();
+			} finally {
+				release();
 			}
-			unsubscribe();
 		});
 	});
 
 	app.get('/results/:id', (c) => {
 		const id = c.req.param('id');
 		const result = ID.test(id) ? opts.service.result(id) : undefined;
-		return result ? c.json(result) : c.json({ error: 'not_found', message: 'Dieses Ergebnis gibt es nicht mehr. Ergebnisse werden nach 7 Tagen gelöscht.' }, 404);
+		return result ? c.json(maskHomeIp(result)) : c.json({ error: 'not_found', message: 'Dieses Ergebnis gibt es nicht mehr. Ergebnisse werden nach 7 Tagen gelöscht.' }, 404);
 	});
 
 	// Server-rendered result for /ergebnis/<id>: Caddy includes this fragment into the static shell (templates),
@@ -135,10 +179,10 @@ export function createApi(opts: ApiOptions): Hono {
 		const id = c.req.param('id');
 		const result = ID.test(id) ? opts.service.result(id) : undefined;
 		c.header('Content-Type', 'text/html; charset=utf-8');
-		if (!result) return c.body(renderResultMissing());
+		if (!result) return c.body(inertForTemplates(renderResultMissing()));
 		// The subject only exists in RAM for the tester's first hour; the server-rendered page never shows it.
-		const shared = { ...result, mail: { ...result.mail, from: null, subject: null } };
-		return c.body(renderResultView(shared, { shareUrl: `${opts.siteUrl ?? 'https://e-mail-check.de'}/ergebnis/${id}` }));
+		const shared = maskHomeIp({ ...result, mail: { ...result.mail, from: null, subject: null } });
+		return c.body(inertForTemplates(renderResultView(shared, { shareUrl: `${opts.siteUrl ?? 'https://e-mail-check.de'}/ergebnis/${id}` })));
 	});
 
 	app.get('/dns', async (c) => {
