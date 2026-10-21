@@ -220,7 +220,7 @@ PDF-Kundenbericht · Konto mit Verlauf · Test-Pakete/Agentur-Tarif · DMARC-Mon
 
 ## 11. Referenzen
 
-- Repository: https://github.com/dennisbuchwald/e-mail-check.de (`main`, Deploy per `scripts/deploy.sh`, Ablauf in `docs/DEPLOYMENT.md`)
+- Repository: https://github.com/dennisbuchwald/e-mail-check.de (**öffentlich**, `main`, Deploy per `scripts/deploy.sh`, Ablauf in `docs/DEPLOYMENT.md`). Code AGPL-3.0, Texte/Logo/Design geschützt (`LICENSE-CONTENT.md`). `research/`, `docs/recht-notizen.md`, `docs/offene-punkte.md` bleiben lokal und kommen nie ins Repo.
 
 - Start-Auftrag für den Agenten: `START-PROMPT.md`
 - Design-Quelltext, Tokens: `design/` · Logo: `brand/`
