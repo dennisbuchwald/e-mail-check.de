@@ -720,6 +720,17 @@
 .rv-missing {
 	align-items: center;
 }
+.rv-missing-fig {
+	--hairline-plate: #ffffff;
+	--hairline-hi: #111113;
+	--hairline-edge: #111113;
+	--hairline-mid: #8a8b91;
+	--hairline-lo: #d4d4d8;
+	width: 100%;
+	max-width: 280px;
+	aspect-ratio: 5 / 4;
+	margin: 0 auto;
+}
 
 /* Motion (only with .rv-anim, set by JS when motion is allowed) */
 .rv-anim .rv-fill {

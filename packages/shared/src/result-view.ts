@@ -312,6 +312,6 @@ ${planHtml}
 
 /** Shown by the server for unknown or expired ids. */
 export function renderResultMissing(): string {
-	return `<div class="rv rv-missing" data-rv-missing><div class="card msg-card"><h1 class="h">Ergebnis nicht gefunden</h1><p>Ergebnisse sind 7 Tage abrufbar. Danach löschen wir sie automatisch.</p><a class="btn btn-ink" href="/">Neuen Test starten</a></div></div>`;
+	return `<div class="rv rv-missing" data-rv-missing><div class="card msg-card"><div class="rv-missing-fig" data-hairline="loupe" data-label="Lupe über einem leeren Blatt: hier ist nichts zu finden"></div><h1 class="h">Ergebnis nicht gefunden</h1><p><b>Hier finden wir nichts mehr.</b></p><p>Ergebnisse sind 7 Tage abrufbar. Danach löschen wir sie automatisch.</p><a class="btn btn-ink" href="/">Neuen Test starten</a></div></div>`;
 }
 

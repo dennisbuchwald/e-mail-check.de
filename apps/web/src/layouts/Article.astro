@@ -5,6 +5,8 @@ import Breadcrumbs from '../components/Breadcrumbs.astro';
 import Prose from '../components/Prose.astro';
 import Faq from '../components/Faq.astro';
 import Cta from '../components/Cta.astro';
+import Figure from '../components/Figure.astro';
+import type { FigureName } from '../data/figures';
 import { articleSchema, breadcrumbSchema, faqSchema } from '../data/schema';
 
 interface Props {
@@ -21,15 +23,18 @@ interface Props {
 	noindex?: boolean;
 	cta?: boolean;
 	eyebrow?: string;
+	/** Header line figure for the topic (data/figures.ts). */
+	figure?: { name: FigureName; label: string };
 }
-const { title, seoTitle, description, path, crumbs, kurz, faq = [], quellen = [], stand, geprueft, noindex = false, cta = true, eyebrow } = Astro.props;
+const { title, seoTitle, description, path, crumbs, kurz, faq = [], quellen = [], stand, geprueft, noindex = false, cta = true, eyebrow, figure } = Astro.props;
 const standDe = stand ? new Date(stand).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
 const jsonLd = noindex ? [] : [breadcrumbSchema(crumbs), ...(stand ? [articleSchema({ title, description, path, date: stand })] : []), ...faqSchema(faq)];
 ---
 
 <Base title={seoTitle} description={description} path={path} noindex={noindex} jsonLd={jsonLd}>
 	<article class="wrap article">
-		<div class="narrow head">
+		<div class:list={['narrow head', { 'has-fig': figure }]}>
+			{figure && <Figure name={figure.name} label={figure.label} class="head-fig" />}
 			<Breadcrumbs items={crumbs} />
 			{eyebrow && <span class="pill">{eyebrow}</span>}
 			<h1>{title}</h1>
@@ -93,6 +98,25 @@ const jsonLd = noindex ? [] : [breadcrumbSchema(crumbs), ...(stand ? [articleSch
 	}
 	.head h1 {
 		font-size: clamp(34px, 5vw, 54px);
+	}
+	/* Header figure: to the right of the title on wide screens, hidden on phones (no pointer, text first). */
+	.head.has-fig {
+		position: relative;
+		padding-right: 260px;
+	}
+	.head :global(.head-fig) {
+		position: absolute;
+		top: 0;
+		right: -40px;
+		width: 280px;
+	}
+	@media (max-width: 1080px) {
+		.head.has-fig {
+			padding-right: 0;
+		}
+		.head :global(.head-fig) {
+			display: none;
+		}
 	}
 	.kurz {
 		color: var(--ink);

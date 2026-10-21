@@ -31,3 +31,7 @@ The **source code** in this repository is licensed under the [GNU Affero General
 - the name and domain "e-mail-check.de".
 
 If you reuse the code, replace texts, logo and name with your own.
+
+## Fremde Bestandteile
+
+- **hairline** (`@lucasmarkes/hairline`), Linienfiguren auf der Website. MIT-Lizenz, © Lucas Marques, https://github.com/lucasmarkes/hairline. Wird als npm-Paket eingebunden, der Lizenztext liegt im Paket.
