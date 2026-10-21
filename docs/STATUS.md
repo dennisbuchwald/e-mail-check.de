@@ -23,5 +23,4 @@ Stand: 21.10.2026
 
 ## Offene Fragen an Dennis
 - Wer prüft die Anleitungen fachlich gegen die Anbieter-Oberflächen?
-- Eigener Server sofort oder übergangsweise auf dem n8n-CAX11?
 - SPF-Linie für Domains mit Google und Microsoft: `~all` oder `-all`?
