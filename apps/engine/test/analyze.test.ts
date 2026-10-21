@@ -15,6 +15,21 @@ async function run(name: string, opts: { ip?: string; sender?: string; deps?: Pa
 
 const find = (r: MailResult, id: string) => r.findings.find((f) => f.id === id)!;
 
+describe('scanWithRspamd', () => {
+	it('never keeps message excerpts from rspamd options', async () => {
+		const { scanWithRspamd } = await import('../src/checks/content.ts');
+		const realFetch = globalThis.fetch;
+		globalThis.fetch = (async () =>
+			new Response(JSON.stringify({ action: 'no action', symbols: { R_SUSPICIOUS_URL: { name: 'R_SUSPICIOUS_URL', score: 2, description: 'x', options: ['geheim.example/pfad'] } } }))) as typeof fetch;
+		try {
+			const res = await scanWithRspamd('http://rspamd', Buffer.from(''), { ip: '1.2.3.4', helo: 'h', sender: '' }, 'a@b');
+			expect(JSON.stringify(res)).not.toContain('geheim');
+		} finally {
+			globalThis.fetch = realFetch;
+		}
+	});
+});
+
 describe('analyzeMessage', () => {
 	it('rates a clean mail 10/10 and reports every step', async () => {
 		const { result, steps } = await run('gut.eml');

@@ -1,67 +1,94 @@
 ---
 import Article from '../layouts/Article.astro';
+// Draft. Must match the real processing in apps/engine, infra/rspamd and infra/caddy.
+// Sources and open questions: docs/recht-notizen.md.
 ---
 
 <Article
 	title="Datenschutzerklärung"
 	seoTitle="Datenschutz | e-mail-check.de"
-	description="Wie e-mail-check.de mit Testmails, Ergebnissen und Zugriffsdaten umgeht: Server in Deutschland, Mail-Inhalt sofort gelöscht, keine Cookies."
+	description="Wie e-mail-check.de mit Testmails, Ergebnissen und Zugriffsdaten umgeht: Server in Deutschland, Mail-Inhalt nicht gespeichert, keine Cookies."
 	path="/datenschutz"
 	crumbs={[{ href: '/', label: 'Start' }, { href: '/datenschutz', label: 'Datenschutz' }]}
 	cta={false}
 	noindex
 >
-	<p class="draft"><strong>Entwurf:</strong> Dieser Text beschreibt die tatsächliche technische Verarbeitung. Er ist noch nicht rechtlich geprüft und muss vor dem Livegang von einer fachkundigen Person freigegeben werden. Angaben in eckigen Klammern sind Platzhalter.</p>
+	<p class="draft"><strong>Entwurf:</strong> Nach bestem Wissen erstellt, keine Rechtsberatung. Der Text beschreibt die tatsächliche technische Verarbeitung (Stand: [Datum]). Vor dem Livegang fachlich prüfen lassen. Angaben in eckigen Klammern sind Platzhalter.</p>
 
 	<h2>Kurz zusammengefasst</h2>
 	<ul>
 		<li>Unsere Server stehen in Deutschland.</li>
-		<li>Den Inhalt deiner Testmail werten wir nur im Arbeitsspeicher aus und verwerfen ihn direkt danach. Er wird nie auf einer Festplatte gespeichert.</li>
+		<li>Deine Testmail werten wir nur im Arbeitsspeicher aus. Sie wird nie auf eine Festplatte geschrieben und nach der Prüfung verworfen.</li>
 		<li>Gespeichert wird nur die Zusammenfassung (Score, Prüfpunkte, technische Prüfwerte). Sie wird nach 7 Tagen automatisch gelöscht.</li>
+		<li>Für die Prüfung fragen wir öffentliche Sperrlisten ab. Dabei erfahren deren Betreiber einzelne technische Merkmale deiner Mail, nämlich die Server-IP und verlinkte Domains, aber nie den Text.</li>
 		<li>Wir setzen keine Cookies und nutzen kein Google Analytics.</li>
 	</ul>
 
 	<h2>Verantwortlicher</h2>
-	<p>Dennis Buchwald, [Anschrift], [E-Mail-Adresse]. Siehe <a href="/impressum">Impressum</a>.</p>
+	<p>Dennis Buchwald, Oststraße 12, 74072 Heilbronn, E-Mail: [E-Mail-Adresse]. Siehe auch das <a href="/impressum">Impressum</a>.</p>
+	<p>Ein Datenschutzbeauftragter ist nicht benannt, weil keine gesetzliche Pflicht dazu besteht.</p>
 
 	<h2>Aufruf der Website</h2>
-	<p>Beim Aufruf verarbeitet unser Webserver technisch notwendige Daten (IP-Adresse, Zeitpunkt, aufgerufene Seite, Browser-Kennung), um die Seite auszuliefern und vor Angriffen zu schützen. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. [Speicherdauer der Server-Logs festlegen, z. B. 7 Tage.]</p>
+	<p>Damit die Seite bei dir ankommt, verarbeitet unser Webserver bei jedem Aufruf deine IP-Adresse, den Zeitpunkt, die aufgerufene Adresse und die Kennung deines Browsers. Das ist technisch nicht anders möglich.</p>
+	<p>Wir schreiben dabei keine Zugriffsprotokolle (Access-Logs). Fehlermeldungen unserer Dienste enthalten keine IP-Adressen. [Falls später Protokolle aktiviert werden: „Zugriffsprotokolle löschen wir automatisch nach 7 Tagen.“]</p>
+	<p>Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. Unser berechtigtes Interesse ist, die Website sicher und fehlerfrei auszuliefern.</p>
 
 	<h2>Mail-Test</h2>
-	<p>Wenn du einen Test startest, erzeugen wir eine zufällige Testadresse. Sie ist 60 Minuten gültig und nimmt genau eine Mail an. Für die Auswertung verarbeiten wir:</p>
+	<p>Wenn du einen Test startest, erzeugen wir eine zufällige Testadresse. Sie nimmt 60 Minuten lang Mail an, und zwar nur bis zur ersten eingegangenen Mail. Dabei verarbeiten wir:</p>
 	<ul>
-		<li><strong>Die Mail selbst</strong> (Kopfzeilen, Text, Links, Anhänge): nur im Arbeitsspeicher, nur für die Dauer der Prüfung, danach verworfen.</li>
-		<li><strong>Technische Absenderdaten</strong>: IP-Adresse und Name des sendenden Servers, Absender-Adresse aus dem Umschlag (MAIL FROM) und die Domain aus dem Absenderfeld.</li>
-		<li><strong>Das Ergebnis</strong>: Score, Prüfpunkte und technische Prüfwerte wie DNS-Einträge, Signatur-Domain, Server-IP und Sperrlisten-Treffer. Es ist über einen zufälligen Link abrufbar, wird nicht in Suchmaschinen aufgenommen und nach 7 Tagen automatisch gelöscht.</li>
+		<li><strong>Die Mail selbst</strong> (Kopfzeilen, Text, Links, Anhänge): nur im Arbeitsspeicher und nur für die Dauer der Prüfung, meist wenige Sekunden. Danach wird sie verworfen.</li>
+		<li><strong>Technische Absenderdaten</strong>: IP-Adresse und Name des sendenden Servers, die Absenderadresse aus dem Umschlag (MAIL FROM) und die Domain aus dem Absenderfeld.</li>
+		<li><strong>Die Testadresse</strong>: Sie wird zusammen mit Erstell- und Ablaufzeit und dem Bearbeitungsstand 7 Tage lang gespeichert, damit dieselbe Adresse nicht doppelt vergeben wird. Eine IP-Adresse speichern wir dazu nicht.</li>
+		<li><strong>Das Ergebnis</strong>: Score, Prüfpunkte und technische Prüfwerte. Dazu gehören die IP-Adresse und der Name des sendenden Servers, die gefundenen DNS-Einträge, die Signatur-Domains, die Absender-Domain, Sperrlisten-Treffer und die Namen der Spamfilter-Regeln, die angeschlagen haben. Fundstellen aus der Mail (etwa verlinkte Adressen oder Textstellen) speichern wir nicht.</li>
 	</ul>
-	<p>Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO (du nutzt den Dienst) bzw. lit. f (Schutz vor Missbrauch).</p>
+	<p>Das Ergebnis ist über einen zufälligen Link abrufbar. Jeder, der den Link kennt, kann es 7 Tage lang sehen. Danach löschen wir es automatisch. Ergebnis-Links werden nicht in Suchmaschinen aufgenommen.</p>
+	<p>Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO, soweit es um deine eigenen Daten geht (du nutzt den Dienst), und im Übrigen Art. 6 Abs. 1 lit. f DSGVO. Unser berechtigtes Interesse ist, den von dir angeforderten Test durchzuführen und das Ergebnis für dich abrufbar zu halten.</p>
 
-	<h2>Abfragen bei Dritten</h2>
-	<p>Für die Prüfung fragen wir öffentliche DNS-Daten ab. Dabei erfahren Dritte Folgendes, aber nie den Inhalt deiner Mail:</p>
+	<h3>Daten anderer Personen in deiner Testmail</h3>
+	<p>Eine Testmail kann Daten anderer Menschen enthalten, etwa Namen oder Adressen deiner Kunden. Diese Daten verarbeiten wir ausschließlich für die technische Prüfung und nur so, wie oben beschrieben (Art. 6 Abs. 1 lit. f DSGVO). Bitte schick nach Möglichkeit Testmails ohne echte Personendaten. Für das Ergebnis macht das keinen Unterschied.</p>
+
+	<h2>Abfragen bei Dritten (Sperrlisten)</h2>
+	<p>Ob eine Mail im Spam landet, hängt stark davon ab, ob der sendende Server oder die verlinkten Seiten auf öffentlichen Sperrlisten stehen. Um das zu prüfen, stellen wir über unseren eigenen DNS-Server Anfragen an die Betreiber dieser Listen. Den Text deiner Mail erfahren sie dabei nie. Je nach Liste erfahren sie:</p>
 	<ul>
-		<li><strong>Sperrlisten</strong> (Spamhaus, SpamCop, Barracuda, NiX Spam, PSBL) erhalten die IP-Adresse des sendenden Servers als DNS-Anfrage.</li>
-		<li><strong>Link-Sperrlisten</strong> des Spamfilters erhalten Domains, die in der Mail verlinkt sind.</li>
-		<li><strong>DNS-Server</strong> der beteiligten Domains erhalten die üblichen Anfragen nach SPF-, DKIM- und DMARC-Einträgen.</li>
+		<li><strong>IP-Adresse des sendenden Servers</strong>: an Spamhaus (ZEN), SpamCop, Barracuda, NiX Spam und PSBL. Weitere IP-Adressen aus der Mail fragen wir nicht ab.</li>
+		<li><strong>Domains aus Links in der Mail</strong>: an Spamhaus (DBL), SURBL und URIBL. Nur der Domainname, nicht der vollständige Link.</li>
+		<li><strong>DNS-Server</strong> der beteiligten Domains erhalten die üblichen Anfragen nach SPF-, DKIM- und DMARC-Einträgen und nach dem Servernamen (rDNS).</li>
 	</ul>
-	<p>Abfragen, bei denen Prüfsummen von Mail-Inhalten an Dritte gehen (sogenannte Fuzzy-Hashes), sind abgeschaltet.</p>
+	<p>Einige dieser Betreiber sitzen außerhalb der EU, zum Beispiel in den USA. [Rechtsgrundlage für die Übermittlung in Drittländer nach fachlicher Prüfung ergänzen.] Prüfsummen von Mail-Inhalten, Mailadressen oder Links senden wir an niemanden. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. Unser berechtigtes Interesse ist, dir ein aussagekräftiges Ergebnis zu liefern.</p>
 
 	<h2>DNS-Schnellcheck</h2>
 	<p>Wenn du eine Domain prüfst, fragen wir deren öffentliche DNS-Einträge ab. Wir speichern weder die Domain noch das Ergebnis.</p>
 
 	<h2>Schutz vor Missbrauch</h2>
-	<p>Um den kostenlosen Dienst vor Missbrauch zu schützen, zählen wir die Anzahl der Tests pro IP-Adresse. Diese Zähler liegen nur im Arbeitsspeicher und verfallen nach einer Stunde.</p>
+	<p>Damit der kostenlose Dienst nicht missbraucht wird, zählen wir pro IP-Adresse, wie viele Tests und DNS-Abfragen in der letzten Stunde gestartet wurden. Diese Zähler liegen nur im Arbeitsspeicher und werden spätestens etwa 70 Minuten nach der letzten Anfrage gelöscht. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. Unser berechtigtes Interesse ist der Schutz des Dienstes.</p>
 
 	<h2>Speicher im Browser</h2>
-	<p>Damit deine Testadresse beim Neuladen der Seite erhalten bleibt, merkt sich dein Browser sie im Sitzungsspeicher (sessionStorage). Den zuletzt gewählten Anbieter für Anleitungen speichert er im lokalen Speicher (localStorage). Diese Daten verlassen deinen Browser nicht. Das ist technisch erforderlich für die von dir gewünschte Funktion (§ 25 Abs. 2 Nr. 2 TDDDG).</p>
+	<p>Damit dein laufender Test beim Neuladen der Seite erhalten bleibt, legt dein Browser Testadresse und Test-Kennung im Sitzungsspeicher (sessionStorage) ab. Dieser Speicher wird gelöscht, wenn du den Tab schließt. Wählst du in einer Anleitung deinen Anbieter, merkt sich dein Browser diese Auswahl im lokalen Speicher (localStorage), bis du ihn leerst. Beides verlässt deinen Browser nicht.</p>
+	<p>Das Speichern ist unbedingt erforderlich, damit wir die von dir gewünschte Funktion bereitstellen können (§ 25 Abs. 2 Nr. 2 TDDDG). Eine Einwilligung ist dafür nicht nötig.</p>
 
 	<h2>Statistik</h2>
-	<p>[Falls aktiviert: Wir nutzen das selbst gehostete, cookie-freie Statistik-Werkzeug Umami. Es speichert keine IP-Adressen und setzt keine Cookies. Die Daten bleiben auf unserem Server in Deutschland.]</p>
-
-	<h2>Deine Rechte</h2>
-	<p>Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch sowie das Recht, dich bei einer Aufsichtsbehörde zu beschweren. Da wir Ergebnisse nicht einer Person zuordnen, können wir sie nur über den Ergebnis-Link finden.</p>
+	<p>[Nur wenn aktiviert: Wir nutzen das cookie-freie Statistik-Werkzeug Umami, das auf unserem eigenen Server in Deutschland läuft. Es setzt keine Cookies und speichert keine IP-Adressen. [Vor Aktivierung prüfen, ob die eingesetzte Umami-Version etwas im Browser ablegt.] Hast du in deinem Browser „Do Not Track“ eingeschaltet, wird dein Besuch nicht gezählt. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. Unser berechtigtes Interesse ist, zu verstehen, welche Inhalte genutzt werden.]</p>
 
 	<h2>Hosting</h2>
-	<p>[Hosting-Anbieter, Standort Deutschland, AV-Vertrag]</p>
+	<p>[Hosting-Anbieter mit Anschrift eintragen, Standort Deutschland. Mit ihm besteht ein Vertrag zur Auftragsverarbeitung nach Art. 28 DSGVO.]</p>
+
+	<h2>Empfänger</h2>
+	<p>Deine Daten erhalten nur der Hosting-Anbieter (als Auftragsverarbeiter) und, im oben beschriebenen Umfang, die Betreiber der Sperrlisten. Wir verkaufen keine Daten und geben sie nicht zu Werbezwecken weiter.</p>
+
+	<h2>Keine automatisierte Entscheidung</h2>
+	<p>Der Score ist eine automatische technische Bewertung deiner Mail. Er hat keine rechtliche Wirkung für dich und ist keine automatisierte Entscheidung im Sinne von Art. 22 DSGVO.</p>
+
+	<h2>Musst du Daten angeben?</h2>
+	<p>Nein. Ohne Testmail können wir aber keinen Mail-Test durchführen.</p>
+
+	<h2>Deine Rechte</h2>
+	<p>Du hast das Recht auf Auskunft (Art. 15 DSGVO), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18) und Datenübertragbarkeit (Art. 20).</p>
+	<p><strong>Widerspruchsrecht:</strong> Soweit wir Daten auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO verarbeiten, kannst du aus Gründen, die sich aus deiner besonderen Situation ergeben, jederzeit widersprechen (Art. 21 DSGVO).</p>
+	<p>Wir ordnen Ergebnisse keiner Person zu. Damit wir ein Ergebnis finden und vorzeitig löschen können, schick uns bitte den Ergebnis-Link.</p>
+	<p>Du kannst dich außerdem bei einer Datenschutz-Aufsichtsbehörde beschweren. Zuständig für uns ist: Der Landesbeauftragte für den Datenschutz und die Informationsfreiheit Baden-Württemberg, Lautenschlagerstraße 20, 70173 Stuttgart.</p>
+
+	<h2>Änderungen</h2>
+	<p>Wenn sich die Technik ändert, passen wir diese Erklärung an. Es gilt die jeweils hier veröffentlichte Fassung.</p>
 </Article>
 
 <style>
