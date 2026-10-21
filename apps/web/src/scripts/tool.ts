@@ -95,6 +95,8 @@ export function initTool(): void {
 	let generation = 0; // invalidates callbacks of an old test after reset
 	let guideTopic: GuideTopic = 'dmarc';
 	let guides: GuideData | null = null;
+	/** Subject and sender from the live "received" step: only in this page, never from the result link (audit C3). */
+	let liveMail: { from: string | null; subject: string | null } | null = null;
 
 	// ---- screens ----
 	function show(screen: Screen) {
@@ -116,6 +118,7 @@ export function initTool(): void {
 		const gen = ++generation;
 		closeStream();
 		result = null;
+		liveMail = null;
 		resetAnimation();
 		show('start');
 		$('[data-address]').innerHTML = '<span class="address-loading">Adresse wird erstellt …</span>';
@@ -151,10 +154,18 @@ export function initTool(): void {
 			try {
 				const t = JSON.parse(saved) as typeof test;
 				const res = await api<TestStatus>(`/api/tests/${t!.id}`);
-				if (res.ok && res.data.state === 'waiting') {
+				// Reloaded while waiting or while the mail is being analyzed: keep following the same test (audit I5).
+				if (res.ok && (res.data.state === 'waiting' || res.data.state === 'analyzing')) {
 					test = t;
 					showAddress();
+					if (res.data.state === 'analyzing') goWait();
 					listen(++generation);
+					return;
+				}
+				// Finished while the page was gone: the result is still there, show it.
+				if (res.ok && res.data.state === 'done' && res.data.resultId) {
+					storage()?.removeItem(STORE_KEY);
+					location.replace(`/ergebnis/${res.data.resultId}`);
 					return;
 				}
 			} catch {
@@ -169,6 +180,7 @@ export function initTool(): void {
 		source?.close();
 		source = null;
 		clearTimeout(pollTimer);
+		pollTimer = 0;
 	}
 
 	function listen(gen: number) {
@@ -348,6 +360,7 @@ export function initTool(): void {
 			$('.wait-slot').dataset.phase = 'after';
 			$('[data-wait-title]').textContent = 'Mail ist da. Wir prüfen sie';
 			announce('Mail empfangen. Die Prüfung läuft.');
+			if (e.mail) liveMail = { from: e.mail.from ?? null, subject: e.mail.subject ?? null };
 			if (e.mail?.from || e.mail?.subject) {
 				$('[data-wm-from]').textContent = e.mail.from ?? 'unbekannt';
 				$('[data-wm-subject]').textContent = e.mail.subject ?? '';
@@ -390,7 +403,7 @@ export function initTool(): void {
 		if (gen !== generation) return;
 		if (!res?.ok) return message('Ergebnis nicht gefunden', 'Das Ergebnis konnte nicht geladen werden. Starte bitte einen neuen Test.');
 		history.pushState({ resultId }, '', `/ergebnis/${resultId}`);
-		renderResult(res.data, true);
+		renderResult(liveMail ? { ...res.data, mail: { ...res.data.mail, ...liveMail } } : res.data, true);
 	}
 
 	// ---- result (markup: packages/shared/src/result-view.ts, same as the server renders) ----
@@ -624,7 +637,34 @@ export function initTool(): void {
 			})
 			.catch(() => (ssr ? undefined : message('Gerade geht es nicht', 'Der Server ist nicht erreichbar. Probier es gleich noch einmal.')));
 	} else {
-		resetAnimation();
-		resumeOrCreate();
+		// A test address costs rate limit and keeps a stream open: only create it for a page someone looks at,
+		// and close the stream while the tab is in the background (audit I9). On return it replays what happened.
+		let paused = false;
+		const start = () => {
+			resetAnimation();
+			resumeOrCreate();
+		};
+		if (document.visibilityState === 'visible') start();
+		else {
+			const once = () => {
+				if (document.visibilityState !== 'visible') return;
+				document.removeEventListener('visibilitychange', once);
+				start();
+			};
+			document.addEventListener('visibilitychange', once);
+		}
+		const pause = () => {
+			if (!test || result || (!source && !pollTimer)) return;
+			closeStream();
+			paused = true;
+		};
+		const resume = () => {
+			if (!paused || !test || result) return;
+			paused = false;
+			listen(generation);
+		};
+		document.addEventListener('visibilitychange', () => (document.hidden ? pause() : resume()));
+		window.addEventListener('pagehide', pause);
+		window.addEventListener('pageshow', (e) => e.persisted && resume());
 	}
 }

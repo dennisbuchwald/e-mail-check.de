@@ -38,7 +38,7 @@ describe('API', () => {
 		expect(JSON.stringify(result)).not.toContain('Angebot für die neue Website');
 	});
 
-	it('keeps subject and From address in RAM only, never in the database', async () => {
+	it('never serves subject or From address through the result link, only live in the test stream (audit C3)', async () => {
 		const { app, service, store } = setup();
 		const test = await (await app.request('/api/tests', { method: 'POST' })).json();
 		const res = (await service.handleMessage(test.address, fixture('gut.eml'), { ip: GOOD_IP, helo: 'x', sender: 'max@gut.example.test', tls: { version: 'TLSv1.3' } }))!;
@@ -46,8 +46,14 @@ describe('API', () => {
 		expect(stored.mail.subject).toBeNull();
 		expect(stored.mail.from).toBeNull();
 		const served = (await (await app.request(`/api/results/${res.id}`)).json()) as MailResult;
-		expect(served.mail.subject).toBe('Angebot Website');
-		expect(served.mail.from).toBe('max@gut.example.test');
+		expect(served.mail.subject).toBeNull();
+		expect(served.mail.from).toBeNull();
+		const view = await (await app.request(`/api/results/${res.id}/view`)).text();
+		expect(view).not.toContain('Angebot Website');
+		expect(view).not.toContain('max@gut.example.test');
+		// The tester (who holds the test id) got both in the "received" step.
+		const sse = await (await app.request(`/api/tests/${test.id}/events`)).text();
+		expect(sse).toContain('Angebot Website');
 	});
 
 	it('streams progress via SSE, replaying finished steps', async () => {

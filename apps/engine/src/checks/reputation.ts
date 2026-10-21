@@ -90,14 +90,15 @@ async function queryList(resolve: DnsResolver, ip: string, list: Blocklist): Pro
 	}
 }
 
-async function checkPtr(resolve: DnsResolver, ip: string): Promise<{ ptr: string | null; matches: boolean }> {
+async function checkPtr(resolve: DnsResolver, ip: string): Promise<{ ptr: string | null; matches: boolean; unknown?: boolean }> {
 	const v = ip.replace(/^::ffff:/i, '');
 	const rev = `${reverseIp(v)}.${isIP(v) === 4 ? 'in-addr.arpa' : 'ip6.arpa'}`;
 	let names: string[] = [];
 	try {
 		names = await resolve(rev, 'PTR');
-	} catch {
-		return { ptr: null, matches: false };
+	} catch (err) {
+		// Only "no such record" means no rDNS; a timeout or SERVFAIL says nothing about the server (audit I3).
+		return { ptr: null, matches: false, ...(isNotFound(err) ? {} : { unknown: true }) };
 	}
 	for (const host of names) {
 		try {
@@ -142,16 +143,28 @@ export async function checkReputation(ip: string, resolve: DnsResolver, lists: B
 	const allowLists = all.filter((r) => r.allow);
 	const helo_ = await checkHelo(resolve, helo, ip, ptr.ptr);
 	const listed = results.filter((r) => r.listed === true);
+	const answered = results.filter((r) => r.listed !== null).length;
+	// No list answered and no rDNS answer either: the resolver is down, so we cannot say anything (audit I3).
+	if (listed.length === 0 && answered === 0 && ptr.unknown) {
+		return {
+			...base,
+			status: 'skip',
+			title: 'Server-Ruf nicht geprüft',
+			text: 'Die Sperrlisten und der Namens-Eintrag waren gerade nicht erreichbar. Teste später noch einmal.',
+			deductions: [],
+			raw: { ip, error: 'dns_unavailable', lists: results, allowLists },
+		};
+	}
 	const deductions = [];
 	let listPoints = 0;
 	for (const r of listed) listPoints += r.major ? POINTS.reputation.majorList : POINTS.reputation.otherList;
 	if (listed.length > 0) {
 		deductions.push({ reason: `Auf Sperrliste: ${listed.map((r) => r.list).join(', ')}`, points: round1(Math.min(POINTS.reputation.listCap, listPoints)) });
 	}
-	if (!ptr.ptr) deductions.push({ reason: 'Kein rDNS-Eintrag (PTR)', points: POINTS.reputation.noPtr });
-	else if (!ptr.matches) deductions.push({ reason: 'rDNS passt nicht zur IP', points: POINTS.reputation.ptrMismatch });
+	if (!ptr.ptr && !ptr.unknown) deductions.push({ reason: 'Kein rDNS-Eintrag (PTR)', points: POINTS.reputation.noPtr });
+	else if (ptr.ptr && !ptr.matches) deductions.push({ reason: 'rDNS passt nicht zur IP', points: POINTS.reputation.ptrMismatch });
 
-	const raw = { ip, ptr: ptr.ptr, ptrMatches: ptr.matches, helo: helo_.name, heloMatches: helo_.matches, lists: results, allowLists };
+	const raw = { ip, ptr: ptr.ptr, ptrMatches: ptr.matches, ...(ptr.unknown ? { ptrUnknown: true } : {}), helo: helo_.name, heloMatches: helo_.matches, lists: results, allowLists };
 	// Only Spamhaus PBL: an ordinary internet connection sends straight to the recipient.
 	// Not an accusation of spam, but big providers refuse it, so the points stay.
 	if (listed.length > 0 && listed.every((r) => r.pbl)) {
@@ -174,7 +187,7 @@ export async function checkReputation(ip: string, resolve: DnsResolver, lists: B
 			raw,
 		};
 	}
-	if (!ptr.ptr) {
+	if (!ptr.ptr && !ptr.unknown) {
 		return {
 			...base,
 			status: 'bad',
@@ -184,7 +197,7 @@ export async function checkReputation(ip: string, resolve: DnsResolver, lists: B
 			raw,
 		};
 	}
-	if (!ptr.matches) {
+	if (ptr.ptr && !ptr.matches) {
 		return {
 			...base,
 			status: 'warn',
@@ -199,7 +212,7 @@ export async function checkReputation(ip: string, resolve: DnsResolver, lists: B
 		...base,
 		status: 'ok',
 		title: 'Server-Ruf gut',
-		text: `Der Server ${ptr.ptr} steht auf keiner der ${results.length - unknown} geprüften Sperrlisten.`,
+		text: `Der Server ${ptr.ptr ?? ip} steht auf keiner der ${results.length - unknown} geprüften Sperrlisten.${ptr.unknown ? ' Den Namens-Eintrag (rDNS) konnten wir gerade nicht abfragen.' : ''}`,
 		deductions,
 		raw,
 	};

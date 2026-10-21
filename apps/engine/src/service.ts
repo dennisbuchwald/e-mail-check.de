@@ -1,14 +1,13 @@
 // Test lifecycle: create address → receive mail → analyze → result. Progress is pushed to subscribers.
 import { EventEmitter } from 'node:events';
 import { randomInt } from 'node:crypto';
-import type { MailPreview, MailResult, ProgressEvent, TestStatus } from '@emc/shared';
+import { STEPS, type MailPreview, type MailResult, type ProgressEvent, type TestStatus } from '@emc/shared';
 import { analyzeMessage, newId, type AnalyzeDeps } from './analyze.ts';
 import type { SmtpEnvelope } from './checks/auth.ts';
 import type { Store } from './store.ts';
 import { CheckedCounter } from './stats.ts';
 
 // No 0/o/1/l/i: addresses get typed by hand sometimes.
-const HEADER_TTL_MS = 3600_000;
 const ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
 
 export function newLocalPart(length = 8): string {
@@ -23,7 +22,37 @@ export interface ServiceOptions {
 	testDomain: string;
 	testTtlMinutes: number;
 	now?: () => Date;
+	/** Analyses running at the same time; the rest wait (audit I1). */
+	maxParallel?: number;
+	/** An analysis that takes longer than this fails instead of hanging forever (audit I2). */
+	analysisTimeoutMs?: number;
 }
+
+/** A small counting semaphore: at most `max` tasks run, the others wait in order. */
+class Queue {
+	private running = 0;
+	private readonly waiting: (() => void)[] = [];
+	private readonly max: number;
+	constructor(max: number) {
+		this.max = max;
+	}
+	async run<T>(task: () => Promise<T>): Promise<T> {
+		if (this.running >= this.max) await new Promise<void>((r) => this.waiting.push(r));
+		this.running++;
+		try {
+			return await task();
+		} finally {
+			this.running--;
+			this.waiting.shift()?.();
+		}
+	}
+}
+
+const withTimeout = <T>(p: Promise<T>, ms: number): Promise<T> =>
+	new Promise<T>((resolve, reject) => {
+		const t = setTimeout(() => reject(new Error(`analysis timed out after ${ms} ms`)), ms);
+		p.then((v) => (clearTimeout(t), resolve(v)), (e) => (clearTimeout(t), reject(e)));
+	});
 
 export class TestService {
 	private readonly opts: ServiceOptions;
@@ -31,11 +60,15 @@ export class TestService {
 	/** Finished steps of running analyses; kept briefly for late subscribers and polling. */
 	private readonly progress = new Map<string, Extract<ProgressEvent, { type: 'step' }>[]>();
 	private readonly checked = new CheckedCounter({ count: () => this.opts.store.mailsChecked(), now: () => this.now() });
-	private readonly headers = new Map<string, { from: string | null; subject: string | null }>();
+	private readonly queue: Queue;
 
 	constructor(opts: ServiceOptions) {
 		this.opts = opts;
+		this.queue = new Queue(opts.maxParallel ?? 4);
 		this.bus.setMaxListeners(1000);
+		// A restart during an analysis (deploy, OOM) would leave the test on "analyzing" for good.
+		const stale = opts.store.failStaleTests();
+		if (stale) console.log(`startup: ${stale} interrupted analyses marked as failed`);
 	}
 
 	private now(): Date {
@@ -59,7 +92,7 @@ export class TestService {
 			id: t.id,
 			address: `${t.local}@${this.opts.testDomain}`,
 			state: expired ? 'expired' : t.state,
-			done: t.state === 'done' ? ['received', 'spf', 'dkim', 'dmarc', 'reputation', 'content'] : (this.progress.get(t.id)?.map((e) => e.step) ?? []),
+			done: t.state === 'done' ? [...STEPS] : (this.progress.get(t.id)?.map((e) => e.step) ?? []),
 			resultId: t.resultId,
 			expiresAt: t.expiresAt,
 		};
@@ -82,16 +115,19 @@ export class TestService {
 		let preview: MailPreview | undefined;
 		this.progress.set(t.id, steps);
 		try {
-			const result = await analyzeMessage(message, env, rcpt, this.opts.deps, (step, info) => {
-				const e = { type: 'step' as const, step, ...info };
-				steps.push(e);
-				this.emit(t.id, e);
-			}, (p) => (preview = p));
-			// Subject and From address are mail content: they stay in RAM for one hour for
-			// the person who just ran the test and never reach the database.
+			const result = await this.queue.run(() =>
+				withTimeout(
+					analyzeMessage(message, env, rcpt, this.opts.deps, (step, info) => {
+						const e = { type: 'step' as const, step, ...info };
+						steps.push(e);
+						this.emit(t.id, e);
+					}, (p) => (preview = p)),
+					this.opts.analysisTimeoutMs ?? 90_000,
+				),
+			);
+			// Subject and From address are mail content: they reach the tester only live, in the "received"
+			// step of their own test stream, and never the database or the result link (audit C3).
 			this.opts.store.saveResult({ ...result, mail: { ...result.mail, from: null, subject: null } });
-			this.headers.set(result.id, { from: result.mail.from, subject: result.mail.subject });
-			setTimeout(() => this.headers.delete(result.id), HEADER_TTL_MS).unref();
 			this.opts.store.setTestState(t.id, 'done', result.id);
 			// The preview goes out once, live; a later subscriber or the share link never gets it.
 			this.emit(t.id, { type: 'done', resultId: result.id, ...(preview ? { preview } : {}) });
@@ -107,10 +143,9 @@ export class TestService {
 		}
 	}
 
+	/** The stored summary. Never with subject or sender: whoever has the link only sees the result. */
 	result(id: string): MailResult | undefined {
-		const r = this.opts.store.getResult(id, this.now());
-		const h = r && this.headers.get(id);
-		return r && h ? { ...r, mail: { ...r.mail, ...h } } : r;
+		return this.opts.store.getResult(id, this.now());
 	}
 
 	/** All-time number of analyzed mails, or null below 100 (see stats.ts). */
