@@ -1093,6 +1093,8 @@ function mount({ stage, svg, read }, value) {
     jump: (v) => { prog.x = prog.t = clamp(v, 0, 1); prog.v = 0; B.wake(); },
     /** states: six of "ok" | "warn" | "bad" | "skip"; details: spfGlyph, dkimBroken, dmarcFail …; onSelect(i) on a click. */
     configure: (next) => { cfg = { ...cfg, ...next }; F = flagsOf(cfg); B.wake(); },
+    /** Where the station markers sit (viewBox units, rest camera), for buttons laid over the drawing. */
+    anchors: () => { const P = proj(C0); return [[-32, 31], [44, 22], [100, 24], [152, 22], [225, 22], F.spam ? [326, 2] : [301, 26]].map(([x, y]) => { const q = P(x, y, 0); return [r2(q[0]), r2(q[1] - 6.5)]; }); },
     /** Zoom onto station i and dim the others; null zooms back out. */
     focus: (i) => {
       const now = performance.now();

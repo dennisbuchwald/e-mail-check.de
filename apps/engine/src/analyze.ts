@@ -4,6 +4,7 @@ import { randomBytes } from 'node:crypto';
 import type { MailPreview } from '@emc/shared';
 import { bandFor, computeScore, enrichFindings, hasAuthFailure, stationsOf, subScores, summarize, trafficLight, verdictFor, type Finding, type MailMeta, type MailResult, type StepId, type StepInfo } from '@emc/shared';
 import { checkAuth, type SmtpEnvelope } from './checks/auth.ts';
+import { detectProviders } from './checks/provider.ts';
 import { checkReputation } from './checks/reputation.ts';
 import { contentFinding, scanWithRspamd, type BodyStats, type ContentAnalysis } from './checks/content.ts';
 import { simpleParser, type ParsedMail } from 'mailparser';
@@ -43,6 +44,7 @@ export async function analyzeMessage(message: Buffer, env: SmtpEnvelope, rcpt: s
 	const content = runContentChecks(message, parsed, env, rcpt, deps);
 
 	const auth = await checkAuth(message, env, deps.resolver, deps.mta);
+	const providers = detectProviders(auth.fromDomain, deps.resolver).catch(() => ({}));
 	onStep('spf', stepInfo(auth.spf));
 	onStep('dkim', stepInfo(auth.dkim));
 	onStep('dmarc', stepInfo(auth.dmarc));
@@ -81,6 +83,7 @@ export async function analyzeMessage(message: Buffer, env: SmtpEnvelope, rcpt: s
 		sub,
 		mail: meta,
 		fromDomain: auth.fromDomain,
+		providers: await providers,
 		findings,
 	};
 }

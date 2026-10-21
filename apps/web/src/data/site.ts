@@ -6,7 +6,8 @@ export const SITE = {
 	owner: 'Dennis Buchwald',
 	ownerUrl: 'https://dennisbuchwald.de',
 	/** "Lass es einrichten" target (decision 21.10.2026). */
-	setupUrl: 'https://dennisbuchwald.de/kontakt',
+	/** dbw media setup offer; {check} = kind of problem (utm_content). Never personal data in the URL. */
+	setupUrl: 'https://dbw-media.de/projektanfrage/?utm_source=e-mail-check&utm_medium=ergebnis&utm_campaign=mail-setup&utm_content={check}',
 };
 
 export const PROVIDERS = [

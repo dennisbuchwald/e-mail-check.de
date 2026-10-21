@@ -18,8 +18,17 @@ export type MailrouteOptions = {
 	zoom?: number;
 	onSelect?: (station: number) => void;
 	onDone?: () => void;
+	/** Length of one replay in seconds (default 4.6). */
+	duration?: number;
 };
-export type Mailroute = { update(o: MailrouteOptions): void; replay(): void; focus(station: number | null): void; destroy(): void };
+export type Mailroute = {
+	update(o: MailrouteOptions): void;
+	replay(): void;
+	focus(station: number | null): void;
+	/** Marker positions as fractions of the scene box (0..1), for buttons over the stations. */
+	anchors(): [number, number][];
+	destroy(): void;
+};
 
 const LAP_S = 7;
 const REPLAY_S = 4.6;
@@ -60,7 +69,7 @@ export function mailroute(el: HTMLElement, options: MailrouteOptions = {}): Mail
 	};
 	const loop = HL.register(el, (dt: number) => {
 		if (replaying) {
-			t += dt / REPLAY_S;
+			t += dt / (opts.duration ?? REPLAY_S);
 			if (t >= 1) {
 				finish();
 				return false;
@@ -100,6 +109,7 @@ export function mailroute(el: HTMLElement, options: MailrouteOptions = {}): Mail
 		},
 		replay,
 		focus: (i) => engine.focus(i),
+		anchors: () => engine.anchors().map(([x, y]) => [x / 400, (y - 35) / 250] as [number, number]),
 		destroy() {
 			if (dead) return;
 			dead = true;

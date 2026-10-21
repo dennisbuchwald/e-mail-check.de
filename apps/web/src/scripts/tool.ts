@@ -392,8 +392,9 @@ export function initTool(): void {
 			await newTest();
 			window.scrollTo({ top: 0 });
 			$<HTMLButtonElement>('.copy-address').focus({ preventScroll: true });
-		} else if (action === 'replay') {
-			view.replayScene();
+		} else if (action === 'recheck') {
+			const card = btn.closest<HTMLElement>('[data-todo]');
+			if (card) void view.recheck(card);
 		} else if (action === 'source') {
 			const panel = $('#rv-source');
 			const open = panel.hidden;
@@ -429,16 +430,17 @@ export function initTool(): void {
 		}
 	});
 
-	// Stations are a tablist: arrow keys, Home and End move between them (WAI-ARIA tabs).
+	// Station buttons over the scene: Tab reaches them, arrow keys, Home and End move between them.
 	root.addEventListener('keydown', (ev) => {
-		const tab = (ev.target as HTMLElement).closest<HTMLElement>('.rv-st');
-		if (!tab) return;
-		const i = Number(tab.dataset.station);
-		const n = $$('.rv-st').length;
+		const hot = (ev.target as HTMLElement).closest<HTMLElement>('.rv-hot');
+		if (!hot) return;
+		const all = $$('.rv-hot');
+		const i = all.indexOf(hot);
+		const n = all.length;
 		const next = { ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1, Home: 0, End: n - 1 }[ev.key];
 		if (next === undefined) return;
 		ev.preventDefault();
-		selectStation((next + n) % n, true);
+		all[(next + n) % n].focus();
 	});
 
 	window.addEventListener('popstate', () => {

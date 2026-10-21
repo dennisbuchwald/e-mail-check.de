@@ -89,7 +89,8 @@ describe('API', () => {
 		expect(view.headers.get('content-type')).toContain('text/html');
 		const html = await view.text();
 		expect(html).toContain('Deine Mail kam sauber an.');
-		expect(html.match(/role="tab"/g)?.length).toBeGreaterThanOrEqual(6);
+		expect(html.match(/class="rv-hot( [^"]*)?"/g)?.length).toBe(6);
+		expect(html.match(/data-panel="/g)?.length).toBe(6);
 		expect(html).toContain(`/ergebnis/${res.id}`);
 		expect(html).not.toContain('Angebot Website');
 		expect(html).not.toContain('max@gut.example.test');

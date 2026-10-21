@@ -76,7 +76,19 @@ export interface MailResult {
 	mail: MailMeta;
 	/** Sender domain from the From header, needed for guides (e.g. DMARC host). */
 	fromDomain: string | null;
+	/** Who hosts the domain's DNS and mail (from NS and MX), for direct links to our guides. Older results lack it. */
+	providers?: Providers;
 	findings: Finding[];
+}
+
+/** A recognised provider; `slug` is set when we have guides for it under /anleitung/<slug>/. */
+export interface ProviderInfo {
+	slug: string | null;
+	name: string;
+}
+export interface Providers {
+	dns?: ProviderInfo;
+	mail?: ProviderInfo;
 }
 
 /** Steps of the live progress, in display order. */

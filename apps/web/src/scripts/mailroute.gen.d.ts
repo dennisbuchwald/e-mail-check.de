@@ -4,6 +4,7 @@ type Engine = {
 	jump(v: number): void;
 	configure(cfg: Record<string, unknown>): void;
 	focus(i: number | null): void;
+	anchors(): [number, number][];
 	destroy(): void;
 };
 type Read = { textContent: string };

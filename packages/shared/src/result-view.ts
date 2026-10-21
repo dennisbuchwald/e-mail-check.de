@@ -4,13 +4,14 @@
 import { ruleTitle } from './rspamd.ts';
 import { BANDS, STATUS_RANK, verdictFor } from './scoring.ts';
 import { sceneConfig, STATE_WORD } from './scene.ts';
-import { initialStation, stationsOf, type Station, type StationId } from './stations.ts';
+import { stationsOf, type Station, type StationId } from './stations.ts';
+import { proTipsOf, todosOf, type Todo, type TodoRecord } from './todo.ts';
 import type { MailResult, Status } from './types.ts';
 
 export interface ResultViewOptions {
 	/** Absolute share URL of this result. */
 	shareUrl: string;
-	/** "Lass es einrichten" target, shown when there is a problem. */
+	/** dbw media setup offer ("{check}" becomes utm_content). Only right after the person's own test, never on the shared link. */
 	setupUrl?: string;
 }
 
@@ -20,6 +21,8 @@ export function esc(s: unknown): string {
 
 /** A score or points with one decimal, German style (also used by the web app). */
 export const fmt1 = (n: number) => n.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+/** Time on the way: "< 1 s" below a second, nothing for implausible values (clock skew, wrong headers). */
+export const fmtDuration = (sec: unknown): string | null => (typeof sec !== 'number' || sec < 0 || sec > 3600 ? null : sec < 1 ? '< 1 s' : `${Math.round(sec)} s`);
 const fmt = (n: number) => n.toLocaleString('de-DE', { maximumFractionDigits: 1 });
 type Raw = Record<string, any>;
 const rawOf = (st: Station | undefined, id: string): Raw => (st?.findings.find((f) => f.id === id)?.raw ?? {}) as Raw;
@@ -157,7 +160,7 @@ function stationVisual(st: Station, r: MailResult): string {
 				.map((h, i) => `${i ? '<div class="ln"></div>' : ''}<div class="p"><i${i === hops.length - 1 ? ' class="us"' : ''}></i><span>${esc(i === hops.length - 1 ? 'wir' : shortHost(h.host))}</span><span class="mono">+${h.sec} s</span></div>`)
 				.join('');
 			const tls = ['1.0', '1.1', '1.2', '1.3'].map((v) => `<div class="${v === t.tls?.level ? 'me' : v < '1.2' ? 'old' : ''}">${v}</div>`).join('');
-			return `<span class="eyebrow">Zustellweg</span><div class="h rv-big">${hops.length} <small>Stationen${t.durationSec !== null && t.durationSec !== undefined ? ` · ${t.durationSec} s unterwegs` : ''}</small></div><div class="rv-chain">${line}</div><span class="eyebrow">Verschlüsselung</span><div class="rv-tls">${tls}</div>${rawBox([
+			return `<span class="eyebrow">Zustellweg</span><div class="h rv-big">${hops.length} <small>Stationen${fmtDuration(t.durationSec) ? ` · ${fmtDuration(t.durationSec)} unterwegs` : ''}</small></div><div class="rv-chain">${line}</div><span class="eyebrow">Verschlüsselung</span><div class="rv-tls">${tls}</div>${rawBox([
 				t.tls?.used ? `${t.tls.version ?? 'TLS'}` : 'Ohne TLS übertragen',
 				...hops.map((h) => `by ${h.host} +${h.sec}s`),
 			])}`;
@@ -185,94 +188,70 @@ function shortHost(h: string): string {
 	return parts.length > 2 ? parts.slice(-2).join('.') : h;
 }
 
-/** One concrete next step per station, in plain words (the explanation stays in the text above). */
-function actionText(st: Station): string {
-	const f = st.findings.filter((x) => x.status === 'warn' || x.status === 'bad').sort((a, b) => rank(b.status) - rank(a.status))[0];
-	const raw = (f?.raw ?? {}) as Raw;
-	// A DNS hiccup is not a configuration problem: no "set up a record" advice for it.
-	if (f?.deductions.some((d) => /temperror/i.test(d.reason))) return 'Das war eine kurze DNS-Störung, nicht deine Einstellung. Teste in ein paar Minuten noch einmal.';
-	switch (f?.id) {
-		case 'sender':
-			return 'Richte eine Adresse mit deiner eigenen Domain ein (z. B. bei deinem Webhoster) und verschick Kunden- und Firmenmails von dort.';
-		case 'spf':
-			return raw.result === 'none'
-				? 'Leg bei dem Anbieter, bei dem deine Domain liegt, einen SPF-Eintrag an. Darin steht, welche Server Mails für dich verschicken dürfen.'
-				: 'Ergänze deinen SPF-Eintrag um den Dienst, der diese Mail verschickt hat. Den passenden Baustein (include:…) nennt dir der Dienst in seiner Hilfe.';
-		case 'dkim':
-			return 'Schalte bei dem Dienst, der deine Mails verschickt, die Unterschrift (DKIM) ein und trag den angezeigten Schlüssel in deine DNS-Einstellungen ein.';
-		case 'dmarc':
-			if (raw.result === undefined) return 'Gib deiner Mail eine gültige Absenderadresse (From) mit deiner eigenen Domain, im Mail-Programm oder im Versanddienst.';
-			if (!raw.policy) return 'Leg eine DMARC-Regel an. Den Wert unten kannst du direkt kopieren.';
-			if (raw.policy === 'none') return 'Wenn alle deine Dienste sauber unterschreiben, stell die Regel von p=none auf p=quarantine um.';
-			return 'Sorg dafür, dass SPF oder DKIM zu deiner Absenderadresse passen. Meist fehlt die Unterschrift des Versanddienstes für deine eigene Domain.';
-		case 'reputation': {
-			const lists = ((raw.lists ?? []) as Raw[]).filter((l) => l.listed);
-			if (lists.length && lists.every((l) => l.pbl)) return 'Verschick über den Postausgangsserver (SMTP mit Anmeldung) deines Mail-Anbieters statt direkt von deinem Internetanschluss.';
-			if (lists.length) return `Bei einem Mail-Anbieter: Support kontaktieren. Bei eigenem Server: die Ursache abstellen und dich austragen lassen, z. B. bei ${lists.map((l) => l.list).join(', ')}.`;
-			return 'Bitte den Betreiber deines Mailservers, einen passenden Rückwärts-Eintrag (rDNS) für die IP zu setzen.';
-		}
-		case 'transport':
-			return 'Bitte den Betreiber deines Mailservers, TLS 1.2 oder 1.3 für ausgehende Mails einzuschalten.';
-		case 'content':
-			return 'Ändere die Punkte, die rechts mit Pluspunkten markiert sind, und teste danach noch einmal.';
-		default:
-			return f?.text ?? '';
-	}
+/** Short name of a passed check for the chips row. */
+const PASSED_LABEL: Record<string, string> = { spf: 'SPF', sender: 'Eigene Domain', dkim: 'DKIM', dmarc: 'DMARC', reputation: 'Server-Ruf', transport: 'TLS', content: 'Inhalt' };
+
+/** The value of a record with its placeholder marked. */
+function recordValue(rec: TodoRecord): string {
+	const v = esc(rec.value);
+	return rec.placeholder ? v.replace(esc(rec.placeholder), `<mark title="Durch deine Adresse ersetzen">${esc(rec.placeholder)}</mark>`) : v;
 }
 
-/** "Was tun" box for hints and problems. */
-function fixBox(st: Station, r: MailResult): string {
-	if (st.status !== 'warn' && st.status !== 'bad') return '';
-	const fs = st.findings.filter((f) => f.status === 'warn' || f.status === 'bad');
-	const withSuggestion = fs.find((f) => f.suggestion);
-	const guide = fs.find((f) => f.guide)?.guide;
-	const copy = withSuggestion?.suggestion
-		? `<p class="rv-host">Neuer ${esc(withSuggestion.suggestion.type)}-Eintrag, Name/Host <code>${esc(withSuggestion.suggestion.host)}</code></p><div class="copyrow"><span class="mono">${esc(withSuggestion.suggestion.value)}</span><button type="button" class="copybtn" data-copy="${esc(withSuggestion.suggestion.value)}">${COPY}<span>Kopieren</span></button></div>`
-		: '';
-	const link = guide ? `<a class="rv-guide" href="/anleitung" data-fix="${esc(guide)}">Anleitung für deinen Anbieter ›</a>` : '';
-	return `<div class="rv-fix is-${st.status}"><div class="rv-fix-head"><b>Was tun</b>${st.gain > 0 ? `<span class="tag is-ok">+${fmt1(st.gain)} Pkt. bei Behebung</span>` : ''}</div><p>${esc(actionText(st))}</p>${copy}${link}</div>`;
+function recordBox(rec: TodoRecord): string {
+	return `<div class="rv-record"><p class="rv-host">Typ <code>${esc(rec.type)}</code> · Name/Host <code>${esc(rec.host)}</code></p><div class="copyrow"><span class="mono">${recordValue(rec)}</span><button type="button" class="copybtn" data-copy="${esc(rec.value)}">${COPY}<span>Kopieren</span></button></div>${rec.placeholder ? `<p class="rv-small">Ersetze <mark>${esc(rec.placeholder)}</mark> durch eine Adresse, an die die Berichte gehen sollen.</p>` : ''}</div>`;
+}
+
+/** "Kein Bock auf DNS?" line: only for the person who just tested (never on the shared link). */
+function setupLine(opts: ResultViewOptions, check: string): string {
+	if (!opts.setupUrl) return '';
+	const href = opts.setupUrl.replace('{check}', encodeURIComponent(check));
+	return `<p class="rv-setup">Kein Bock auf DNS? <a href="${esc(href)}" target="_blank" rel="noopener">dbw media richtet das für dich ein ›</a><small>Angebot von dbw media, der Agentur hinter diesem Projekt</small></p>`;
+}
+
+function todoCard(t: Todo, i: number, opts: ResultViewOptions): string {
+	const links = [...(t.guide ? [t.guide] : []), ...(t.links ?? [])].map((l) => `<a class="rv-todo-link" href="${esc(l.href)}"${/^https?:/.test(l.href) ? ' target="_blank" rel="noopener"' : ''}>${esc(l.label)}</a>`).join('');
+	const check = t.recheck ? `<button type="button" class="btn btn-line rv-recheck" data-action="recheck">Eingetragen? Jetzt prüfen</button>` : '';
+	return `<li class="card rv-todo is-${t.status}" data-todo data-station="${t.station}" data-gain="${t.gain}"${t.recheck ? ` data-recheck="${esc(JSON.stringify(t.recheck))}"` : ''}>
+<div class="rv-todo-head"><span class="rv-todo-n" aria-hidden="true">${i + 1}</span><span class="rv-todo-mark" aria-hidden="true">${BADGE[t.status]}</span><h3 class="h">${esc(t.title)}</h3>${t.gain > 0 ? `<span class="tag is-ok">+${fmt1(t.gain)} Pkt.</span>` : ''}<span class="sr-only">${t.status === 'bad' ? 'Problem' : 'Hinweis'}</span></div>
+<p>${esc(t.why)}</p>${t.record ? recordBox(t.record) : ''}${links || check ? `<div class="rv-todo-actions">${check}${links}</div>` : ''}<p class="rv-todo-status" data-todo-status aria-live="polite"></p>${setupLine(opts, t.check)}</li>`;
 }
 
 export function renderResultView(r: MailResult, opts: ResultViewOptions): string {
 	const stations = stationsOf(r.findings);
-	const open = initialStation(stations);
 	const verdict = r.verdict ?? verdictFor(r.score, stations);
 	const warn = stations.filter((s) => s.status === 'warn').length;
 	const bad = stations.filter((s) => s.status === 'bad').length;
-	const firstBad = stations.findIndex((s) => s.status === 'bad');
-	const fill = firstBad < 0 ? 100 : (firstBad / (stations.length - 1)) * 100;
 	const band = BANDS[r.band];
 	const bandStatus = { risk: 'bad', endangered: 'warn', solid: 'skip', good: 'ok' }[r.band];
 	const at = new Date(r.mail?.receivedAt ?? r.createdAt);
 	const when = `${at.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Berlin' })} · ${at.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' })}`;
-	const duration = rawOf(stations.find((s) => s.id === 'transport'), 'transport').durationSec;
+	const duration = fmtDuration(rawOf(stations.find((s) => s.id === 'transport'), 'transport').durationSec);
 	// The replay of this one mail (apps/web/scenes/mailroute.js): states per station plus details for the objects.
 	const scene = sceneConfig(stations);
 	const sceneLabel = `Der Weg deiner Mail: ${stations.map((st, i) => `Station ${i + 1} ${st.title}: ${STATE_WORD[st.status]}`).join(', ')}.`;
+	const todos = todosOf(r);
 
-	const tabs = stations
-		.map(
-			(st, i) => `<button type="button" class="rv-st is-${st.status}" role="tab" id="rv-tab-${i}" aria-controls="rv-panel-${i}" aria-selected="${i === open}" tabindex="${i === open ? 0 : -1}" data-station="${i}" style="--i:${i}">
-<span class="rv-node">${svg(ICONS[st.id])}<span class="rv-badge" aria-hidden="true">${BADGE[st.status]}</span></span><span class="sr-only">Station ${i + 1} </span><span class="rv-t">${esc(st.title)}</span><span class="rv-v mono">${esc(stationValue(st))}</span><span class="sr-only">: ${STATE_WORD[st.status]}</span></button>`,
-		)
+	const todoHtml = todos.length
+		? `<section class="rv-todos" aria-labelledby="rv-todo-title"><h2 class="h rv-todo-title" id="rv-todo-title">Das solltest du tun <span>· ${todos.length} ${todos.length === 1 ? 'Schritt' : 'Schritte'}</span></h2><ol>${todos.map((t, i) => todoCard(t, i, opts)).join('')}</ol>
+<div class="rv-todo-end"><span>Alles erledigt?</span><a class="btn btn-ink" href="/" data-action="retest">Erneut testen</a></div>${setupLine(opts, todos[0].check)}</section>`
+		: `<section class="card rv-green"><span class="eyebrow">Alles im grünen Bereich</span><h2 class="h">Hier gibt es nichts zu tun.</h2><p>Deine Mail ist sauber eingerichtet. Wenn du noch weiter gehen willst, sind das die nächsten Stufen. Beides ist freiwillig.</p>${proTipsOf(r)
+				.map((t) => `<div class="rv-tip-pro"><b>${esc(t.title)}</b><p>${esc(t.text)}</p>${t.record ? recordBox(t.record) : ''}</div>`)
+				.join('')}</section>`;
+
+	const hots = stations
+		.map((st, i) => `<button type="button" class="rv-hot is-${st.status}" data-station="${i}" aria-expanded="false" aria-controls="rv-panel-${i}" aria-label="Station ${i + 1} ${esc(st.title)}: ${STATE_WORD[st.status]}"></button>`)
 		.join('');
 	const panels = stations
 		.map(
-			(st, i) => `<section class="rv-panel" role="tabpanel" id="rv-panel-${i}" aria-labelledby="rv-tab-${i}" data-panel="${i}"${i === open ? ' data-open' : ''}>
-<div class="rv-explain"><span class="eyebrow">Station ${i + 1} von 6 · ${STATUS_WORD[st.status]}</span><h2 class="h">${esc(stationHeading(st))}</h2><p>${stationText(st)}</p>${fixBox(st, r)}</div>
+			(st, i) => `<section class="rv-panel" id="rv-panel-${i}" data-panel="${i}" aria-label="Station ${i + 1} ${esc(st.title)}" hidden>
+<div class="rv-explain"><span class="eyebrow">Station ${i + 1} von 6 · ${esc(st.title)} · ${STATUS_WORD[st.status]}</span><h2 class="h">${esc(stationHeading(st))}</h2><p>${stationText(st)}</p></div>
 <div class="rv-vis">${stationVisual(st, r)}</div></section>`,
 		)
 		.join('');
-
-	const plan = stations
-		.filter((s) => s.status === 'bad' || s.status === 'warn')
-		.sort((a, b) => b.gain - a.gain);
-	const planHtml =
-		bad > 1
-			? `<section class="card rv-plan" aria-labelledby="rv-plan-title"><span class="eyebrow">Aktionsplan</span><h2 class="h" id="rv-plan-title">Der Reihe nach beheben. Größte Wirkung zuerst.</h2><ol>${plan
-					.map((s) => `<li><button type="button" class="rv-goto is-${s.status}" data-goto="${s.index}"><span class="dot"></span><span class="grow"><b>${esc(stationHeading(s))}</b> <small>Station ${s.index + 1} · ${esc(s.title)}</small></span>${s.gain > 0 ? `<span class="mono">+${fmt1(s.gain)} Pkt.</span>` : ''}</button></li>`)
-					.join('')}</ol></section>`
-			: '';
+	const passed = r.findings.filter((f) => f.status === 'ok');
+	const passedHtml = passed.length
+		? `<details class="card rv-passed"><summary><span class="eyebrow">Bestanden</span><span class="rv-passed-chips">${passed.map((f) => `<span class="tag with-dot is-ok">${esc(PASSED_LABEL[f.id] ?? f.tech)}</span>`).join('')}</span><span class="rv-passed-more">Details</span></summary><ul>${passed.map((f) => `<li><b>${esc(f.title)}</b> <span>${esc(f.text)}</span></li>`).join('')}</ul></details>`
+		: '';
 
 	const rawAll = JSON.stringify(
 		r.findings.map((f) => ({ id: f.id, status: f.status, abzug: f.deductions, raw: f.raw })),
@@ -280,7 +259,7 @@ export function renderResultView(r: MailResult, opts: ResultViewOptions): string
 		2,
 	);
 
-	return `<div class="rv" data-rv data-final="${r.score}" data-open="${open}" data-result-id="${esc(r.id)}">
+	return `<div class="rv" data-rv data-final="${r.score}" data-result-id="${esc(r.id)}">
 <div class="card rv-head">
 	<span class="rv-head-i"><span class="eyebrow">Absender</span><span class="mono" data-mh-from>${esc(r.mail?.from ?? r.fromDomain ?? 'unbekannt')}</span></span>
 	${r.mail?.subject ? `<span class="rv-head-i"><span class="eyebrow">Betreff</span><span>${esc(r.mail.subject)}</span></span>` : ''}
@@ -291,22 +270,23 @@ export function renderResultView(r: MailResult, opts: ResultViewOptions): string
 	<div><span class="eyebrow">Ergebnis</span><h1 class="h rv-verdict" data-headline tabindex="-1">${esc(verdict.line1)}<br><span>${esc(verdict.line2)}</span></h1></div>
 	<div class="rv-score-col">
 		<div class="rv-score"><span class="h rv-num"><span class="rv-sizer" aria-hidden="true">10,0</span><span data-score-value>${fmt1(r.score)}</span></span><span class="rv-of">/ 10</span></div>
+		<p class="rv-provisional" data-provisional hidden>vorläufig, ohne neue Testmail</p>
 		<div class="rv-chips"><span class="tag with-dot is-${bandStatus}">${esc(band.label)}</span>${warn ? `<span class="tag with-dot is-warn">${warn} ${warn === 1 ? 'Hinweis' : 'Hinweise'}</span>` : ''}${bad ? `<span class="tag with-dot is-bad">${bad} ${bad === 1 ? 'Problem' : 'Probleme'}</span>` : ''}</div>
+		<a class="rv-scale" href="/#zahl">Was bedeutet die Zahl? ›</a>
 	</div>
 </div>
 ${r.authWarning ? `<div class="card rv-exception" data-auth-warning><span class="tag is-warn">Ausnahme</span><span>SPF, DKIM oder DMARC schlägt fehl. Darum warnen wir, egal wie hoch die Zahl ist: Das allein kann Mails in den Spam schicken.</span></div>` : ''}
+${todoHtml}
 <div class="card rv-route">
-	<div class="rv-route-head"><span class="eyebrow">Der Weg deiner Mail · 6 Stationen</span><span class="rv-route-tools">${typeof duration === 'number' ? `<span class="mono rv-dur">Unterwegs ${duration} s</span>` : ''}<button type="button" class="rv-replay" data-action="replay" hidden>↻ Nochmal abspielen</button></span></div>
-	<div class="rv-scene" data-rv-scene data-states="${scene.states.join(',')}" data-details="${esc(JSON.stringify(scene.details))}" data-label="${esc(sceneLabel)}"></div>
-	<div class="rv-track${firstBad >= 0 ? ' has-break' : ''}" role="tablist" aria-label="Stationen deiner Mail" style="--fill:${fill}%"><span class="rv-line" aria-hidden="true"><span class="rv-fill"></span></span>${tabs}</div>
-	${firstBad >= 0 ? `<p class="rv-stuck" style="--at:${firstBad}">Hier bleibt deine Mail hängen.</p>` : ''}
+	<div class="rv-route-head"><span class="eyebrow">Der Weg deiner Mail · Station anklicken für Details</span>${duration ? `<span class="mono rv-dur">Unterwegs ${duration}</span>` : ''}</div>
+	<div class="rv-stage"><div class="rv-scene" data-rv-scene data-states="${scene.states.join(',')}" data-details="${esc(JSON.stringify(scene.details))}" data-label="${esc(sceneLabel)}"></div><div class="rv-hots" role="group" aria-label="Stationen deiner Mail">${hots}</div></div>
 	<div class="rv-panels">${panels}</div>
 </div>
-${planHtml}
+${passedHtml}
 <div class="rv-bottom">
 	<div class="card rv-card"><span class="eyebrow">Was das für dich bedeutet</span><p data-sub>${esc(r.sub)}</p></div>
 	<div class="card rv-card"><span class="eyebrow">Für deinen Kunden</span><div class="copyrow"><span class="mono" data-share-url>${esc(opts.shareUrl.replace(/^https?:\/\//, ''))}</span><button type="button" class="copybtn" data-action="share" data-copy="${esc(opts.shareUrl)}" aria-label="Ergebnis-Link kopieren">${COPY}<span>Kopieren</span></button></div><p class="rv-small">Gültig bis ${esc(new Date(r.expiresAt).toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin' }))} · nicht in Google auffindbar</p></div>
-	<div class="card rv-card rv-actions"><a class="btn btn-ink" href="/" data-action="retest">Erneut testen</a><button type="button" class="btn btn-line" data-action="source" aria-expanded="false" aria-controls="rv-source">Mail-Quelle &amp; Header</button>${bad && opts.setupUrl ? `<p class="rv-small rv-setup">Keine Zeit? <a href="${esc(opts.setupUrl)}" rel="noopener">Lass es einrichten</a></p>` : ''}</div>
+	<div class="card rv-card rv-actions">${todos.length ? '' : '<a class="btn btn-ink" href="/" data-action="retest">Erneut testen</a>'}<button type="button" class="btn btn-line" data-action="source" aria-expanded="false" aria-controls="rv-source">Mail-Quelle &amp; Header</button></div>
 </div>
 <section class="card rv-source" id="rv-source" hidden aria-label="Mail-Quelle und Header">
 	<div class="rv-source-tabs" role="tablist" aria-label="Ansicht">

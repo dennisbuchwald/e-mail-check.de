@@ -37,8 +37,9 @@ const { Content } = await render(page);
 	.narrow-wrap {
 		max-width: 828px;
 	}
-	/* The SEO content stays crawlable; while a result is shown it simply follows below. */
-	:global(body[data-tool-state='wait']) .home-below {
+	/* The SEO content stays crawlable for the start page. While waiting and for a result (also right after
+	   the test, without a reload) the page is the result alone, exactly like the shared link. */
+	:global(body:is([data-tool-state='wait'], [data-tool-state='result'], [data-tool-state='guide'])) .home-below {
 		display: none;
 	}
 </style>
