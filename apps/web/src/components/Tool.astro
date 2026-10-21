@@ -1341,8 +1341,16 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 		.mw-label {
 			width: 56px;
 		}
+		/* Always two lines (break after @), reserved before the address loads: CLS 0. */
 		.address {
 			font-size: 16px;
+			min-height: 2.6em;
+		}
+		.address :global(.nw) {
+			display: block;
+		}
+		.address :global(wbr) {
+			display: none;
 		}
 		.mw-copy {
 			flex-basis: 100%;

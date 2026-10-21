@@ -67,3 +67,22 @@ test('content pages have one h1, canonical and a link to the tool', async ({ pag
 		expect(await page.locator('main a[href="/"]').count()).toBeGreaterThan(0);
 	}
 });
+
+test('status bar: Ratgeber menu works with the keyboard and the counter never shows a made-up number', async ({ page }) => {
+	await page.goto('/spf-check');
+	const button = page.getByRole('button', { name: 'Ratgeber' });
+	await button.focus();
+	await page.keyboard.press('Enter');
+	await expect(button).toHaveAttribute('aria-expanded', 'true');
+	await expect(page.locator('#ratgeber-menu a').first()).toBeFocused();
+	await page.keyboard.press('ArrowDown');
+	await expect(page.locator('#ratgeber-menu a').nth(1)).toBeFocused();
+	await page.keyboard.press('Escape');
+	await expect(button).toHaveAttribute('aria-expanded', 'false');
+	await expect(button).toBeFocused();
+	const stats = await (await page.request.get('/api/stats')).json();
+	const text = (await page.locator('[data-tests-today]').textContent()) ?? '';
+	if (stats.testsToday === null) expect(text).toBe('');
+	else expect(text).toContain(stats.testsToday.toLocaleString('de-DE'));
+	await expect(page.locator('.statusbar a[aria-label="mail check, Startseite"]')).toHaveAttribute('href', '/');
+});
