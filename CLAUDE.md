@@ -149,6 +149,7 @@ Backlinks: zuerst eigene Seiten (dennisbuchwald.de, flinkform.de), dann Tool-Ver
 - **Statistik:** Umami (selbst gehostet, lokal aus).
 - **Score:** `docs/scoring.md`.
 - **Start lokal:** `docker compose up --build`.
+- **Sicherheit und Betrieb (Audit 21.10.2026):** Grenzen, Härtung, Deploy mit Tag und Rollback, Log-Filter und Backups stehen in `docs/DEPLOYMENT.md` (Abschnitt E). Betreff und Absender erreichen nur die testende Person live im Stream, nie `/api/results` oder den geteilten Link.
 
 **Infrastruktur:**
 - Entwicklung **lokal** (ca. 90 %): UI, API, DNS-Checks, rspamd in Docker mit Beispiel-Mails (.eml).

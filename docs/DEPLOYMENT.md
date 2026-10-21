@@ -86,11 +86,16 @@ Reihenfolge einhalten, jeder Punkt ist ein eigener Schritt.
 
 ## E. Betrieb
 
-- **Updates:** `scripts/deploy.sh` erneut. Basis-Images (rspamd, caddy, node, alpine) monatlich neu bauen: `docker compose … build --pull`.
-- **Monitoring:**
-  - n8n prüft alle 5 Min. `https://e-mail-check.de/api/health`.
-  - Einmal pro Stunde schickt n8n eine echte Mail an eine frische Testadresse und erwartet ein Ergebnis. Das zeigt sofort Probleme mit Port 25, MX oder TLS.
-- **Backups:** keine nötig. Es gibt nur Zusammenfassungen, die nach 7 Tagen ohnehin gelöscht werden. Der Code liegt im Repo.
-- **Logs:** Docker rotiert bei 3 × 10 MB je Dienst. Caddy schreibt kein Access-Log (nicht konfiguriert). So steht es auch in der Datenschutzerklärung.
+- **Deploy (seit Audit 21.10.2026):** `DEPLOY_HOST=167.235.225.13 scripts/deploy.sh` geht nur von einem sauberen, gepushten `main` aus. Das Skript exportiert genau den Commit (`git archive`, nie der Arbeitsstand), sichert vorher den Zähler, baut, prüft `/api/health` und setzt danach einen Tag `deploy-JJJJMMTT-HHMM`.
+- **Rollback:** `DEPLOY_HOST=167.235.225.13 DEPLOY_REF=deploy-<älterer Tag> scripts/deploy.sh`. Tags: `git tag -l 'deploy-*'`.
+- **Updates:** Basis-Images sind per Digest gepinnt (Dockerfiles, Compose). Dependabot schlägt wöchentlich Updates als Pull Request vor, CI (`.github/workflows/ci.yml`) prüft sie. Übernehmen, dann deployen.
+- **Monitoring (noch einzurichten, Dennis):**
+  - n8n prüft alle 5 Min. `https://e-mail-check.de/api/health` und meldet sich bei zwei Fehlschlägen in Folge.
+  - Einmal pro Stunde: `POST /api/tests`, eine Mail an die Adresse schicken (n8n-Node „Send Email“ über ein echtes Postfach), nach 60 s `GET /api/tests/<id>` muss `state: done` liefern. Das zeigt sofort Probleme mit Port 25, MX oder TLS.
+- **Backups:** Ergebnisse werden nach 7 Tagen gelöscht, eine Sicherung würde diese Zusage nur verlängern. Das einzig Dauerhafte ist der Gesamtzähler `mails_checked`: `deploy.sh` legt ihn vor jedem Deploy lokal unter `backups/counters-*.json` ab (gitignored). Wiederherstellen nach Verlust des Volumes: `MAILS_CHECKED_SEED=<Wert>` in die `.env` auf dem Server, deployen (der Zähler sinkt dadurch nie). Zählweise: pro ausgewerteter Testadresse, eine Mail an drei Testadressen zählt also dreimal.
+- **Logs:** Docker rotiert bei 3 × 10 MB je Dienst. Caddy schreibt kein Access-Log. Warnungen und Fehler von Caddy enthalten den Request, deshalb filtert die globale `log`-Option IP, Port und Kopfzeilen heraus (vorher standen IP und Browser-Kennung darin, live festgestellt im Audit). Die Engine loggt keine IP-Adressen.
+- **Grenzen:** Engine 1 GB RAM und 1,5 CPU, rspamd 768 MB, Caddy 384 MB, unbound 256 MB (`docker-compose.prod.yml`). SMTP: 3 Verbindungen pro IP, 5 Empfänger pro Mail, Trennung nach 10 unbekannten Empfängern, höchstens 4 Auswertungen gleichzeitig, Abbruch nach 90 s. SSE: 5 Streams pro IP.
+- **Statistik (Umami):** nur mit `COMPOSE_PROFILES=stats` in der `.env`. Dann müssen `UMAMI_APP_SECRET` (≥ 32 Zeichen) und `UMAMI_DB_PASSWORD` (≥ 16) gesetzt sein, `deploy.sh` bricht sonst ab. Öffentlich sind nur `/stats/script.js` und `/stats/api/send`, die Oberfläche ist von außen nicht erreichbar (Port nicht veröffentlicht). Login danach sofort vom Standard ändern.
+- **Server-Härtung, live noch offen (Dennis entscheidet):** `infra/server/cloud-init.yml` setzt für neue Server `PermitRootLogin no` und gibt `deploy` kein sudo mehr. Auf dem laufenden Server ist das noch der alte Stand. Umstellen per `sudo sed -i 's/^PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config.d/10-hardening.conf && sudo systemctl reload ssh`, vorher prüfen, dass der Login als `deploy` klappt. Sudo für `deploy` erst danach entziehen.
 - **Spamhaus:** kostenlos nur nicht-kommerziell. Sobald Werbung läuft: DQS-Zugang oder Spamhaus aus `apps/engine/src/checks/reputation.ts` entfernen.
 - **Ressourcen (lokal gemessen 21.10.2026):** rspamd ca. 180 MB, Engine ca. 60 MB, Caddy ca. 45 MB, unbound ca. 10 MB. Zusammen unter 300 MB, CAX11 (4 GB) hat viel Luft.

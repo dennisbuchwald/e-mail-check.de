@@ -20,6 +20,8 @@ Stand: 21.10.2026
 - **E2E**: 8 Playwright-Tests grün (Desktop + Mobil).
 - **Doku**: README, `docs/scoring.md`, `docs/DEPLOYMENT.md`, `docs/offene-punkte.md`, `research/abschluss-audit.md`.
 
+- **Audit 21.10.2026 umgesetzt (`Claude outputs/audit-2026-10-21.md`, nicht im Repo; nicht deployt):** alle drei Critical (ReDoS in der HTML-Auswertung, SMTP puffert über das Limit, Betreff/Absender über den Ergebnis-Link), alle elf Important (Verbindungen pro IP, Warteschlange, Timeout, Neustart-Bereinigung, DNS-Ausfall ≠ fehlender rDNS, echte TLS-Version, Neuladen während der Analyse, Umami-Absicherung, Tests für SSE und Fehlerpfad, Typecheck + CI, Deploy nur aus Git mit Tag und Rollback, Schriften 57 statt 115 KB) und die Vorschläge (Log-Filter, Container-Härtung, gepinnte Images, IP-Maskierung bei Heimanschlüssen im geteilten Link, Template-Schutz, SSE-Limit, „Was tun“ bei DNS-Störung, `tool.ts` aufgeteilt, Ergebnis-CSS nachgeladen, Brotli). Tests: Engine 124, E2E 12, Branches 65 → 75 %. Bewusst offen: Uptime-Check in n8n und Root-Login auf dem laufenden Server (beides Dennis, `docs/DEPLOYMENT.md` E), `astro check` (kann TypeScript 7 nicht, geprüft wird per `tsc`), eine Pufferkopie für rspamd (fetch-Typen verlangen sie).
+
 ## Live
 - https://e-mail-check.de ist öffentlich live (Hetzner CAX11), Mail-Empfang auf `*@test.e-mail-check.de` mit STARTTLS, PTR gesetzt. Details: `docs/DEPLOYMENT.md`.
 
