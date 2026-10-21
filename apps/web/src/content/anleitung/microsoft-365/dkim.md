@@ -11,7 +11,7 @@ kurzantwort: "Bei Microsoft 365 ist DKIM für deine eigene Domain nicht automati
 schritte:
   dkim:
     - text: "Im Defender-Portal **security.microsoft.com** öffnen: **E-Mail & Zusammenarbeit** > **Richtlinien & Regeln** > **Bedrohungsrichtlinien**."
-    - text: "**E-Mail-Authentifizierungseinstellungen** > Reiter **DKIM**, Domain anklicken, beide Werte unter **CNAMEs veröffentlichen** kopieren."
+    - text: "**E-Mail-Authentifizierungseinstellungen** > Reiter **DKIM**, Zeile der Domain anklicken, beide Werte unter **CNAMEs veröffentlichen** kopieren."
     - text: "Bei deinem Domain-Anbieter zwei CNAME-Einträge anlegen: Host **selector1._domainkey** und **selector2._domainkey**, Wert jeweils aus dem Portal kopieren."
     - text: "Einige Minuten warten, bis Microsoft die Einträge erkennt."
     - text: "Im Portal den Schalter **Nachrichten für diese Domäne mit DKIM-Signaturen signieren** aktivieren."
@@ -22,17 +22,20 @@ faq:
   - frage: "Wo finde ich die CNAME-Werte für DKIM?"
     antwort: "Im Defender-Portal unter E-Mail-Authentifizierungseinstellungen, Reiter DKIM. Klick auf deine Domain, die Werte stehen im Abschnitt CNAMEs veröffentlichen. Sie sind für jede Firma anders, deshalb kannst du sie nicht aus einem Beispiel abschreiben."
   - frage: "Warum kommt beim Einschalten eine Fehlermeldung?"
-    antwort: "Das ist normal, wenn die CNAME-Einträge noch fehlen. Microsoft zeigt dann einen Clientfehler und den Status CnameMissing. Leg die Einträge an, warte etwas und schalte DKIM danach erneut ein."
+    antwort: "Das ist normal, wenn die CNAME-Einträge noch fehlen. Microsoft zeigt dann ein Fenster mit einem Clientfehler, danach steht der Status auf CnameMissing. Leg die Einträge an, warte etwas und schalte DKIM danach erneut ein."
   - frage: "Wie lange dauert es, bis DKIM wirkt?"
     antwort: "Laut Microsoft dauert es einige Minuten oder auch länger, bis die neuen CNAME-Einträge erkannt werden. Erst dann lässt sich der Schalter aktivieren. Danach unterschreibt Microsoft 365 neue Mails mit deiner Domain."
 quelle:
   - titel: "Microsoft Learn: DKIM für E-Mail in Ihrer benutzerdefinierten Domäne verwenden"
     url: "https://learn.microsoft.com/de-de/defender-office-365/email-authentication-dkim-configure"
+  - titel: "Microsoft Learn (Englisch, Originalfassung): How to use DKIM for email in your custom domain"
+    url: "https://learn.microsoft.com/en-us/defender-office-365/email-authentication-dkim-configure"
+  - titel: "Host Europe FAQ: Wie kann ich DKIM für Microsoft 365 einrichten?"
+    url: "https://www.hosteurope.de/faq/microsoft365/allgemeines_m365/m365-dkim-einrichtung"
 stand: "2026-10-21"
 geprueft: false
 offenePunkte:
-  - "Microsoft Learn ist maschinell übersetzt und nennt die Seite teils „Email Authentifizierungseinstellungen“, teils „E-Mail-Authentifizierungseinstellungen“. Bezeichnung in der echten deutschen Oberfläche prüfen."
-  - "Wortlaut des Schalters in der deutschen Oberfläche prüfen (Quelle nennt deutsche und englische Fassung)."
+  - "Seitenname „E-Mail-Authentifizierungseinstellungen“ und Schalter „Nachrichten für diese Domäne mit DKIM-Signaturen signieren“ sind durch Microsoft Learn (de) und Host Europe belegt, aber nicht per eigenem Screenshot. Beim ersten echten Durchlauf gegenprüfen."
   - "Links auf Hoster-Anleitungen (/anleitung/ionos/dkim usw.) setzen voraus, dass diese Seiten zum Launch online sind."
 ---
 
@@ -46,9 +49,11 @@ Ohne Testmail geht es mit dem [DKIM-Check](/dkim-check). Er sucht automatisch na
 
 Voraussetzung: Deine Domain ist bereits in Microsoft 365 hinzugefügt und bestätigt. Du brauchst Admin-Rechte.
 
-**1. Defender-Portal öffnen.** Geh auf `security.microsoft.com` und klick nacheinander auf **E-Mail & Zusammenarbeit** > **Richtlinien & Regeln** > **Bedrohungsrichtlinien** > **E-Mail-Authentifizierungseinstellungen**. Wähl dort den Reiter **DKIM**.
+**1. Defender-Portal öffnen.** Geh auf `security.microsoft.com` und klick nacheinander auf **E-Mail & Zusammenarbeit** > **Richtlinien & Regeln** > **Bedrohungsrichtlinien** > **E-Mail-Authentifizierungseinstellungen**. Wähl dort den Reiter **DKIM**. Direkt dorthin kommst du über `security.microsoft.com/authentication?viewid=DKIM`.
 
-**2. Werte holen.** In der Liste steht deine Domain mit einem Schalter auf „Deaktiviert“. Versuchst du ihn einzuschalten, erscheint ein Fehlerfenster. Keine Sorge: Das ist der normale Weg. Bestätige mit **OK**. Der Status heißt jetzt **CnameMissing**.
+**2. Werte holen.** In der Liste steht deine Domain mit einem Schalter auf **Deaktiviert** und dem Status **NoDKIMKeys**. Versuchst du den Schalter einzuschalten, erscheint ein Fenster mit einem Clientfehler. Keine Sorge: Das ist der normale Weg. Bestätige mit **OK**. Der Status heißt jetzt **CnameMissing**.
+
+Alternativ öffnest du die Domain direkt. Steht dort „Keine DKIM-Schlüssel für diese Domäne gespeichert“, klickst du unten auf **DKIM-Schlüssel erstellen**.
 
 Klick auf die Zeile deiner Domain (nicht auf den Schalter). Im Seitenfenster findest du unter **CNAMEs veröffentlichen** zwei Werte. Kopier beide.
 
@@ -59,13 +64,13 @@ Klick auf die Zeile deiner Domain (nicht auf den Schalter). Im Seitenfenster fin
 | `selector1._domainkey` | CNAME | Wert 1 aus dem Portal |
 | `selector2._domainkey` | CNAME | Wert 2 aus dem Portal |
 
-Die Zielwerte sind für jede Firma verschieden. Sie enden auf `dkim.mail.microsoft`. Schreib sie nicht aus einem Beispiel ab, sondern kopier sie aus dem Portal.
+Die Zielwerte sind für jede Firma verschieden. Sie beginnen mit `selector1-` bzw. `selector2-` und enden bei neuen Einrichtungen auf `dkim.mail.microsoft`. Ältere Einrichtungen zeigen noch auf eine Adresse mit `onmicrosoft.com`, auch das ist in Ordnung. Schreib die Werte nicht aus einem Beispiel ab, sondern kopier sie aus dem Portal. Der Teil mit deinem Domainnamen weicht oft von der Schreibweise ab, die du erwarten würdest.
 
 Für die Klicks bei deinem Hoster hilft dir die passende Anleitung: [DKIM bei IONOS](/anleitung/ionos/dkim), [DKIM bei STRATO](/anleitung/strato/dkim), [DKIM bei ALL-INKL](/anleitung/all-inkl/dkim) oder [Hetzner](/anleitung/hetzner/spf-dkim-dmarc).
 
 **4. Warten.** Laut Microsoft dauert es einige Minuten oder länger, bis die Einträge erkannt werden.
 
-**5. Signatur einschalten.** Zurück im Seitenfenster deiner Domain aktivierst du den Schalter **Nachrichten für diese Domäne mit DKIM-Signaturen signieren**. Klappt es, steht als Status **Signieren von DKIM-Signaturen für diese Domäne**.
+**5. Signatur einschalten.** Zurück im Seitenfenster deiner Domain aktivierst du den Schalter **Nachrichten für diese Domäne mit DKIM-Signaturen signieren**. Es erscheint ein Hinweis, dass die Änderung einige Minuten dauern kann, den du mit **OK** schließt. Klappt es, steht als Status **Signieren von DKIM-Signaturen für diese Domäne**.
 
 ## Sonderfall: Domain beim Hoster, weitere Versender
 

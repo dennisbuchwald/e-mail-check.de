@@ -141,7 +141,7 @@ Bleib nicht für immer bei `p=none`. Die Regel erfüllt zwar die Mindestanforder
 Gesetzlich nicht. Aber die beiden größten Postfach-Anbieter verlangen es von Vielversendern:
 
 - **Gmail** verlangt seit dem **1. Februar 2024** von allen Absendern, die mehr als 5.000 Mails pro Tag an Gmail-Adressen schicken, SPF, DKIM und einen DMARC-Eintrag. Die Regel darf auf `p=none` stehen. Die „Von“-Adresse muss zur SPF- oder DKIM-Domain passen.
-- **Microsoft** stellt seit **Mai 2025** dieselben Grundanforderungen an Vielversender, die mehr als 5.000 Mails pro Tag an Outlook.com, Hotmail und Live schicken: SPF, DKIM und DMARC mit mindestens `p=none`, passend zu SPF oder DKIM.
+- **Microsoft** stellt seit dem **5. Mai 2025** dieselben Grundanforderungen an Vielversender, die mehr als 5.000 Mails pro Tag an Outlook.com, Hotmail und Live schicken: SPF und DKIM müssen bestehen, dazu DMARC mit mindestens `p=none`, passend zu SPF oder DKIM (am besten zu beidem). Mails, die das nicht erfüllen, lehnt Outlook laut Microsoft mit dem Fehler `550 5.7.515` ab.
 
 Für kleinere Absender gibt es keine feste Pflicht. Spamfilter werten die Signale aber bei allen Absendern aus. Eine Domain ohne DMARC wirkt weniger vertrauenswürdig. In unserem Mail-Test kostet ein fehlender DMARC-Eintrag deshalb 1,5 Punkte.
 

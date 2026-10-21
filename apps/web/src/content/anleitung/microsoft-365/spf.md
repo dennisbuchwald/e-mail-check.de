@@ -23,18 +23,25 @@ faq:
   - frage: "Wie lautet der SPF-Eintrag für Office 365?"
     antwort: "Für Microsoft 365 und Office 365 lautet er v=spf1 include:spf.protection.outlook.com -all. Nutzt du weitere Versender, kommen deren include- oder ip4-Angaben vor das -all. Es darf trotzdem nur ein einziger SPF-Eintrag pro Domain existieren."
   - frage: "Soll ich -all oder ~all verwenden?"
-    antwort: "Microsoft empfiehlt -all für Domains in Microsoft 365, weil du zusätzlich DKIM und DMARC einrichten solltest. Wichtig ist nur, dass vorher alle echten Versender im Eintrag stehen. Sonst werden deren Mails abgelehnt."
+    antwort: "Microsoft empfiehlt -all, wenn nur Microsoft 365 verschickt und DKIM und DMARC laufen. Verschicken weitere Dienste mit deiner Domain, etwa Google, dein Hoster oder ein Newsletter-Tool, nimm zuerst ~all. So empfehlen es Google und der Branchenverband M3AAWG. Auf -all wechselst du erst, wenn die DMARC-Berichte zeigen, dass alle Versender bestehen."
   - frage: "Kann ich SPF im Microsoft 365 Admin Center einstellen?"
-    antwort: "Nein. Microsoft 365 hat kein Portal für SPF-Einträge deiner eigenen Domain. Du legst den TXT-Eintrag bei dem Anbieter an, der deine DNS-Einstellungen verwaltet. Nur für die Adresse mit onmicrosoft.com kümmert sich Microsoft selbst darum."
+    antwort: "Nein. Microsoft 365 hat kein Portal für SPF-Einträge deiner eigenen Domain. Du legst den TXT-Eintrag bei dem Anbieter an, der deine DNS-Einstellungen verwaltet. Ausnahme: Liegt die Domain bei einem Anbieter mit Domain Connect wie IONOS, kann Microsoft die Einträge beim Hinzufügen der Domain automatisch setzen lassen."
   - frage: "Was passiert, wenn ich zwei SPF-Einträge habe?"
     antwort: "Dann kann der Empfänger nicht entscheiden, welcher gilt, und SPF schlägt komplett fehl (permerror). Führe alle Angaben in einem Eintrag zusammen und lösche den zweiten."
 quelle:
   - titel: "Microsoft Learn: Einrichten von SPF für Ihre Microsoft 365-Domäne"
     url: "https://learn.microsoft.com/de-de/defender-office-365/email-authentication-spf-configure"
+  - titel: "Microsoft Learn: Hinzufügen einer Domäne zu Microsoft 365 (Domain Connect)"
+    url: "https://learn.microsoft.com/de-de/microsoft-365/admin/setup/add-domain"
+  - titel: "Google Workspace Admin-Hilfe: SPF einrichten (Empfehlung ~all)"
+    url: "https://knowledge.workspace.google.com/admin/security/set-up-spf?hl=de"
+  - titel: "M3AAWG: Email Authentication Recommended Best Practices (2020)"
+    url: "https://www.m3aawg.org/sites/default/files/doc_files/m3aawg-email-authentication-recommended-best-practices-09-2020.pdf"
 stand: "2026-10-21"
 geprueft: false
 offenePunkte:
-  - "Prüfen, ob Microsoft 365 beim Hinzufügen der Domain bei manchen Hostern den SPF-Eintrag automatisch setzt (in der Quelle nicht beschrieben)."
+  - "Microsoft nennt IONOS, Cloudflare, Plesk u. a. als Domain-Connect-Anbieter, die DNS-Einträge automatisch setzen. Nicht dokumentiert ist, ob dabei ein vorhandener SPF-Eintrag ergänzt oder ein zweiter angelegt wird. Mit einer Test-Domain prüfen."
+  - "SPF-Linie (~all bei mehreren Versendern, -all nur bei reinem Microsoft 365 mit DKIM und DMARC) mit Dennis bestätigen."
   - "Links auf Hoster-Anleitungen (/anleitung/ionos/spf usw.) setzen voraus, dass diese Seiten zum Launch online sind."
 ---
 
@@ -47,6 +54,8 @@ Noch genauer ist der [Mail-Test](/): Schick aus Outlook eine Mail an deine Testa
 ## Schritt für Schritt
 
 **1. Den richtigen Ort finden.** Microsoft 365 verschickt deine Mails, aber deine Domain liegt meistens woanders: bei IONOS, STRATO, ALL-INKL oder einem anderen Hoster. Genau dort, in den DNS-Einstellungen deiner Domain, setzt du den SPF-Eintrag. Laut Microsoft gibt es in Microsoft 365 selbst keine Einstellung dafür.
+
+Eine Ausnahme gibt es beim Hinzufügen der Domain: Unterstützt dein Anbieter Domain Connect, kann Microsoft 365 die nötigen DNS-Einträge dort automatisch anlegen lassen. Microsoft nennt dafür unter anderem IONOS, Cloudflare und Plesk. Prüf danach trotzdem, ob es nur einen SPF-Eintrag gibt.
 
 Je nach Hoster findest du die passenden Klicks hier:
 
@@ -74,10 +83,12 @@ Fast jede Firma verschickt nicht nur über Outlook. Die Website schickt Formular
 So sieht ein Eintrag mit eigenem Server und Microsoft 365 aus (Beispiel-IP):
 
 ```
-v=spf1 ip4:203.0.113.10 include:spf.protection.outlook.com -all
+v=spf1 ip4:203.0.113.10 include:spf.protection.outlook.com ~all
 ```
 
-Die Angabe für dein Newsletter-Tool findest du in dessen Hilfe, meist als `include:…`. Sie kommt vor das `-all`.
+Die Angabe für dein Newsletter-Tool findest du in dessen Hilfe, meist als `include:…`. Sie kommt vor das `~all`.
+
+Warum hier `~all` statt `-all`? Microsoft empfiehlt `-all`, Google dagegen `~all`, ebenso der Branchenverband M3AAWG. Unsere Linie: Verschickt nur Microsoft 365 und laufen DKIM und DMARC, nimm `-all`. Sobald weitere Dienste dazukommen, startest du mit `~all`. Fehlt ein Versender, landet dessen Mail dann eher im Spam statt abgelehnt zu werden. Die eigentliche Schutzwirkung übernimmt DMARC. Auf `-all` wechselst du, wenn die DMARC-Berichte zeigen, dass alle Versender bestehen.
 
 Ein typischer Fall aus der Praxis: Die Website liegt bei IONOS, die Postfächer bei Microsoft 365, das Kontaktformular verschickt über den IONOS-Server. Dann müssen sowohl Microsoft als auch IONOS im Eintrag stehen. Fehlt IONOS, landen die Formular-Anfragen im Spam, obwohl Outlook-Mails sauber ankommen. Welche Angabe dein Hoster braucht, steht in dessen Anleitung, etwa [SPF bei IONOS](/anleitung/ionos/spf).
 
