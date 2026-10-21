@@ -33,7 +33,7 @@ const setOpen = (open: boolean, focusButton = false) => {
 	if (open) panel.querySelector<HTMLElement>('a')?.focus();
 	else if (focusButton) button.focus();
 };
-button.addEventListener('click', () => setOpen(panel.hidden));
+button.addEventListener('click', () => setOpen(panel.hidden === true));
 menu.addEventListener('keydown', (e) => {
 	if (e.key === 'Escape' && !panel.hidden) setOpen(false, true);
 	if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !panel.hidden) {

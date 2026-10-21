@@ -9,6 +9,8 @@ import type { MailResult, Status } from './types.ts';
 export interface ResultViewOptions {
 	/** Absolute share URL of this result. */
 	shareUrl: string;
+	/** "Lass es einrichten" target, shown when there is a problem. */
+	setupUrl?: string;
 }
 
 export function esc(s: unknown): string {
@@ -82,8 +84,11 @@ function stationHeading(st: Station): string {
 const rank = (s: Status) => ({ bad: 3, warn: 2, ok: 1, skip: 0 })[s];
 
 function stationText(st: Station): string {
-	const fs = st.findings.filter((f) => f.status !== 'skip');
-	if (!fs.length) return st.findings[0]?.text ?? 'Diese Station konnten wir bei diesem Test nicht prüfen.';
+	const checked = st.findings.filter((f) => f.status !== 'skip');
+	if (!checked.length) return st.findings[0]?.text ?? 'Diese Station konnten wir bei diesem Test nicht prüfen.';
+	// With a hint or problem, explain only that; the passed part of the station would just add noise.
+	const open = checked.filter((f) => f.status !== 'ok');
+	const fs = open.length ? open : checked;
 	return fs
 		.sort((a, b) => rank(b.status) - rank(a.status))
 		.map((f) => esc(f.text))
@@ -177,6 +182,38 @@ function shortHost(h: string): string {
 	return parts.length > 2 ? parts.slice(-2).join('.') : h;
 }
 
+/** One concrete next step per station, in plain words (the explanation stays in the text above). */
+function actionText(st: Station): string {
+	const f = st.findings.filter((x) => x.status === 'warn' || x.status === 'bad').sort((a, b) => rank(b.status) - rank(a.status))[0];
+	const raw = (f?.raw ?? {}) as Raw;
+	switch (f?.id) {
+		case 'sender':
+			return 'Richte eine Adresse mit deiner eigenen Domain ein (z. B. bei deinem Webhoster) und verschick Kunden- und Firmenmails von dort.';
+		case 'spf':
+			return raw.result === 'none'
+				? 'Leg bei dem Anbieter, bei dem deine Domain liegt, einen SPF-Eintrag an. Darin steht, welche Server Mails für dich verschicken dürfen.'
+				: 'Ergänze deinen SPF-Eintrag um den Dienst, der diese Mail verschickt hat. Den passenden Baustein (include:…) nennt dir der Dienst in seiner Hilfe.';
+		case 'dkim':
+			return 'Schalte bei dem Dienst, der deine Mails verschickt, die Unterschrift (DKIM) ein und trag den angezeigten Schlüssel in deine DNS-Einstellungen ein.';
+		case 'dmarc':
+			if (!raw.policy) return 'Leg eine DMARC-Regel an. Den Wert unten kannst du direkt kopieren.';
+			if (raw.policy === 'none') return 'Wenn alle deine Dienste sauber unterschreiben, stell die Regel von p=none auf p=quarantine um.';
+			return 'Sorg dafür, dass SPF oder DKIM zu deiner Absenderadresse passen. Meist fehlt die Unterschrift des Versanddienstes für deine eigene Domain.';
+		case 'reputation': {
+			const lists = ((raw.lists ?? []) as Raw[]).filter((l) => l.listed);
+			if (lists.length && lists.every((l) => l.pbl)) return 'Verschick über den Postausgangsserver (SMTP mit Anmeldung) deines Mail-Anbieters statt direkt von deinem Internetanschluss.';
+			if (lists.length) return `Bei einem Mail-Anbieter: Support kontaktieren. Bei eigenem Server: die Ursache abstellen und dich austragen lassen, z. B. bei ${lists.map((l) => l.list).join(', ')}.`;
+			return 'Bitte den Betreiber deines Mailservers, einen passenden Rückwärts-Eintrag (rDNS) für die IP zu setzen.';
+		}
+		case 'transport':
+			return 'Bitte den Betreiber deines Mailservers, TLS 1.2 oder 1.3 für ausgehende Mails einzuschalten.';
+		case 'content':
+			return 'Ändere die Punkte, die rechts mit Pluspunkten markiert sind, und teste danach noch einmal.';
+		default:
+			return f?.text ?? '';
+	}
+}
+
 /** "Was tun" box for hints and problems. */
 function fixBox(st: Station, r: MailResult): string {
 	if (st.status !== 'warn' && st.status !== 'bad') return '';
@@ -187,7 +224,7 @@ function fixBox(st: Station, r: MailResult): string {
 		? `<p class="rv-host">Neuer ${esc(withSuggestion.suggestion.type)}-Eintrag, Name/Host <code>${esc(withSuggestion.suggestion.host)}</code></p><div class="copyrow"><span class="mono">${esc(withSuggestion.suggestion.value)}</span><button type="button" class="copybtn" data-copy="${esc(withSuggestion.suggestion.value)}">${COPY}<span>Kopieren</span></button></div>`
 		: '';
 	const link = guide ? `<a class="rv-guide" href="/anleitung" data-fix="${guide}">Anleitung für deinen Anbieter ›</a>` : '';
-	return `<div class="rv-fix is-${st.status}"><div class="rv-fix-head"><b>Was tun</b>${st.gain > 0 ? `<span class="tag is-ok">+${fmt1(st.gain)} Pkt. bei Behebung</span>` : ''}</div><p>${fs.map((f) => esc(f.text)).join(' ')}</p>${copy}${link}</div>`;
+	return `<div class="rv-fix is-${st.status}"><div class="rv-fix-head"><b>Was tun</b>${st.gain > 0 ? `<span class="tag is-ok">+${fmt1(st.gain)} Pkt. bei Behebung</span>` : ''}</div><p>${esc(actionText(st))}</p>${copy}${link}</div>`;
 }
 
 export function renderResultView(r: MailResult, opts: ResultViewOptions): string {
@@ -234,7 +271,7 @@ export function renderResultView(r: MailResult, opts: ResultViewOptions): string
 		2,
 	);
 
-	return `<div class="rv" data-rv data-score="${r.score}" data-open="${open}" data-result-id="${esc(r.id)}">
+	return `<div class="rv" data-rv data-final="${r.score}" data-open="${open}" data-result-id="${esc(r.id)}">
 <div class="card rv-head">
 	<span class="rv-head-i"><span class="eyebrow">Absender</span><span class="mono" data-mh-from>${esc(r.mail?.from ?? r.fromDomain ?? 'unbekannt')}</span></span>
 	${r.mail?.subject ? `<span class="rv-head-i"><span class="eyebrow">Betreff</span><span>${esc(r.mail.subject)}</span></span>` : ''}
@@ -252,14 +289,14 @@ ${r.authWarning ? `<div class="card rv-exception" data-auth-warning><span class=
 <div class="card rv-route">
 	<div class="rv-route-head"><span class="eyebrow">Der Weg deiner Mail · 6 Stationen</span>${typeof duration === 'number' ? `<span class="mono rv-dur">Unterwegs ${duration} s</span>` : ''}</div>
 	<div class="rv-track${firstBad >= 0 ? ' has-break' : ''}" role="tablist" aria-label="Stationen deiner Mail" style="--fill:${fill}%"><span class="rv-line" aria-hidden="true"><span class="rv-fill"></span></span>${tabs}</div>
-	${firstBad >= 0 ? `<p class="rv-stuck" style="--at:${fill}%">Hier bleibt deine Mail hängen.</p>` : ''}
+	${firstBad >= 0 ? `<p class="rv-stuck" style="--at:${firstBad}">Hier bleibt deine Mail hängen.</p>` : ''}
 	<div class="rv-panels">${panels}</div>
 </div>
 ${planHtml}
 <div class="rv-bottom">
 	<div class="card rv-card"><span class="eyebrow">Was das für dich bedeutet</span><p data-sub>${esc(r.sub)}</p></div>
 	<div class="card rv-card"><span class="eyebrow">Für deinen Kunden</span><div class="copyrow"><span class="mono" data-share-url>${esc(opts.shareUrl.replace(/^https?:\/\//, ''))}</span><button type="button" class="copybtn" data-action="share" data-copy="${esc(opts.shareUrl)}" aria-label="Ergebnis-Link kopieren">${COPY}<span>Kopieren</span></button></div><p class="rv-small">Gültig bis ${esc(new Date(r.expiresAt).toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin' }))} · nicht in Google auffindbar</p></div>
-	<div class="card rv-card rv-actions"><a class="btn btn-ink" href="/" data-action="retest">Erneut testen</a><button type="button" class="btn btn-line" data-action="source" aria-expanded="false" aria-controls="rv-source">Mail-Quelle &amp; Header</button></div>
+	<div class="card rv-card rv-actions"><a class="btn btn-ink" href="/" data-action="retest">Erneut testen</a><button type="button" class="btn btn-line" data-action="source" aria-expanded="false" aria-controls="rv-source">Mail-Quelle &amp; Header</button>${bad && opts.setupUrl ? `<p class="rv-small rv-setup">Keine Zeit? <a href="${esc(opts.setupUrl)}" rel="noopener">Lass es einrichten</a></p>` : ''}</div>
 </div>
 <section class="card rv-source" id="rv-source" hidden aria-label="Mail-Quelle und Header">
 	<div class="rv-source-tabs" role="tablist" aria-label="Ansicht">
