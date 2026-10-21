@@ -160,7 +160,7 @@ Backlinks: zuerst eigene Seiten (dennisbuchwald.de, flinkform.de), dann Tool-Ver
 
 ## 9. Design
 
-> **Stand 21.10.2026:** Redesign umgesetzt (weg von dicken Outlines, hin zu cleanem SaaS-Stil). Entwürfe: `REDESIGN-PROMPT.md` und `design/redesign/`. Tokens im Code: `apps/web/src/styles/global.css`. Vorher/Nachher-Screenshots: `docs/redesign/`.
+> **Stand 21.10.2026:** Redesign umgesetzt (weg von dicken Outlines, hin zu cleanem SaaS-Stil). Entwürfe: `design/redesign/`. Aktueller Auftrag: `REDESIGN-V2-PROMPT.md` (V1 archiviert in `docs/prompts-archiv/`). Tokens im Code: `apps/web/src/styles/global.css`. Vorher/Nachher-Screenshots: `docs/redesign/`.
 
 **Grundhaltung:** UX radikal einfach (Vorbild Trade Republic: Komplexes simpel darstellen), Look wie ein hochwertiges SaaS-Produkt mit eigener Identität.
 
@@ -231,3 +231,15 @@ PDF-Kundenbericht · Konto mit Verlauf · Test-Pakete/Agentur-Tarif · DMARC-Mon
 - Vorbild Funktion: https://mail-tester.com
 - Vorbild SEO-Aufbau: https://flinkform.de
 - Design-Grundlage: dbw-media-Styleguide (`05_Second-Brain/design-system.md`)
+
+
+## Update 21.10.2026: Hero final, Wortmarke, Animationen
+Hierfür gilt `REDESIGN-V2-PROMPT.md`. Kurz zusammengefasst:
+- Statusleiste: Wortmarke, Pille „SYSTEM BEREIT · SERVER DE · X TESTS HEUTE“ (nur mit echter Zahl), „Ratgeber ▾“.
+- Hintergrund: Punktraster statt Aura.
+- Hero: Mail-Fenster mit An/Betreff, Vertrauenszeile mit grünen Häkchen.
+- Wortmarke „mail / check“: `brand/wortmarke.svg`.
+- Laden: grüner Prüf-Punkt springt ins Logo.
+- Scrollen: In der Statusleiste (sticky) verschwindet „mail / check“, und die Bildmarke wächst in der Fläche der Wortmarke zum reinen Logo. Der Hero bleibt unverändert.
+- Prototyp: `design/redesign/hero-animation-prototyp.html`.
+- Animationen: keine Bibliothek (kein GSAP o. Ä.). CSS-Keyframes und Scroll-driven Animations mit kleinem JS-Fallback, nur transform/opacity, prefers-reduced-motion beachten.
