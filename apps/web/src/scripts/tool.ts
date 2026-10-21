@@ -594,7 +594,7 @@ export function initTool(): void {
 		const action = btn.dataset.action;
 		if (action === 'copy' && test) {
 			await copyText(test.address);
-			flash(btn, 'Kopiert');
+			flash(btn, 'Kopiert ✓');
 		} else if (action === 'sent') {
 			goWait();
 		} else if (action === 'reset' || action === 'retest') {
@@ -634,10 +634,6 @@ export function initTool(): void {
 			body.hidden = !open;
 		}
 	});
-	// Header button lives outside the tool section.
-	document.querySelectorAll<HTMLElement>('.site-header [data-action="reset"]').forEach((b) =>
-		b.addEventListener('click', () => root.querySelector<HTMLElement>('[data-new-test]')?.click()),
-	);
 
 	window.addEventListener('popstate', () => {
 		if (location.pathname === '/' && mode === 'test') newTest();

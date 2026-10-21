@@ -3,7 +3,7 @@ titel: "Kommt deine Mail an?"
 seoTitel: "Mail Tester: Landen deine E-Mails im Spam? Kostenlos testen"
 beschreibung: "Schick eine Testmail und bekomm in 30 Sekunden deinen Score von 0 bis 10. Mit Klartext-Anleitung für deinen Anbieter. Server in Deutschland, kein Konto."
 keyword: "mail tester"
-intro: "Schick eine normale Mail an deine Testadresse. In 30 Sekunden weißt du, ob alles passt, und wie du auf 10 von 10 kommst."
+intro: "Schick eine normale Mail an diese Adresse. In 30 Sekunden weißt du, ob alles passt, und wie du auf 10 von 10 kommst."
 faq:
   - frage: "Wie funktioniert ein Mail-Tester?"
     antwort: "Du schickst eine echte Mail an eine Testadresse. Der Mail-Tester empfängt sie wie ein normales Postfach und prüft, ob deine Domain den Absender bestätigt, ob die Mail digital unterschrieben ist, ob es eine Schutzregel gibt, ob dein Server auf einer Sperrliste steht und wie der Inhalt auf Spamfilter wirkt. Daraus entsteht ein Score von 0 bis 10."
