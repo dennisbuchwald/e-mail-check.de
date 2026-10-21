@@ -90,13 +90,19 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 			<div class="wait-text">
 				<h2 class="wait-title" data-wait-title tabindex="-1">Wir warten auf deine Mail</h2>
 				<p class="wait-sub"><span class="typing" aria-hidden="true"><span></span><span></span><span></span></span><span data-wait-sub>Die Seite aktualisiert sich von selbst</span></p>
-				<p class="wait-clock mono" data-wait-clock></p>
-				<div class="wait-mail" data-wait-mail hidden>
-					<span class="wm-row"><span class="eyebrow">Von</span><span class="mono" data-wm-from></span></span>
-					<span class="wm-row" data-wm-subject-row><span class="eyebrow">Betreff</span><span data-wm-subject></span></span>
+				<div class="wait-slot">
+					<div class="wait-before" data-wait-before>
+						<p class="wait-clock mono" data-wait-clock></p>
+						<p class="wait-addr">An <span class="mono" data-address-small></span> <button type="button" class="linkbtn" data-action="copy">kopieren</button><br /><a class="linkbtn nowrap" data-mailto href="#">Mail-Programm öffnen</a></p>
+						<p class="wait-hint" data-wait-hint aria-live="off"></p>
+					</div>
+					<div class="wait-after" data-wait-after>
+						<div class="wait-mail" data-wait-mail>
+							<span class="wm-row"><span class="eyebrow">Von</span><span class="mono" data-wm-from></span></span>
+							<span class="wm-row" data-wm-subject-row><span class="eyebrow">Betreff</span><span data-wm-subject></span></span>
+						</div>
+					</div>
 				</div>
-				<p class="wait-addr" data-wait-addr>An <span class="mono" data-address-small></span> <button type="button" class="linkbtn" data-action="copy">kopieren</button><br /><a class="linkbtn nowrap" data-mailto href="#">Mail-Programm öffnen</a></p>
-				<p class="wait-hint" data-wait-hint aria-live="off"></p>
 			</div>
 		</div>
 		<div class="card steps-card">
@@ -482,6 +488,11 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 	}
 	.wait-title {
 		font-size: clamp(26px, 3vw, 36px);
+		line-height: 1.12;
+		min-height: 2.24em;
+		display: flex;
+		align-items: flex-end;
+		justify-content: center;
 		outline: none;
 	}
 	.wait-sub {
@@ -534,12 +545,12 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 		inset: 26px;
 		border-radius: 999px;
 		border: 1.5px dashed rgba(17, 17, 19, 0.35);
-		animation: spinr 7s linear infinite;
+		animation: spinr 14s linear infinite;
 	}
 	.sat {
 		position: absolute;
 		inset: 0;
-		animation: spin 2.4s linear infinite;
+		animation: spin 3s linear infinite;
 	}
 	.sat span {
 		position: absolute;
@@ -572,16 +583,22 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 		border-radius: 999px;
 		background: var(--ok);
 		box-shadow: 0 0 14px 3px rgba(2, 202, 80, 0.35);
-		animation: scan 0.9s ease-in-out infinite alternate;
+		top: 22%;
+		will-change: transform;
+		animation: scan 1.1s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
 	}
 	.pop {
-		animation: pop 0.55s var(--bounce) both;
+		animation: pop 0.55s var(--ease-soft) both;
 	}
-	.orb.waiting .core {
-		animation: breathe 1.6s ease-in-out infinite;
+	.ring2,
+	.sat,
+	.radar,
+	.lamp,
+	.fly {
+		will-change: transform;
 	}
 	.orb.done {
-		animation: bump 0.6s var(--bounce);
+		animation: bump 0.7s var(--ease-soft);
 	}
 	.burst {
 		position: absolute;
@@ -667,12 +684,12 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 	.step[data-state='active'] .st {
 		border: 2px solid rgba(17, 17, 19, 0.12);
 		border-top-color: var(--ink);
-		animation: spin 0.8s linear infinite;
+		animation: spin 1.1s linear infinite;
 	}
 	.step[data-state='done'] .st {
 		border: none;
 		background: var(--ink);
-		animation: pop 0.45s var(--bounce) both;
+		animation: pop 0.4s var(--ease-soft) both;
 	}
 	.step[data-state='done'] .st svg {
 		opacity: 1;
@@ -681,7 +698,15 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 		display: flex;
 		flex-direction: column;
 		gap: 2px;
+		flex: 1;
 		min-width: 0;
+	}
+	/* Long live details are cut with an ellipsis instead of widening the card. */
+	.steps-card,
+	.steps,
+	.step {
+		min-width: 0;
+		max-width: 100%;
 	}
 	.step-label {
 		font-size: 15px;
@@ -694,13 +719,16 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 		color: var(--ink);
 	}
 	.step-detail {
-		display: none;
+		display: block;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 		font-size: 12px;
 		line-height: 18px;
 		color: var(--muted);
 	}
-	.step[data-state='active'] .step-detail {
-		display: block;
+	.step[data-state='pending'] .step-detail {
+		color: var(--faint);
 	}
 
 	@keyframes spin {
@@ -737,10 +765,10 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 	}
 	@keyframes scan {
 		from {
-			top: 22%;
+			transform: translateY(0);
 		}
 		to {
-			top: 76%;
+			transform: translateY(var(--scan-travel, 54px));
 		}
 	}
 	@keyframes burst {
@@ -758,7 +786,7 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 			transform: scale(1);
 		}
 		40% {
-			transform: scale(1.07);
+			transform: scale(1.035);
 		}
 		100% {
 			transform: scale(1);
@@ -825,7 +853,7 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 		opacity: 1;
 	}
 	.lamp[data-status] {
-		animation: lamp-on 0.6s var(--bounce) both;
+		animation: lamp-on 0.7s var(--ease-soft) both;
 	}
 	.lamp[data-status='ok'] {
 		background: var(--ok);
@@ -861,10 +889,46 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 		filter: drop-shadow(0 6px 10px rgba(17, 17, 19, 0.18));
 	}
 	.orb.arrived .core {
-		animation: land 0.7s var(--bounce);
+		animation: land 0.8s var(--ease-soft);
 	}
 	.nowrap {
 		white-space: nowrap;
+	}
+	.wait-slot {
+		display: grid;
+		width: 100%;
+		justify-items: center;
+	}
+	.wait-before,
+	.wait-after {
+		grid-area: 1 / 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 10px;
+		max-width: 100%;
+		transition:
+			opacity 0.45s ease,
+			transform 0.6s var(--ease-soft),
+			visibility 0s linear 0s;
+	}
+	.wait-slot[data-phase='after'] .wait-before,
+	.wait-slot:not([data-phase='after']) .wait-after {
+		opacity: 0;
+		visibility: hidden;
+		transition:
+			opacity 0.3s ease,
+			transform 0.3s ease,
+			visibility 0s linear 0.3s;
+	}
+	.wait-slot[data-phase='after'] .wait-before {
+		transform: translateY(-8px);
+	}
+	.wait-slot:not([data-phase='after']) .wait-after {
+		transform: translateY(10px);
+	}
+	.wait-mail.is-empty {
+		display: none;
 	}
 	.wait-clock {
 		margin: 0;
@@ -883,9 +947,7 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 		box-shadow: var(--shadow);
 		text-align: left;
 		max-width: 100%;
-		animation: pop 0.5s var(--bounce) both;
 	}
-	.wait-mail[hidden],
 	.wm-row[hidden] {
 		display: none;
 	}
@@ -912,7 +974,7 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 		font-size: 13px;
 		line-height: 19px;
 		color: var(--muted);
-		min-height: 38px;
+		min-height: 57px;
 		transition: opacity 0.4s ease;
 	}
 	.wait-hint.fade {
@@ -948,16 +1010,13 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 	.step[data-status='bad'] .ic-alert {
 		display: block;
 	}
-	.step[data-state='done'] .step-detail:not(:empty) {
-		display: block;
-		animation: pop 0.35s ease both;
-	}
+
 	@keyframes lamp-on {
 		0% {
 			transform: rotate(var(--a)) translateY(-100px) rotate(calc(-1 * var(--a))) scale(0.4);
 		}
-		60% {
-			transform: rotate(var(--a)) translateY(-100px) rotate(calc(-1 * var(--a))) scale(1.5);
+		55% {
+			transform: rotate(var(--a)) translateY(-100px) rotate(calc(-1 * var(--a))) scale(1.25);
 		}
 		100% {
 			transform: rotate(var(--a)) translateY(-100px) rotate(calc(-1 * var(--a))) scale(1);
@@ -989,11 +1048,11 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 			transform: scale(1);
 			box-shadow: var(--shadow);
 		}
-		30% {
-			transform: scale(0.9, 0.84);
+		35% {
+			transform: scale(0.96, 0.93);
 		}
-		60% {
-			transform: scale(1.06);
+		65% {
+			transform: scale(1.02);
 			box-shadow: 0 0 0 10px rgba(2, 202, 80, 0.18), var(--shadow);
 		}
 		100% {
@@ -1334,6 +1393,9 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 		.core {
 			inset: 42px;
 		}
+		.scan {
+			--scan-travel: 45px;
+		}
 		.lamp,
 		.lamp[data-status] {
 			transform: rotate(var(--a)) translateY(-84px) rotate(calc(-1 * var(--a)));
@@ -1428,13 +1490,13 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 		display: flex;
 		flex-direction: column;
 		gap: 10px;
-		animation: card-in 0.6s var(--bounce) both;
+		animation: card-in 0.7s var(--ease-soft) both;
 		animation-delay: var(--d, 0s);
 	}
 	@keyframes card-in {
 		from {
 			opacity: 0;
-			transform: translateY(14px) scale(0.98);
+			transform: translateY(10px);
 		}
 		to {
 			opacity: 1;
