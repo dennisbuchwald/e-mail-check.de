@@ -59,6 +59,7 @@ const ogImage = new URL('/og.png', SITE.url).href;
 	<body data-tool-state={tool ? 'start' : undefined} class:list={[{ soft }]}>
 		<a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
 		<header class="statusbar" data-statusbar>
+			<div class="wrap sb-inner">
 			<a href="/" class="sb-home" aria-label="mail check, Startseite"><Wordmark id="sb" class="sb-wm" /></a>
 			<span class="sb-pill mono"
 				><span class="live" aria-hidden="true"></span><span class="sb-long">System bereit · Server DE<span data-tests-today></span></span><span class="sb-short">Bereit</span></span
@@ -85,6 +86,7 @@ const ogImage = new URL('/og.png', SITE.url).href;
 						))
 					}
 				</nav>
+			</div>
 			</div>
 		</header>
 
@@ -128,12 +130,14 @@ const ogImage = new URL('/og.png', SITE.url).href;
 
 <style>
 	/* ---- status bar (design/redesign/hero-animation-prototyp.html) ---- */
+	/* Background spans the full width, the content sits on the page's content width. */
 	.statusbar {
 		position: sticky;
 		top: 0;
 		z-index: 20;
+	}
+	.sb-inner {
 		height: 76px;
-		padding: 0 40px;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
@@ -425,9 +429,6 @@ const ogImage = new URL('/og.png', SITE.url).href;
 		width: auto;
 	}
 	@media (max-width: 820px) {
-		.statusbar {
-			padding: 0 var(--gutter);
-		}
 		.sb-home :global(.wordmark) {
 			height: 40px;
 		}
