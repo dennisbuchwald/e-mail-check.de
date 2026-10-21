@@ -5,7 +5,7 @@ Stand: 21.10.2026
 ## Steht (lokal komplett lauffähig: `docker compose up -d --build`)
 - **Engine** (`apps/engine`): SMTP-Empfang nur im RAM, SPF/DKIM/DMARC mit Alignment, rDNS, 5 Sperrlisten über eigenen Resolver, Inhalt per rspamd, Score + Klartext, API mit SSE, DNS-Schnellcheck mit Versender-Erkennung, Rate-Limit, Löschung nach 7 Tagen. 35 Tests grün.
 - **Website** (`apps/web`): Startseite mit Tool und Prüf-Animation an echten Events, Ergebnis mit Prüfpunkten, Anleitung im Ergebnis (Anbieter wird erkannt), Teilen-Link `/ergebnis/<id>` (noindex), DNS-Checks `/spf-check`, `/dkim-check`, `/dmarc-check`.
-- **Inhalte**: 26 Seiten laut `research/seo-strategie.md` (4 Tools, 5 Wissen, 16 Anleitungen, Übersicht), alle mit Quelle, Stand, `geprueft: false`.
+- **Inhalte**: 27 Seiten (4 Tools, 5 Wissen, 16 Anleitungen, Übersicht, Vergleich `/mail-tester-alternative`), alle mit Quelle und Stand, Anleitungen mit `geprueft: false`.
 - **Technik-SEO**: Titles/Descriptions, Canonicals, strukturierte Daten, Sitemap, robots.txt, OG-Bild, 404. Lighthouse mobil ≥ 95 in allen Kategorien.
 - **Recht**: Impressum (Platzhalter), Datenschutz + AVV als Entwurf (noindex).
 - **Statistik**: Umami als Compose-Profil vorbereitet, lokal aus.
