@@ -8,6 +8,8 @@ export interface SmtpEnvelope {
 	helo: string;
 	/** MAIL FROM; empty string for a null reverse-path (bounces). */
 	sender: string;
+	/** TLS of the SMTP session, if STARTTLS was used. */
+	tls?: { version: string | null } | null;
 }
 
 export interface AuthFindings {

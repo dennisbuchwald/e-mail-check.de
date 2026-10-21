@@ -30,6 +30,31 @@ export interface Finding {
 	suggestion?: { type: 'TXT'; host: string; value: string };
 	/** Raw technical details for experts (no message content). */
 	raw: Record<string, unknown>;
+	/** Points gained if this finding is fixed (sum of its deductions). Set by enrichFindings. */
+	gain?: number;
+	/** How much fixing it matters. Set by enrichFindings. */
+	impact?: Impact;
+}
+
+export type Impact = 'hoch' | 'mittel' | 'gering';
+
+/** Score ranges shown on the site: 0–4.9, 5–6.9, 7–8.9, 9–10. */
+export type Band = 'risk' | 'endangered' | 'solid' | 'good';
+
+export interface SubScores {
+	/** 0–100 per area; null if nothing in that area could be checked. */
+	auth: number | null;
+	reputation: number | null;
+	content: number | null;
+}
+
+/** Envelope facts of the received mail, shown in the result header. */
+export interface MailMeta {
+	from: string | null;
+	/** Subject, cut to 80 characters. */
+	subject: string | null;
+	receivedAt: string;
+	tls: { used: boolean; version: string | null };
 }
 
 export interface MailResult {
@@ -38,8 +63,15 @@ export interface MailResult {
 	expiresAt: string;
 	score: number;
 	light: 'ok' | 'warn' | 'bad';
+	band: Band;
+	/** True if SPF, DKIM or DMARC failed: we always warn, whatever the score. */
+	authWarning: boolean;
+	subScores: SubScores;
+	/** Verdict headline in plain language. */
 	headline: string;
+	/** "Was das für dich bedeutet". */
 	sub: string;
+	mail: MailMeta;
 	/** Sender domain from the From header, needed for guides (e.g. DMARC host). */
 	fromDomain: string | null;
 	findings: Finding[];
