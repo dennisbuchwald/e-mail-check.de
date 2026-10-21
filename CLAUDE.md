@@ -136,18 +136,19 @@ Backlinks: zuerst eigene Seiten (dennisbuchwald.de, flinkform.de), dann Tool-Ver
 
 ---
 
-## 8. Technik (Empfehlung – vom Agenten neu bewerten und mit Dennis diskutieren)
+## 8. Technik (entschieden 21.10.2026, Details in `docs/PLAN.md`)
 
-**Empfehlung:**
-- **Website:** Astro (statisch, sehr schnell, Ratgeber als Markdown/MDX). Alternative: Next.js, falls viel Interaktivität/Server-Rendering nötig wird.
-- **API:** kleiner Node.js-Dienst (z. B. Fastify oder Hono) oder Python (FastAPI). Aufgaben: Testadresse erzeugen, Ergebnis-Status liefern (Polling oder Server-Sent Events), DNS-Schnellcheck.
-- **Mail-Empfang:** Postfix (Catch-all auf eigener Test-Subdomain, z. B. `@test.e-mail-check.de`) → Übergabe an die Auswertung.
-- **Analyse:** rspamd (oder SpamAssassin) für Inhalts-Score und DKIM-Prüfung, eigene DNS-Abfragen für SPF/DMARC/rDNS, Abfrage gängiger Sperrlisten.
-- **Datenbank:** SQLite oder PostgreSQL, nur Ergebnis-Zusammenfassungen.
-- **Statistik:** Umami oder Plausible, selbst gehostet.
-- **Deployment:** Docker Compose.
-
-**Offene Fragen zum Bewerten:** Astro vs. Next.js für Tool + Inhalte, Node vs. Python für die Analyse, Polling vs. SSE, wie Score-Gewichtung transparent bleibt.
+- **Website:** Astro, statisch, Tool als kleine Insel in Vanilla TS. Ratgeber als Content-Collections mit Frontmatter `quelle`, `stand`, `geprueft`.
+- **Engine:** Node 24 + TypeScript (läuft ohne Build per Type-Stripping), Hono für die API, `mailauth` für SPF/DKIM/DMARC inkl. Alignment.
+- **Mail-Empfang:** eigener SMTP-Empfang in Node (`smtp-server`) statt Postfix, weil Postfix Mails auf die Platte schreibt. Mail liegt nur im RAM, unbekannte Adressen werden beim `RCPT TO` abgelehnt.
+- **Testadressen:** `<8 Zeichen>@test.e-mail-check.de`, 60 Minuten gültig, nur eine Mail pro Adresse.
+- **Inhalt:** rspamd per HTTP, nur Inhalts-Regeln (Auth, IP-Listen, Bayes, Fuzzy aus).
+- **DNS:** eigener Resolver unbound im Stack, weil Spamhaus öffentliche Resolver blockt.
+- **Fortschritt:** Server-Sent Events, Polling als Fallback.
+- **Datenbank:** SQLite (`node:sqlite`), nur Testadressen und Ergebnis-Zusammenfassungen, Löschjob stündlich.
+- **Statistik:** Umami (selbst gehostet, lokal aus).
+- **Score:** `docs/scoring.md`.
+- **Start lokal:** `docker compose up --build`.
 
 **Infrastruktur:**
 - Entwicklung **lokal** (ca. 90 %): UI, API, DNS-Checks, rspamd in Docker mit Beispiel-Mails (.eml).
@@ -196,6 +197,12 @@ Backlinks: zuerst eigene Seiten (dennisbuchwald.de, flinkform.de), dann Tool-Ver
 3. Prüfen: Scan-Strahl fährt über die Mail, Fortschrittsring füllt sich pro Check, Checkliste hakt nacheinander ab, pulsierende Punkte („Check 3 von 6“).
 4. Fertig: Ring federt, Funken-Burst, dann Ergebnis.
 Die Animation folgt dem echten Fortschritt der Analyse (Events aus der API), nicht nur einem Timer.
+
+**Checkliste im Prüf-Modus (Vorbild: Aufgabenliste von Claude):** Jeder Prüfschritt hat drei Zustände:
+- **offen:** gestrichelter Kreis (`2px dashed #B8B8BE`), Text gedeckt
+- **läuft:** drehender Ring, Text fett, darunter eine Live-Zeile in IBM Plex Mono, was gerade passiert (z. B. „Suche den SPF-Eintrag deiner Domain …“, „Frage 12 Sperrlisten ab …“). Möglichst echte Details aus der API (Domain, Anzahl Listen).
+- **erledigt:** gefüllter Tinte-Kreis mit weißem Haken, ploppt mit Bounce auf
+Dazu oben eine Statuszeile mit pulsierenden Punkten („Check 3 von 6“).
 
 ---
 

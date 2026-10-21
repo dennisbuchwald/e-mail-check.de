@@ -2,8 +2,8 @@
 import type { Finding } from './types.ts';
 
 export const POINTS = {
-	spf: { none: 1.5, fail: 2, softfail: 1, neutral: 0.5, permerror: 1.5, temperror: 0.5, notAligned: 0 },
-	dkim: { none: 2, fail: 2.5, notAligned: 0.5, weakKey: 0.5 },
+	spf: { none: 1.5, fail: 2, softfail: 1, neutral: 0.5, permerror: 1.5, temperror: 0.5 },
+	dkim: { none: 2, fail: 2.5, notAligned: 0.5, temperror: 0.5 },
 	dmarc: { none: 1.5, fail: 2.5, monitorOnly: 0.2, temperror: 0.5 },
 	reputation: { majorList: 3, otherList: 1, listCap: 4, noPtr: 1, ptrMismatch: 0.5 },
 	content: { cap: 4 },
