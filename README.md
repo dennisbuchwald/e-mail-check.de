@@ -106,4 +106,10 @@ Eingebunden wird es erst, wenn beim Web-Build `PUBLIC_UMAMI_ID` gesetzt ist.
 - Gearbeitet wird direkt auf `main`, Commits nur unter Dennis' Namen.
 - Remote: `origin` → https://github.com/dennisbuchwald/e-mail-check.de.git
 - Der Server zieht **nicht** von GitHub: `scripts/deploy.sh` überträgt den lokalen Stand per rsync. So braucht der Server keinen GitHub-Zugang, und nur geprüfte Stände (Tests laufen vorher) gehen live.
-- Nie ins Repo: `.env`, Zugangsdaten, echte Mails. `apps/engine/test/fixtures/test-dkim-private.pem` ist ein reiner Testschlüssel für die Beispiel-Domains `*.example.test` und wird nirgends produktiv genutzt.
+- Nie ins Repo: `.env`, Zugangsdaten, echte Mails, Recherche-Daten und Rechtsnotizen (das Repo ist öffentlich). `apps/engine/test/fixtures/test-dkim-private.pem` ist ein reiner Testschlüssel für die Beispiel-Domains `*.example.test` und wird nirgends produktiv genutzt.
+
+## Lizenz
+
+- **Code:** [AGPL-3.0](LICENSE). Du darfst ihn nutzen, ändern und weitergeben. Wer eine veränderte Fassung als öffentlichen Dienst betreibt, muss deren Quellcode offenlegen.
+- **Texte, Logo, Design und der Name e-mail-check.de:** alle Rechte vorbehalten, siehe [LICENSE-CONTENT.md](LICENSE-CONTENT.md).
+- **Nicht im Repo:** Recherche-Daten (Keywords, SERP- und Wettbewerbsanalyse), Rechtsnotizen und interne Prüflisten. Sie liegen nur lokal (`research/`, `docs/recht-notizen.md`, `docs/offene-punkte.md`, siehe `.gitignore`).
