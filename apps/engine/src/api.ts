@@ -2,7 +2,7 @@
 import { Hono, type Context } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import { getConnInfo } from '@hono/node-server/conninfo';
-import type { ProgressEvent } from '@emc/shared';
+import { renderResultMissing, renderResultView, type ProgressEvent } from '@emc/shared';
 import { dnsCheck, normalizeDomain } from './dnscheck.ts';
 import type { DnsResolver } from './dns.ts';
 import { RateLimiter } from './ratelimit.ts';
@@ -13,6 +13,8 @@ export interface ApiOptions {
 	resolver: DnsResolver;
 	rateLimit: { tests: number; dns: number };
 	trustProxy: boolean;
+	/** Public site URL for share links in the server-rendered result (no trailing slash). */
+	siteUrl?: string;
 	/** Override for tests (no socket there). */
 	clientIp?: (c: Context) => string;
 }
@@ -125,6 +127,18 @@ export function createApi(opts: ApiOptions): Hono {
 		const id = c.req.param('id');
 		const result = ID.test(id) ? opts.service.result(id) : undefined;
 		return result ? c.json(result) : c.json({ error: 'not_found', message: 'Dieses Ergebnis gibt es nicht mehr. Ergebnisse werden nach 7 Tagen gelöscht.' }, 404);
+	});
+
+	// Server-rendered result for /ergebnis/<id>: Caddy includes this fragment into the static shell (templates),
+	// so the result is visible without JavaScript. Always 200: the fragment itself says "not found".
+	app.get('/results/:id/view', (c) => {
+		const id = c.req.param('id');
+		const result = ID.test(id) ? opts.service.result(id) : undefined;
+		c.header('Content-Type', 'text/html; charset=utf-8');
+		if (!result) return c.body(renderResultMissing());
+		// The subject only exists in RAM for the tester's first hour; the server-rendered page never shows it.
+		const shared = { ...result, mail: { ...result.mail, from: null, subject: null } };
+		return c.body(renderResultView(shared, { shareUrl: `${opts.siteUrl ?? 'https://e-mail-check.de'}/ergebnis/${id}` }));
 	});
 
 	app.get('/dns', async (c) => {

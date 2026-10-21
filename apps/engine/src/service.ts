@@ -1,7 +1,7 @@
 // Test lifecycle: create address → receive mail → analyze → result. Progress is pushed to subscribers.
 import { EventEmitter } from 'node:events';
 import { randomInt } from 'node:crypto';
-import type { MailResult, ProgressEvent, TestStatus } from '@emc/shared';
+import type { MailPreview, MailResult, ProgressEvent, TestStatus } from '@emc/shared';
 import { analyzeMessage, newId, type AnalyzeDeps } from './analyze.ts';
 import type { SmtpEnvelope } from './checks/auth.ts';
 import type { Store } from './store.ts';
@@ -79,20 +79,23 @@ export class TestService {
 		if (!t || t.state !== 'waiting') return undefined;
 		this.opts.store.setTestState(t.id, 'analyzing');
 		const steps: Extract<ProgressEvent, { type: 'step' }>[] = [];
+		let preview: MailPreview | undefined;
 		this.progress.set(t.id, steps);
 		try {
 			const result = await analyzeMessage(message, env, rcpt, this.opts.deps, (step, info) => {
 				const e = { type: 'step' as const, step, ...info };
 				steps.push(e);
 				this.emit(t.id, e);
-			});
+			}, (p) => (preview = p));
 			// Subject and From address are mail content: they stay in RAM for one hour for
 			// the person who just ran the test and never reach the database.
 			this.opts.store.saveResult({ ...result, mail: { ...result.mail, from: null, subject: null } });
 			this.headers.set(result.id, { from: result.mail.from, subject: result.mail.subject });
 			setTimeout(() => this.headers.delete(result.id), HEADER_TTL_MS).unref();
 			this.opts.store.setTestState(t.id, 'done', result.id);
-			this.emit(t.id, { type: 'done', resultId: result.id });
+			// The preview goes out once, live; a later subscriber or the share link never gets it.
+			this.emit(t.id, { type: 'done', resultId: result.id, ...(preview ? { preview } : {}) });
+			preview = undefined;
 			return result;
 		} catch (err) {
 			this.opts.store.setTestState(t.id, 'error');
