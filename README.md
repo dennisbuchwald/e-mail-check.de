@@ -2,6 +2,8 @@
 
 Deutscher, DSGVO-konformer Mail-Tester für Nicht-Techniker: Testmail schicken, in rund 30 Sekunden Score 0 bis 10, Ampel und Klartext-Anleitung für den eigenen Anbieter. Dazu DNS-Schnellchecks für SPF, DKIM und DMARC und 21 Ratgeber-Seiten.
 
+Repository: https://github.com/dennisbuchwald/e-mail-check.de (Branch `main`)
+
 Projektgrundlage: [CLAUDE.md](CLAUDE.md) · Plan: [docs/PLAN.md](docs/PLAN.md) · Stand: [docs/STATUS.md](docs/STATUS.md)
 
 ## Lokal starten
@@ -98,3 +100,10 @@ docker compose --profile stats up -d
 ```
 
 Eingebunden wird es erst, wenn beim Web-Build `PUBLIC_UMAMI_ID` gesetzt ist.
+
+## Git & Deployment
+
+- Gearbeitet wird direkt auf `main`, Commits nur unter Dennis' Namen.
+- Remote: `origin` → https://github.com/dennisbuchwald/e-mail-check.de.git
+- Der Server zieht **nicht** von GitHub: `scripts/deploy.sh` überträgt den lokalen Stand per rsync. So braucht der Server keinen GitHub-Zugang, und nur geprüfte Stände (Tests laufen vorher) gehen live.
+- Nie ins Repo: `.env`, Zugangsdaten, echte Mails. `apps/engine/test/fixtures/test-dkim-private.pem` ist ein reiner Testschlüssel für die Beispiel-Domains `*.example.test` und wird nirgends produktiv genutzt.
