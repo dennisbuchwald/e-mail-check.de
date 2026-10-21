@@ -1,7 +1,7 @@
 ---
 // "Was wir prüfen" + "Was bedeutet die Zahl?" (design/redesign/start-final-sektionen). Plain, crawlable HTML.
 // The blocklist names must match what we really query: engine checks/reputation.ts + infra/rspamd/local.d/rbl.conf.
-import { BANDS } from '@emc/shared';
+import { BANDS, IP_BLOCKLIST_NAMES, URI_BLOCKLIST_NAMES } from '@emc/shared';
 
 const authRows = [
 	{ tech: 'SPF', label: 'Absender bestätigt', value: 'include:_spf-eu.ionos.com', status: 'ok', badge: 'ok' },
@@ -10,7 +10,7 @@ const authRows = [
 	{ tech: 'rDNS', label: 'Server-Name', value: 'mout.kundenserver.de', status: 'ok', badge: 'ok' },
 	{ tech: 'TLS', label: 'Verschlüsselt', value: 'TLS 1.3', status: 'ok', badge: 'ok' },
 ];
-const lists = ['Spamhaus ZEN', 'SpamCop', 'Barracuda', 'PSBL', 'Spamhaus DBL', 'SURBL', 'URIBL'];
+const lists = [...IP_BLOCKLIST_NAMES, ...URI_BLOCKLIST_NAMES];
 const bands = [
 	{ key: 'risk', color: 'var(--bad)', flex: 50 },
 	{ key: 'endangered', color: 'var(--warn)', flex: 20 },

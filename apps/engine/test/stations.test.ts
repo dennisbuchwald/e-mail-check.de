@@ -95,3 +95,12 @@ describe('server reputation extras', () => {
 		expect(odd.deductions).toEqual([]);
 	});
 });
+
+describe('list names shown on the site', () => {
+	it('match the lists the engine really queries', async () => {
+		const { BLOCKLISTS } = await import('../src/checks/reputation.ts');
+		const { IP_BLOCKLIST_NAMES, ALLOW_LIST_NAMES } = await import('@emc/shared');
+		expect(BLOCKLISTS.filter((l) => !l.allow).map((l) => l.name)).toEqual([...IP_BLOCKLIST_NAMES]);
+		expect(BLOCKLISTS.filter((l) => l.allow).map((l) => l.name)).toEqual([...ALLOW_LIST_NAMES]);
+	});
+});
