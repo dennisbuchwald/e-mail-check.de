@@ -6,7 +6,6 @@ dist/
 /data/
 apps/engine/data/
 .DS_Store
-
 test-results/
 playwright-report/
 research/lighthouse/*.json
@@ -18,12 +17,12 @@ docs/recht-notizen.md
 docs/offene-punkte.md
 .deploy-zugang.txt
 
-# hairline skill (installed locally via npx skills, not part of the repo)
-
-skills-lock.json
 
 # counter backups pulled by scripts/deploy.sh
 /backups/
 
 # test coverage reports
 coverage/
+
+# screenshots from scripts/*screenshots*.mjs
+/screenshots/

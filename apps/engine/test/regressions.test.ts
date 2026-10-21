@@ -1,4 +1,4 @@
-// Regression tests for the audit of 21.10.2026 (audit-2026-10-21.md, not in the repo).
+// Regression tests for limits and edge cases: linear HTML scanning, SMTP limits, timeouts, DNS outages.
 import { createConnection } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { ProgressEvent } from '@emc/shared';

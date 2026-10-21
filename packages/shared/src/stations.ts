@@ -1,4 +1,4 @@
-// Result page V2: the delivery route with six stations (design/redesign/ergebnis-v2-prototyp.html, tab D).
+// Result page V2: the delivery route with six stations.
 // Each station groups one or two findings; its status is the worst of them.
 import { round1, STATUS_RANK } from './scoring.ts';
 import type { CheckId, Finding, Status } from './types.ts';

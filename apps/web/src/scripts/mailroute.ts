@@ -1,4 +1,4 @@
-// "Der Weg deiner Mail" as one hairline scene (docs/redesign/hairline/mailroute.js, built by scripts/build-mailroute.mjs).
+// "Der Weg deiner Mail" as one hairline scene (apps/web/scenes/mailroute.js, built by scripts/build-mailroute.mjs).
 // Same shape as the package's figures: mailroute(el, { progress, play, theme, label }) → { update, destroy }.
 // progress 0..1 moves the envelope; play loops it on its own (wait mode, phones); reduced motion shows the end state.
 import { HL, spec } from './mailroute.gen.js';

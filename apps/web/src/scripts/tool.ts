@@ -53,7 +53,7 @@ export function initTool(): void {
 	let generation = 0; // invalidates callbacks of an old test after reset
 	/** The mail itself from the live done event. Only in this page's memory, never stored. */
 	let preview: MailPreview | null = null;
-	/** Subject and sender from the live "received" step: only in this page, never from the result link (audit C3). */
+	/** Subject and sender from the live "received" step: only in this page, never from the result link. */
 	let liveMail: { from: string | null; subject: string | null } | null = null;
 
 	// ---- screens ----
@@ -112,7 +112,7 @@ export function initTool(): void {
 			try {
 				const t = JSON.parse(saved) as typeof test;
 				const res = await api<TestStatus>(`/api/tests/${t!.id}`);
-				// Reloaded while waiting or while the mail is being analyzed: keep following the same test (audit I5).
+				// Reloaded while waiting or while the mail is being analyzed: keep following the same test.
 				if (res.ok && (res.data.state === 'waiting' || res.data.state === 'analyzing')) {
 					test = t;
 					showAddress();
@@ -463,7 +463,7 @@ export function initTool(): void {
 			.catch(() => (ssr ? undefined : message('Gerade geht es nicht', 'Der Server ist nicht erreichbar. Probier es gleich noch einmal.')));
 	} else {
 		// A test address costs rate limit and keeps a stream open: only create it for a page someone looks at,
-		// and close the stream while the tab is in the background (audit I9). On return it replays what happened.
+		// and close the stream while the tab is in the background. On return it replays what happened.
 		let paused = false;
 		const start = () => {
 			resetAnimation();

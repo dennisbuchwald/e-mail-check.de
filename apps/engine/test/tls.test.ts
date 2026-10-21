@@ -87,7 +87,7 @@ describe('STARTTLS certificate', () => {
 		}
 	});
 
-	it('reports the negotiated TLS version, not the cipher suite minimum (audit I4)', async () => {
+	it('reports the negotiated TLS version, not the cipher suite minimum', async () => {
 		const c = selfSigned('mx');
 		const store = new Store(':memory:');
 		const service = new TestService({ store, testDomain: 'test.e-mail-check.de', testTtlMinutes: 60, deps: { resolver: fakeResolver(), mta: 'mx.test', resultTtlDays: 7, scanContent: null } });

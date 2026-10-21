@@ -2,7 +2,7 @@
 import '@fontsource/ibm-plex-mono/500.css';
 import '@fontsource/ibm-plex-mono/600.css';
 import '../styles/global.css';
-// Own subsets (audit I11): Fraunces only at 680 with opsz 24 to 72, Inter 400 to 700, Latin and German punctuation.
+// Own subsets: Fraunces only at 680 with opsz 24 to 72, Inter 400 to 700, Latin and German punctuation.
 // Built from the fontsource files with fonttools, see src/fonts/README.md. 57 KB instead of 115 KB.
 import frauncesUrl from '../fonts/fraunces-680-latin.woff2?url';
 import interUrl from '../fonts/inter-400-700-latin.woff2?url';
@@ -129,7 +129,7 @@ const ogImage = new URL('/og.png', SITE.url).href;
 </html>
 
 <style>
-	/* ---- status bar (design/redesign/hero-animation-prototyp.html) ---- */
+	/* ---- status bar ---- */
 	/* Background spans the full width, the content sits on the page's content width. */
 	.statusbar {
 		position: sticky;

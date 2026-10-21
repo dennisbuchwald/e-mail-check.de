@@ -1,4 +1,4 @@
-// Result page V2 (design/redesign/ergebnis-v2-prototyp.html, tab D) as one HTML renderer.
+// Result page V2 as one HTML renderer.
 // Used by the browser after a live test and by the engine for shared links (server-side, via Caddy templates),
 // so everything is visible without JavaScript. JS only switches stations and runs the animations.
 import { ruleTitle } from './rspamd.ts';

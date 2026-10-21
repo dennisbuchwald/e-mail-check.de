@@ -23,7 +23,7 @@ export function initMailRoute(): void {
 		}));
 
 	// The reading line: the middle of the viewport, or on phones the middle of what the sticky scene leaves free.
-	// Step i centred on it = progress i / 5 = the envelope at station i (docs/redesign/hairline/mailroute.js).
+	// Step i centred on it = progress i / 5 = the envelope at station i (apps/web/scenes/mailroute.js).
 	function progress(): number {
 		const mid = (el: HTMLElement) => { const r = el.getBoundingClientRect(); return r.top + r.height / 2; };
 		const top = stacked.matches ? box!.getBoundingClientRect().bottom : 0;

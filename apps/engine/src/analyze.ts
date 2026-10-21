@@ -140,7 +140,7 @@ export function previewOf(parsed: ParsedMail): MailPreview {
 const HTML_SCAN = 300_000;
 
 /**
- * Visible text of an HTML body, in linear time (C1 audit 21.10.2026: `<[^>]+>` over a body of `<<<<…`
+ * Visible text of an HTML body, in linear time (`<[^>]+>` over a body of `<<<<…`
  * was quadratic and stalled the single engine process for minutes).
  */
 export function htmlToReadable(input: string): string {

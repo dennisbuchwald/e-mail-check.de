@@ -98,7 +98,7 @@ export function enrichFindings(findings: Finding[]): Finding[] {
 
 const WORDS = ['Null', 'Eine', 'Zwei', 'Drei', 'Vier', 'Fünf', 'Sechs'];
 
-/** Two-line verdict (design/redesign/ergebnis-v2-prototyp.html, tab D): line 1 ink, line 2 grey. */
+/** Two-line verdict: line 1 ink, line 2 grey. */
 export function verdictFor(score: number, findings: (Pick<Finding, 'status'> & { findings?: Finding[] })[]): { line1: string; line2: string } {
 	const bad = findings.filter((f) => f.status === 'bad').length;
 	// The spam filter itself says spam (rspamd ≥ 6): say so, whatever the other stations do.

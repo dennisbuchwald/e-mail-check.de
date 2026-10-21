@@ -97,7 +97,7 @@ async function checkPtr(resolve: DnsResolver, ip: string): Promise<{ ptr: string
 	try {
 		names = await resolve(rev, 'PTR');
 	} catch (err) {
-		// Only "no such record" means no rDNS; a timeout or SERVFAIL says nothing about the server (audit I3).
+		// Only "no such record" means no rDNS; a timeout or SERVFAIL says nothing about the server.
 		return { ptr: null, matches: false, ...(isNotFound(err) ? {} : { unknown: true }) };
 	}
 	for (const host of names) {
@@ -144,7 +144,7 @@ export async function checkReputation(ip: string, resolve: DnsResolver, lists: B
 	const helo_ = await checkHelo(resolve, helo, ip, ptr.ptr);
 	const listed = results.filter((r) => r.listed === true);
 	const answered = results.filter((r) => r.listed !== null).length;
-	// No list answered and no rDNS answer either: the resolver is down, so we cannot say anything (audit I3).
+	// No list answered and no rDNS answer either: the resolver is down, so we cannot say anything.
 	if (listed.length === 0 && answered === 0 && ptr.unknown) {
 		return {
 			...base,

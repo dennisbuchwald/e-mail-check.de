@@ -3,7 +3,7 @@
 import { chromium } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 
-const out = process.argv[2] ?? 'docs/redesign/hairline/sektion';
+const out = process.argv[2] ?? 'screenshots/mailroute';
 const base = process.argv[3] ?? 'http://localhost:4399';
 mkdirSync(out, { recursive: true });
 const browser = await chromium.launch({ channel: 'chrome' });

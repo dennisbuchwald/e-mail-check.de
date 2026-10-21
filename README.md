@@ -4,7 +4,7 @@ Deutscher, DSGVO-konformer Mail-Tester für Nicht-Techniker: Testmail schicken, 
 
 Repository: https://github.com/dennisbuchwald/e-mail-check.de (Branch `main`)
 
-Projektgrundlage: README.md · Plan: [docs/PLAN.md](docs/PLAN.md) · Stand: [docs/STATUS.md](docs/STATUS.md)
+Technik: [docs/scoring.md](docs/scoring.md) (Score) · [docs/datenschutz-technik.md](docs/datenschutz-technik.md) (Datenfluss) · [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) (Betrieb)
 
 ## Lokal starten
 
@@ -87,8 +87,7 @@ apps/web/         Astro (statisch): Tool-Insel, Check-Seiten, Inhalte
 packages/shared/  Typen, Score-Modell (gemeinsam für Engine und Web)
 infra/            Caddy, rspamd-Konfiguration, unbound (eigener DNS-Resolver)
 tests/e2e/        Playwright
-research/         Keyword-Map, SERP, Wettbewerb, Trends, Anbieter-Quellen, SEO-Strategie, Abschluss-Audit
-docs/             Plan, Status, Score, Text-Briefing, offene Punkte, Deployment
+docs/             Score, Datenfluss, Deployment
 ```
 
 ## Statistik (optional)

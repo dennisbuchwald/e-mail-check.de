@@ -4,7 +4,7 @@
 import { chromium, firefox } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 
-const out = process.argv[2] ?? 'docs/redesign/v2/nachher';
+const out = process.argv[2] ?? 'screenshots/v2';
 const base = process.argv[3] ?? 'http://localhost:8080';
 mkdirSync(out, { recursive: true });
 

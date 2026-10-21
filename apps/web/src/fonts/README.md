@@ -1,6 +1,6 @@
 # Schriften (eigene Teilmengen)
 
-Audit 21.10.2026 (I11): Die fontsource-Dateien waren 115 KB für Fraunces und Inter. Hier liegen Teilmengen mit nur dem, was die Seite nutzt.
+Die fontsource-Dateien waren 115 KB für Fraunces und Inter. Hier liegen Teilmengen mit nur dem, was die Seite nutzt.
 
 | Datei | Quelle | Achsen | Größe |
 |---|---|---|---|

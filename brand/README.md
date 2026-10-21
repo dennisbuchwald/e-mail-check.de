@@ -16,4 +16,4 @@ Freiraum um die Marke: mindestens die Breite des Prüf-Kreises.
 ## Wortmarke „mail / check“ (21.10.2026)
 - `wortmarke.svg` (Ink) und `wortmarke-weiss.svg` (auf Dunkel): zweizeilig, Fraunces 700 als Pfade. Die Bildmarke steht rechtsbündig auf der „mail“-Zeile.
 - Unter 32 px Höhe nur `logo-mark.svg` verwenden.
-- Für die Lade- und Scroll-Animation inline einbinden: `apps/web/src/components/Wordmark.astro`, Ablauf in.
+- Für die Lade- und Scroll-Animation inline einbinden: `apps/web/src/components/Wordmark.astro`.

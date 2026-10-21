@@ -21,7 +21,7 @@ export interface ApiOptions {
 
 const ID = /^[\w-]{22}$/;
 
-/** Open live streams per client IP (audit: SSE had no limit). */
+/** Open live streams per client IP (SSE had no limit). */
 const MAX_STREAMS_PER_IP = 5;
 
 /**
@@ -34,7 +34,7 @@ export function inertForTemplates(html: string): string {
 
 /**
  * The share link is public for 7 days. When the sending IP is a home connection (Spamhaus PBL), it is
- * the address of a person, not of a mail server: show it only up to the network part (audit, 21.10.2026).
+ * the address of a person, not of a mail server: show it only up to the network part .
  */
 export function maskHomeIp(result: MailResult): MailResult {
 	const rep = result.findings.find((f) => f.id === 'reputation');

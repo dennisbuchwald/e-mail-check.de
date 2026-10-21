@@ -1,4 +1,4 @@
-// The result markup and its styles, loaded only when a result is shown (audit: about 11 KB CSS and the
+// The result markup and its styles, loaded only when a result is shown (about 11 KB CSS and the
 // renderer used to ship with every start page). The stylesheet is linked by URL: a plain CSS import would be
 // hoisted into every page by the bundler. The result page imports result.css itself (server-rendered markup).
 import cssUrl from '../styles/result.css?url';

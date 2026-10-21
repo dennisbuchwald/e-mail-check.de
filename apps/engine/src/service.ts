@@ -22,9 +22,9 @@ export interface ServiceOptions {
 	testDomain: string;
 	testTtlMinutes: number;
 	now?: () => Date;
-	/** Analyses running at the same time; the rest wait (audit I1). */
+	/** Analyses running at the same time; the rest wait. */
 	maxParallel?: number;
-	/** An analysis that takes longer than this fails instead of hanging forever (audit I2). */
+	/** An analysis that takes longer than this fails instead of hanging forever. */
 	analysisTimeoutMs?: number;
 }
 
@@ -127,7 +127,7 @@ export class TestService {
 				),
 			);
 			// Subject and From address are mail content: they reach the tester only live, in the "received"
-			// step of their own test stream, and never the database or the result link (audit C3).
+			// step of their own test stream, and never the database or the result link.
 			this.opts.store.saveResult({ ...result, mail: { ...result.mail, from: null, subject: null } });
 			this.opts.store.setTestState(t.id, 'done', result.id);
 			// The preview goes out once, live; a later subscriber or the share link never gets it.

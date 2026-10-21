@@ -13,7 +13,7 @@
 	font-display: swap;
 	src: url('../fonts/inter-400-700-latin.woff2') format('woff2-variations'), url('../fonts/inter-400-700-latin.woff2') format('woff2');
 }
-/* Design system (redesign 21.10.2026,: calm SaaS, fine lines, lab character.
+/* Design system: calm SaaS, fine lines, lab character.
    Status colors only as dots, thin bars and tinted chips. Text is always ink. */
 :root {
 	--ink: #111113;

@@ -38,7 +38,7 @@ describe('API', () => {
 		expect(JSON.stringify(result)).not.toContain('Angebot für die neue Website');
 	});
 
-	it('never serves subject or From address through the result link, only live in the test stream (audit C3)', async () => {
+	it('never serves subject or From address through the result link, only live in the test stream', async () => {
 		const { app, service, store } = setup();
 		const test = await (await app.request('/api/tests', { method: 'POST' })).json();
 		const res = (await service.handleMessage(test.address, fixture('gut.eml'), { ip: GOOD_IP, helo: 'x', sender: 'max@gut.example.test', tls: { version: 'TLSv1.3' } }))!;

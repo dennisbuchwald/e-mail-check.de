@@ -3,7 +3,7 @@
 	auto_https off
 	admin off
 	# No IP addresses or browser IDs in the logs (privacy policy): Caddy's handler warnings, e.g. on a 502
-	# during an engine restart, would otherwise contain the full request (audit, 21.10.2026).
+	# during an engine restart, would otherwise contain the full request .
 	log {
 		format filter {
 			wrap json

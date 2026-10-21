@@ -1,4 +1,4 @@
-// Which hairline figure belongs to which topic (README.md, Design: Illustrationen).
+// Which hairline figure belongs to which topic (article headers, 404, missing result).
 export type FigureName = 'hub' | 'vault' | 'padlock' | 'router' | 'relay' | 'sieve' | 'loupe' | 'dish';
 
 export const TOPIC_FIGURE: Record<string, { name: FigureName; label: string }> = {

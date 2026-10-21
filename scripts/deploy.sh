@@ -41,7 +41,7 @@ rsync -az --delete \
 
 echo "→ Bauen und starten"
 ssh "deploy@$HOST" "cd $DIR && test -f .env || { echo '.env fehlt auf dem Server'; exit 1; }
-	# Statistics on: the Umami secrets must be real values (audit I6).
+	# Statistics on: the Umami secrets must be real values.
 	if grep -q '^COMPOSE_PROFILES=.*stats' .env; then
 		grep -Eq '^UMAMI_APP_SECRET=.{32,}' .env && grep -Eq '^UMAMI_DB_PASSWORD=.{16,}' .env || { echo 'UMAMI_APP_SECRET (>= 32) oder UMAMI_DB_PASSWORD (>= 16) fehlt in .env'; exit 1; }
 	fi

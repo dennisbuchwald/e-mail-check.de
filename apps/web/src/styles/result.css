@@ -1,4 +1,4 @@
-/* Result page V2: delivery route with six stations (design/redesign/ergebnis-v2-prototyp.html, tab D).
+/* Result page V2: delivery route with six stations.
    Global on purpose: the markup comes from packages/shared/src/result-view.ts, rendered by the browser or by the server.
    Motion only via transform/opacity; .rv-anim is set by JS, so without JS or with reduced motion nothing moves. */
 

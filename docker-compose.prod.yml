@@ -25,7 +25,7 @@ services:
 
   engine:
     <<: *logging
-    # One process takes mail from strangers: it must not be able to take the whole 4 GB server down (audit C2).
+    # One process takes mail from strangers: it must not be able to take the whole 4 GB server down.
     mem_limit: 1g
     cpus: 1.5
     environment:
@@ -83,7 +83,7 @@ services:
       - "443:443"
       - "443:443/udp"
 
-  # Statistics (profile "stats"): no published port and no local defaults for the secrets (audit I6).
+  # Statistics (profile "stats"): no published port and no local defaults for the secrets.
   # Without values in .env the database refuses to start; scripts/deploy.sh checks them when stats is on.
   umami-db:
     <<: *logging

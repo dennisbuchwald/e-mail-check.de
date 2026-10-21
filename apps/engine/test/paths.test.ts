@@ -1,4 +1,4 @@
-// The paths every real test runs through, which the audit of 21.10.2026 found untested (I7):
+// The paths every real test runs through:
 // live SSE, the error path, hostile mail content in the rendered result, rate limits, purge limits, SMTP limits.
 import { createConnection } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';

@@ -7,7 +7,7 @@ export interface SmtpOptions {
 	maxMessageBytes: number;
 	allowXclient: boolean;
 	tls?: { key: Buffer; cert: Buffer };
-	/** Open connections per client IP (audit I1: 50 idle connections used to lock everyone out). */
+	/** Open connections per client IP (50 idle connections used to lock everyone out). */
 	maxPerIp?: number;
 	/** Unknown recipients per session before we hang up (no probing for live test addresses). */
 	maxBadRcpt?: number;
@@ -47,7 +47,7 @@ export function createSmtpServer(service: TestService, opts: SmtpOptions): SMTPS
 			if (n <= 0) perIp.delete(ip);
 			else perIp.set(ip, n);
 		},
-		// The negotiated protocol, not the cipher's minimum version (audit I4: TLS 1.2 with a CBC suite read as TLSv1.0).
+		// The negotiated protocol, not the cipher's minimum version (TLS 1.2 with a CBC suite read as TLSv1.0).
 		onSecure(socket, session, callback) {
 			(session as Session).tlsProtocol = (socket as unknown as { getProtocol?: () => string | null }).getProtocol?.() ?? null;
 			callback();
@@ -64,7 +64,7 @@ export function createSmtpServer(service: TestService, opts: SmtpOptions): SMTPS
 			callback();
 		},
 		onData(stream, session, callback) {
-			// Keep at most the limit in memory (audit C2: chunks used to pile up until the end of DATA).
+			// Keep at most the limit in memory (chunks used to pile up until the end of DATA).
 			const chunks: Buffer[] = [];
 			let bytes = 0;
 			stream.on('data', (c: Buffer) => {

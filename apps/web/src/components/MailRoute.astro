@@ -1,6 +1,5 @@
 ---
-// "Der Weg deiner Mail", Feinschliff::
-// one isometric scene (scripts/mailroute.ts) beside six text steps.
+// "Der Weg deiner Mail": one isometric scene (scripts/mailroute.ts) beside six text steps.
 // Desktop: the scene sticks in the middle of the viewport while the steps scroll; step i centred = envelope at station i.
 // Phones: the scene sticks small at the top. Reduced motion: scene in its end state (logo with check), steps as a list.
 // All text is real HTML; the scene box has a fixed 8:5 ratio, so nothing shifts when the scene loads.
@@ -88,7 +87,7 @@ const steps = [
 		--hairline-lo: #c9c9cf;
 		--hairline-stroke: 0.9;
 	}
-	/* The scene's own pieces (docs/redesign/hairline/mailroute.js); sizes in viewBox units, so they scale with the scene. */
+	/* The scene's own pieces (apps/web/scenes/mailroute.js); sizes in viewBox units, so they scale with the scene. */
 	.route-sec :global([data-hairline='mailroute'] .hi) {
 		stroke-width: 1.5;
 	}

@@ -19,7 +19,7 @@
 	}
 
 	# Statistics (only when the "stats" profile runs). Same origin: no third party, no CSP exception.
-	# Only the tracking script and its endpoint are public; the Umami login stays unreachable from outside (audit I6).
+	# Only the tracking script and its endpoint are public; the Umami login stays unreachable from outside.
 	@stats path /stats/script.js /stats/api/send
 	handle @stats {
 		uri strip_prefix /stats
