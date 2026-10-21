@@ -21,7 +21,7 @@ services:
         ipv4_address: 172.28.0.53
 
   rspamd:
-    image: rspamd/rspamd:4.2
+    image: rspamd/rspamd:4.2@sha256:47e00f62105f8a60009a30a590ebcf3bfd0b992d45468222d34afa5ca2103690
     restart: unless-stopped
     volumes:
       - ./infra/rspamd/local.d:/etc/rspamd/local.d:ro
@@ -42,12 +42,19 @@ services:
       DNS_SERVERS: 172.28.0.53
       # Local only: lets swaks simulate a real sender IP. Never in production.
       ALLOW_XCLIENT: "1"
+      # The API is only reached through Caddy, which sets X-Forwarded-For.
+      TRUST_PROXY: "1"
     volumes:
       - data:/data
     ports:
       - "2525:2525"
     depends_on: [unbound, rspamd]
     networks: [mail]
+    # Hardened: no capabilities, no privilege escalation, read-only image (only /data and /tmp writable).
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
 
   web:
     build:
@@ -58,10 +65,13 @@ services:
       - "8080:80"
     depends_on: [engine]
     networks: [mail]
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: [no-new-privileges:true]
 
   # Cookie-free statistics, off by default: `docker compose --profile stats up`
   umami-db:
-    image: postgres:17-alpine
+    image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
     profiles: [stats]
     restart: unless-stopped
     environment:
@@ -73,7 +83,7 @@ services:
     networks: [mail]
 
   umami:
-    image: ghcr.io/umami-software/umami:postgresql-latest
+    image: ghcr.io/umami-software/umami:postgresql-latest@sha256:85909afc45bdcda1917394594a087421fdbb05610fded0fa9f6fb861abb2f367
     profiles: [stats]
     restart: unless-stopped
     environment:
@@ -81,6 +91,7 @@ services:
       APP_SECRET: ${UMAMI_APP_SECRET:-local-only-change-me}
       DISABLE_TELEMETRY: "1"
     depends_on: [umami-db]
+    # Local only: the Umami UI on localhost:3000. Production publishes no port (docker-compose.prod.yml).
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     networks: [mail]

@@ -8,7 +8,7 @@ import { createSmtpServer } from './smtp.ts';
 import { Store } from './store.ts';
 import { waitForTls, watchTls } from './tls.ts';
 
-const store = new Store(config.dbPath);
+const store = new Store(config.dbPath, { mailsCheckedSeed: config.mailsCheckedSeed });
 const resolver = createResolver(config.dnsServers);
 const service = new TestService({
 	store,
@@ -25,10 +25,18 @@ setInterval(purge, 3600_000).unref();
 const api = createApi({ service, resolver, rateLimit: config.rateLimit, trustProxy: config.trustProxy, siteUrl: config.siteUrl });
 const http = serve({ fetch: api.fetch, port: config.httpPort }, () => console.log(`api listening on :${config.httpPort}`));
 
-// Production: STARTTLS with the certificate Caddy fetched for the MX hostname.
+// Production: STARTTLS with the certificate Caddy fetched for the MX hostname. A fresh server may still be
+// fetching it: wait a moment, then start without STARTTLS and restart as soon as the certificate appears
+// (Docker brings the engine back up, now with TLS). Before, SMTP waited up to 10 minutes and never got TLS later.
 const tlsFiles = config.tls;
-const tls = tlsFiles ? await waitForTls(tlsFiles, 10 * 60_000) : null;
-if (tlsFiles && !tls) console.error(`tls: no certificate at ${tlsFiles.cert} after 10 minutes, SMTP starts WITHOUT STARTTLS`);
+const tls = tlsFiles ? await waitForTls(tlsFiles, 30_000) : null;
+if (tlsFiles && !tls) {
+	console.error(`tls: no certificate at ${tlsFiles.cert} yet, SMTP starts WITHOUT STARTTLS and restarts once it is there`);
+	void waitForTls(tlsFiles, Number.POSITIVE_INFINITY, 30_000).then(() => {
+		console.log('tls: certificate found, restarting for STARTTLS');
+		process.kill(process.pid, 'SIGTERM');
+	});
+}
 const smtp = createSmtpServer(service, { hostname: config.hostname, maxMessageBytes: config.maxMessageBytes, allowXclient: config.allowXclient, tls: tls ?? undefined });
 if (tlsFiles && tls) watchTls(smtp, tlsFiles);
 smtp.listen(config.smtpPort, () =>

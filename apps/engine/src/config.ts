@@ -15,6 +15,8 @@ export const config = {
 	/** Own recursive resolver (unbound). Empty = system resolver. */
 	dnsServers: (env.DNS_SERVERS ?? '').split(',').map((s) => s.trim()).filter(Boolean),
 	dbPath: env.DB_PATH ?? './data/e-mail-check.sqlite',
+	/** Restore value for the all-time counter after a lost volume (never lowers it). */
+	mailsCheckedSeed: Number(env.MAILS_CHECKED_SEED ?? 0),
 	/** How long a fresh test address accepts mail. */
 	testTtlMinutes: Number(env.TEST_TTL_MINUTES ?? 60),
 	resultTtlDays: Number(env.RESULT_TTL_DAYS ?? 7),
@@ -26,8 +28,8 @@ export const config = {
 	},
 	/** STARTTLS key/cert files; both must be set to enable TLS. */
 	tls: env.TLS_KEY && env.TLS_CERT ? { key: env.TLS_KEY, cert: env.TLS_CERT } : null,
-	/** Trust X-Forwarded-For from the reverse proxy. */
-	trustProxy: env.TRUST_PROXY !== '0',
+	/** Trust X-Forwarded-For from the reverse proxy. Off unless set: only Caddy may reach the API (compose sets it). */
+	trustProxy: env.TRUST_PROXY === '1',
 };
 
 export type Config = typeof config;

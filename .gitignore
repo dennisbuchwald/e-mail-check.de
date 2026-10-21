@@ -21,3 +21,6 @@ docs/offene-punkte.md
 # hairline skill (installed locally via npx skills, not part of the repo)
 
 skills-lock.json
+
+# counter backups pulled by scripts/deploy.sh
+/backups/

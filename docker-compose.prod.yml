@@ -15,17 +15,26 @@ volumes:
 services:
   unbound:
     <<: *logging
+    mem_limit: 256m
+    security_opt: [no-new-privileges:true]
 
   rspamd:
     <<: *logging
+    mem_limit: 768m
+    security_opt: [no-new-privileges:true]
 
   engine:
     <<: *logging
+    # One process takes mail from strangers: it must not be able to take the whole 4 GB server down (audit C2).
+    mem_limit: 1g
+    cpus: 1.5
     environment:
       TEST_DOMAIN: ${TEST_DOMAIN:?TEST_DOMAIN fehlt in .env}
       MX_HOSTNAME: ${MX_HOSTNAME:?MX_HOSTNAME fehlt in .env}
       # Never allow XCLIENT in production: it would let anyone fake the sender IP.
       ALLOW_XCLIENT: "0"
+      # Restore value for the all-time counter after a lost volume (backups/ from scripts/deploy.sh).
+      MAILS_CHECKED_SEED: ${MAILS_CHECKED_SEED:-0}
       TLS_KEY: /certs/mx.key
       TLS_CERT: /certs/mx.crt
     volumes:
@@ -40,7 +49,7 @@ services:
       retries: 3
 
   certsync:
-    image: alpine:3.22
+    image: alpine:3.22@sha256:5291449c3df73caf6ed85e649dec1b9e818b39a5d8c871e97afc13e9cd5e8fa8
     restart: unless-stopped
     <<: *logging
     environment:
@@ -51,6 +60,8 @@ services:
       - ./infra/certsync/sync.sh:/sync.sh:ro
     command: ["/bin/sh", "/sync.sh"]
     network_mode: none
+    mem_limit: 64m
+    security_opt: [no-new-privileges:true]
 
   web:
     <<: *logging
@@ -63,6 +74,7 @@ services:
       SITE_DOMAIN: ${SITE_DOMAIN:?SITE_DOMAIN fehlt in .env}
       MX_HOSTNAME: ${MX_HOSTNAME}
     command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile.prod", "--adapter", "caddyfile"]
+    mem_limit: 384m
     volumes:
       - caddy-data:/data
       - caddy-config:/config
@@ -70,3 +82,17 @@ services:
       - "80:80"
       - "443:443"
       - "443:443/udp"
+
+  # Statistics (profile "stats"): no published port and no local defaults for the secrets (audit I6).
+  # Without values in .env the database refuses to start; scripts/deploy.sh checks them when stats is on.
+  umami-db:
+    <<: *logging
+    environment:
+      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD:-}
+
+  umami:
+    <<: *logging
+    ports: !reset []
+    environment:
+      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD:-}@umami-db:5432/umami
+      APP_SECRET: ${UMAMI_APP_SECRET:-}

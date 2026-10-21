@@ -1,6 +1,20 @@
 # Production. Values come from .env (see .env.example).
 {
 	admin off
+	# No IP addresses or browser IDs in the logs (privacy policy): Caddy's handler warnings, e.g. on a 502
+	# during an engine restart, would otherwise contain the full request (audit, 21.10.2026).
+	log {
+		format filter {
+			wrap json
+			fields {
+				request>remote_ip delete
+				request>remote_port delete
+				request>client_ip delete
+				request>headers delete
+				request>tls delete
+			}
+		}
+	}
 	# Fixed issuer so the certificate path for the MX hostname is predictable (certsync copies it).
 	cert_issuer acme https://acme-v02.api.letsencrypt.org/directory
 }
