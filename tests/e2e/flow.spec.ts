@@ -81,8 +81,8 @@ test('status bar: Ratgeber menu works with the keyboard and the counter never sh
 	await expect(button).toHaveAttribute('aria-expanded', 'false');
 	await expect(button).toBeFocused();
 	const stats = await (await page.request.get('/api/stats')).json();
-	const text = (await page.locator('[data-tests-today]').textContent()) ?? '';
-	if (stats.testsToday === null) expect(text).toBe('');
-	else expect(text).toContain(stats.testsToday.toLocaleString('de-DE'));
+	const text = (await page.locator('[data-checked]').textContent()) ?? '';
+	if (stats.mailsChecked === null) expect(text).toBe(' · Kostenlos · ohne Konto');
+	else expect(text).toBe(` · ${stats.mailsChecked.toLocaleString('de-DE')} Mails geprüft`);
 	await expect(page.locator('.statusbar a[aria-label="mail check, Startseite"]')).toHaveAttribute('href', '/');
 });

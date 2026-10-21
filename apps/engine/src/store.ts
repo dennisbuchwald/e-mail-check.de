@@ -34,17 +34,26 @@ export class Store {
 				json TEXT NOT NULL,
 				expires_at TEXT NOT NULL
 			);
+			CREATE TABLE IF NOT EXISTS counters (
+				name TEXT PRIMARY KEY,
+				value INTEGER NOT NULL
+			);
 		`);
+		// All-time number of analyzed mails. Test rows are deleted after 7 days, so the total lives
+		// in its own row; the first start seeds it with the analyzed tests that still exist.
+		this.db
+			.prepare("INSERT OR IGNORE INTO counters (name, value) SELECT 'mails_checked', COUNT(*) FROM tests WHERE state = 'done'")
+			.run();
 	}
 
 	createTest(row: Omit<TestRow, 'state' | 'resultId'>): void {
 		this.db.prepare('INSERT INTO tests (id, local, state, created_at, expires_at) VALUES (?, ?, ?, ?, ?)').run(row.id, row.local, 'waiting', row.createdAt, row.expiresAt);
 	}
 
-	/** Number of analyzed tests created at or after `sinceIso` (for the public counter). */
-	countDoneSince(sinceIso: string): number {
-		const row = this.db.prepare("SELECT COUNT(*) AS n FROM tests WHERE state = 'done' AND created_at >= ?").get(sinceIso) as { n: number };
-		return Number(row.n);
+	/** All-time number of analyzed mails (one number, no personal data). */
+	mailsChecked(): number {
+		const row = this.db.prepare("SELECT value FROM counters WHERE name = 'mails_checked'").get() as { value: number } | undefined;
+		return Number(row?.value ?? 0);
 	}
 
 	getTest(id: string): TestRow | undefined {
@@ -56,7 +65,8 @@ export class Store {
 	}
 
 	setTestState(id: string, state: TestState, resultId: string | null = null): void {
-		this.db.prepare('UPDATE tests SET state = ?, result_id = COALESCE(?, result_id) WHERE id = ?').run(state, resultId, id);
+		const changed = this.db.prepare("UPDATE tests SET state = ?, result_id = COALESCE(?, result_id) WHERE id = ? AND state <> 'done'").run(state, resultId, id);
+		if (state === 'done' && Number(changed.changes) > 0) this.db.prepare("UPDATE counters SET value = value + 1 WHERE name = 'mails_checked'").run();
 	}
 
 	saveResult(result: MailResult): void {

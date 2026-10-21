@@ -1,51 +1,48 @@
 import { describe, expect, it } from 'vitest';
-import { berlinMidnight, TestsToday } from '../src/stats.ts';
+import { CheckedCounter } from '../src/stats.ts';
+import { Store } from '../src/store.ts';
 
-describe('berlinMidnight', () => {
-	it('uses UTC+2 in summer and UTC+1 in winter', () => {
-		expect(berlinMidnight(new Date('2026-07-15T10:00:00Z')).toISOString()).toBe('2026-07-14T22:00:00.000Z');
-		expect(berlinMidnight(new Date('2026-12-15T10:00:00Z')).toISOString()).toBe('2026-12-14T23:00:00.000Z');
+describe('CheckedCounter', () => {
+	it('hides numbers below 100 and shows real ones from 100', () => {
+		let n = 99;
+		const c = new CheckedCounter({ count: () => n, ttlMs: 0 });
+		expect(c.get()).toBeNull();
+		n = 100;
+		expect(c.get()).toBe(100);
 	});
 
-	it('takes the Berlin date, not the UTC date, right after midnight', () => {
-		// 23:30 UTC on 21.10. is already 01:30 on 22.10. in Berlin.
-		expect(berlinMidnight(new Date('2026-10-21T23:30:00Z')).toISOString()).toBe('2026-10-21T22:00:00.000Z');
-	});
-
-	it('is correct on DST switch days', () => {
-		// 25.10.2026 clocks go back at 03:00: midnight was still summer time.
-		expect(berlinMidnight(new Date('2026-10-25T12:00:00Z')).toISOString()).toBe('2026-10-24T22:00:00.000Z');
-		// 29.03.2026 clocks go forward at 02:00: midnight was still winter time.
-		expect(berlinMidnight(new Date('2026-03-29T12:00:00Z')).toISOString()).toBe('2026-03-28T23:00:00.000Z');
-	});
-});
-
-describe('TestsToday', () => {
-	it('hides numbers below 50 and shows real ones from 50', () => {
-		let n = 49;
-		const t = new TestsToday({ count: () => n, ttlMs: 0 });
-		expect(t.get()).toBeNull();
-		n = 50;
-		expect(t.get()).toBe(50);
-	});
-
-	it('queries the database at most once per minute', () => {
+	it('reads the database at most once per minute', () => {
 		let calls = 0;
 		let now = new Date('2026-10-21T10:00:00Z');
-		const t = new TestsToday({ count: () => (calls++, 120), now: () => now });
-		expect(t.get()).toBe(120);
+		const c = new CheckedCounter({ count: () => (calls++, 120), now: () => now });
+		expect(c.get()).toBe(120);
 		now = new Date('2026-10-21T10:00:59Z');
-		t.get();
+		c.get();
 		expect(calls).toBe(1);
 		now = new Date('2026-10-21T10:01:00Z');
-		t.get();
+		c.get();
 		expect(calls).toBe(2);
 	});
 
-	it('counts from Berlin midnight and returns null on errors', () => {
-		let since = '';
-		new TestsToday({ count: (s) => ((since = s), 80), now: () => new Date('2026-10-21T08:00:00Z') }).get();
-		expect(since).toBe('2026-10-20T22:00:00.000Z');
-		expect(new TestsToday({ count: () => { throw new Error('db'); } }).get()).toBeNull();
+	it('returns null on errors', () => {
+		expect(new CheckedCounter({ count: () => { throw new Error('db'); } }).get()).toBeNull();
+	});
+});
+
+describe('Store mails_checked', () => {
+	const row = (id: string, local: string) => ({ id, local, createdAt: '2026-10-01T10:00:00.000Z', expiresAt: '2026-10-01T11:00:00.000Z' });
+
+	it('counts each analyzed mail once and keeps the total after old tests are purged', () => {
+		const s = new Store(':memory:');
+		s.createTest(row('a'.repeat(22), 'aaaaaaaa'));
+		s.createTest(row('b'.repeat(22), 'bbbbbbbb'));
+		s.setTestState('a'.repeat(22), 'analyzing');
+		s.setTestState('a'.repeat(22), 'done', 'r1');
+		s.setTestState('a'.repeat(22), 'done', 'r1'); // repeated: no double count
+		s.setTestState('b'.repeat(22), 'error');
+		expect(s.mailsChecked()).toBe(1);
+		s.purge(new Date('2026-12-01T00:00:00Z'));
+		expect(s.getTest('a'.repeat(22))).toBeUndefined();
+		expect(s.mailsChecked()).toBe(1);
 	});
 });

@@ -39,10 +39,6 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 				<span class="address" data-address aria-live="off"><span class="address-loading">Adresse wird erstellt …</span></span>
 				<button type="button" class="btn btn-line mw-copy copy-address" data-action="copy" disabled><span>Kopieren</span></button>
 			</div>
-			<div class="mw-row">
-				<span class="mw-label">Betreff</span>
-				<span class="mw-subject">Egal. Am besten so, wie du sonst schreibst.</span>
-			</div>
 			<div class="mw-foot">
 				<span class="status-line"><span class="live"></span><span data-start-hint>Wir warten auf deine Mail.</span></span>
 				<span class="panel-actions">
@@ -353,8 +349,9 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 		display: flex;
 		flex-direction: column;
 		align-items: center;
+		justify-content: center;
 		gap: 34px;
-		padding: 56px var(--gutter) 112px;
+		padding: 32px var(--gutter) 104px;
 		text-align: center;
 	}
 	.hero-copy {
@@ -441,10 +438,6 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 		padding: 0 14px;
 		font-size: 14px;
 		flex: none;
-	}
-	.mw-subject {
-		font-size: 15px;
-		color: #6b6c72;
 	}
 	.mw-foot {
 		display: flex;

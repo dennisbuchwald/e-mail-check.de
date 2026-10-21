@@ -1,12 +1,12 @@
-// Status bar: real "tests today" number, Ratgeber menu, compact fallback without scroll timelines.
+// Status bar: real all-time "mails checked" number (from 100 on, else "Kostenlos · ohne Konto"), Ratgeber menu, compact fallback without scroll timelines.
 const bar = document.querySelector<HTMLElement>('[data-statusbar]')!;
 // The server caches for 60 s; the browser does too, so page views do not each hit the API.
 const showCount = (n: unknown) => {
-	if (typeof n === 'number') bar.querySelector('[data-tests-today]')!.textContent = ` · ${n.toLocaleString('de-DE')} Tests heute`;
+	if (typeof n === 'number') bar.querySelector('[data-checked]')!.textContent = ` · ${n.toLocaleString('de-DE')} Mails geprüft`;
 };
 let cached: { at: number; n: number | null } | null = null;
 try {
-	cached = JSON.parse(sessionStorage.getItem('emc-stats') ?? 'null');
+	cached = JSON.parse(sessionStorage.getItem('emc-checked') ?? 'null');
 } catch {
 	/* storage blocked */
 }
@@ -14,10 +14,10 @@ if (cached && Date.now() - cached.at < 60_000) showCount(cached.n);
 else
 	fetch('/api/stats', { headers: { Accept: 'application/json' } })
 		.then((r) => (r.ok ? r.json() : null))
-		.then((d: { testsToday?: number | null } | null) => {
-			showCount(d?.testsToday);
+		.then((d: { mailsChecked?: number | null } | null) => {
+			showCount(d?.mailsChecked);
 			try {
-				sessionStorage.setItem('emc-stats', JSON.stringify({ at: Date.now(), n: d?.testsToday ?? null }));
+				sessionStorage.setItem('emc-checked', JSON.stringify({ at: Date.now(), n: d?.mailsChecked ?? null }));
 			} catch {
 				/* storage blocked */
 			}
