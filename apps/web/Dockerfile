@@ -13,5 +13,5 @@ ENV PUBLIC_UMAMI_ID=$PUBLIC_UMAMI_ID
 RUN pnpm --filter @emc/web build
 
 FROM caddy:2-alpine
-COPY infra/caddy/Caddyfile /etc/caddy/Caddyfile
+COPY infra/caddy/Caddyfile infra/caddy/Caddyfile.prod infra/caddy/site.caddy /etc/caddy/
 COPY --from=build /app/apps/web/dist /srv

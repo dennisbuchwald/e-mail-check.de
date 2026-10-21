@@ -22,6 +22,8 @@ export const config = {
 		tests: Number(env.RATE_LIMIT_TESTS ?? 10),
 		dns: Number(env.RATE_LIMIT_DNS ?? 30),
 	},
+	/** STARTTLS key/cert files; both must be set to enable TLS. */
+	tls: env.TLS_KEY && env.TLS_CERT ? { key: env.TLS_KEY, cert: env.TLS_CERT } : null,
 	/** Trust X-Forwarded-For from the reverse proxy. */
 	trustProxy: env.TRUST_PROXY !== '0',
 };

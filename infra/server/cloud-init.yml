@@ -1,0 +1,51 @@
+#cloud-config
+# Hetzner Cloud: paste into "Cloud config" when creating the server (Ubuntu 24.04).
+# Creates user "deploy" (same SSH key as root), Docker, firewall, automatic security updates.
+package_update: true
+package_upgrade: true
+packages:
+  - docker.io
+  - docker-compose-v2
+  - ufw
+  - fail2ban
+  - unattended-upgrades
+  - rsync
+
+users:
+  - default
+  - name: deploy
+    groups: [docker]
+    shell: /bin/bash
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+
+write_files:
+  # Real client IPs for published ports (needed for SPF), small logs.
+  - path: /etc/docker/daemon.json
+    content: |
+      {
+        "userland-proxy": false,
+        "log-driver": "json-file",
+        "log-opts": { "max-size": "10m", "max-file": "3" }
+      }
+  - path: /etc/ssh/sshd_config.d/10-hardening.conf
+    content: |
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+      PermitRootLogin prohibit-password
+  - path: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+
+runcmd:
+  - mkdir -p /home/deploy/.ssh && cp /root/.ssh/authorized_keys /home/deploy/.ssh/ && chown -R deploy:deploy /home/deploy/.ssh && chmod 700 /home/deploy/.ssh && chmod 600 /home/deploy/.ssh/authorized_keys
+  - mkdir -p /opt/e-mail-check && chown deploy:deploy /opt/e-mail-check
+  - ufw default deny incoming
+  - ufw allow 22/tcp
+  - ufw allow 25/tcp
+  - ufw allow 80/tcp
+  - ufw allow 443/tcp
+  - ufw allow 443/udp
+  - ufw --force enable
+  - systemctl enable --now docker fail2ban
+  - systemctl restart docker ssh

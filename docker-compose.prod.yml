@@ -1,0 +1,73 @@
+# Production overrides. Start on the server with:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# Values come from .env (copy .env.example). See docs/DEPLOYMENT.md.
+
+x-logging: &logging
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "3" }
+
+volumes:
+  caddy-data:
+  caddy-config:
+  certs:
+
+services:
+  unbound:
+    <<: *logging
+
+  rspamd:
+    <<: *logging
+
+  engine:
+    <<: *logging
+    environment:
+      TEST_DOMAIN: ${TEST_DOMAIN:?TEST_DOMAIN fehlt in .env}
+      MX_HOSTNAME: ${MX_HOSTNAME:?MX_HOSTNAME fehlt in .env}
+      # Never allow XCLIENT in production: it would let anyone fake the sender IP.
+      ALLOW_XCLIENT: "0"
+      TLS_KEY: /certs/mx.key
+      TLS_CERT: /certs/mx.crt
+    volumes:
+      - data:/data
+      - certs:/certs:ro
+    ports: !override
+      - "25:2525"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8787/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  certsync:
+    image: alpine:3.22
+    restart: unless-stopped
+    <<: *logging
+    environment:
+      MX_HOSTNAME: ${MX_HOSTNAME}
+    volumes:
+      - caddy-data:/caddy:ro
+      - certs:/certs
+      - ./infra/certsync/sync.sh:/sync.sh:ro
+    command: ["/bin/sh", "/sync.sh"]
+    network_mode: none
+
+  web:
+    <<: *logging
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        PUBLIC_UMAMI_ID: ${PUBLIC_UMAMI_ID:-}
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN:?SITE_DOMAIN fehlt in .env}
+      MX_HOSTNAME: ${MX_HOSTNAME}
+      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL fehlt in .env}
+    command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile.prod", "--adapter", "caddyfile"]
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+    ports: !override
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
