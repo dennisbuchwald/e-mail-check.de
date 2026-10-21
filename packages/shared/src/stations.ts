@@ -43,3 +43,9 @@ export function initialStation(stations: Station[]): number {
 	const warn = stations.findIndex((s) => s.status === 'warn');
 	return warn >= 0 ? warn : 0;
 }
+
+/** Names of the lists we really query (engine checks/reputation.ts; a test keeps both in sync). */
+export const IP_BLOCKLIST_NAMES = ['Spamhaus ZEN', 'SpamCop', 'PSBL', 'Mailspike', 'Truncate (GBUdb)', 'NordSpam', 's5h.net', '0spam', 'DroneBL', 'blocklist.de'] as const;
+export const ALLOW_LIST_NAMES = ['DNSWL', 'Mailspike Positivliste'] as const;
+/** Link-domain lists, queried by rspamd. */
+export const URI_BLOCKLIST_NAMES = ['Spamhaus DBL', 'SURBL', 'URIBL'] as const;

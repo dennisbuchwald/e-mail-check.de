@@ -14,10 +14,14 @@ export interface Blocklist {
 	pblAnswers?: string[];
 	/** Positive list ("good reputation"): a hit is shown as a plus, never deducted. */
 	allow?: boolean;
+	/** Only answers matching this count as a hit (lists with graded or informational codes). */
+	match?: RegExp;
 	delistUrl: string;
 }
 
-// Selection documented in docs/scoring.md. UCEPROTECT is left out on purpose (paid delisting).
+// Selection and reasons: docs/scoring.md. Only lists that may be queried for free without an account
+// (checked 21.10.2026). Left out: UCEPROTECT and Backscatterer (paid fast delisting), Barracuda (needs a registered
+// resolver), SpamRATS (needs an API key), SORBS, NiX Spam, LashBack, WPBL (shut down or not answering).
 export const BLOCKLISTS: Blocklist[] = [
 	{
 		name: 'Spamhaus ZEN',
@@ -29,8 +33,18 @@ export const BLOCKLISTS: Blocklist[] = [
 		delistUrl: 'https://check.spamhaus.org/',
 	},
 	{ name: 'SpamCop', zone: 'bl.spamcop.net', major: false, ipv6: false, delistUrl: 'https://www.spamcop.net/bl.shtml' },
-	{ name: 'Barracuda', zone: 'b.barracudacentral.org', major: false, ipv6: false, delistUrl: 'https://www.barracudacentral.org/lookups' },
 	{ name: 'PSBL', zone: 'psbl.surriel.com', major: false, ipv6: false, delistUrl: 'https://psbl.org/' },
+	// Mailspike grades reputation; only "part of a spam wave" (.2) and the two worst levels L5/L4 (.10/.11) count.
+	{ name: 'Mailspike', zone: 'bl.mailspike.net', major: false, ipv6: false, match: /^127\.0\.0\.(2|10|11)$/, delistUrl: 'https://mailspike.io/ip_verify' },
+	{ name: 'Truncate (GBUdb)', zone: 'truncate.gbudb.net', major: false, ipv6: false, delistUrl: 'http://www.gbudb.com/truncate/' },
+	{ name: 'NordSpam', zone: 'bl.nordspam.com', major: false, ipv6: true, delistUrl: 'https://www.nordspam.com/delist/' },
+	{ name: 's5h.net', zone: 'all.s5h.net', major: false, ipv6: true, delistUrl: 'http://www.usenix.org.uk/content/rbl.html' },
+	{ name: '0spam', zone: 'bl.0spam.org', major: false, ipv6: false, delistUrl: 'https://www.0spam.org/' },
+	{ name: 'DroneBL', zone: 'dnsbl.dronebl.org', major: false, ipv6: false, delistUrl: 'https://dronebl.org/lookup' },
+	{ name: 'blocklist.de', zone: 'bl.blocklist.de', major: false, ipv6: false, delistUrl: 'https://www.blocklist.de/en/delist.html' },
+	// Positive lists: shown as "good reputation", never deducted or weighed against blocklists.
+	{ name: 'DNSWL', zone: 'list.dnswl.org', major: false, ipv6: false, allow: true, errorAnswers: ['127.0.0.255'], match: /^127\.0\.\d+\.[1-3]$/, delistUrl: 'https://www.dnswl.org/' },
+	{ name: 'Mailspike Positivliste', zone: 'wl.mailspike.net', major: false, ipv6: false, allow: true, match: /^127\.0\.0\.(18|19|20)$/, delistUrl: 'https://mailspike.io/' },
 ];
 
 export function isPrivateIp(ip: string): boolean {
@@ -65,8 +79,10 @@ async function queryList(resolve: DnsResolver, ip: string, list: Blocklist): Pro
 	const out = { list: list.name, delistUrl: list.delistUrl, major: list.major, ...(list.allow ? { allow: true } : {}) };
 	try {
 		const answers: string[] = await resolve(name, 'A');
-		const real = answers.filter((a) => a.startsWith('127.') && !(list.errorAnswers ?? []).includes(a));
-		if (real.length === 0) return { ...out, listed: answers.length > 0 ? null : false };
+		const valid = answers.filter((a) => a.startsWith('127.') && !(list.errorAnswers ?? []).includes(a));
+		if (answers.length > 0 && valid.length === 0) return { ...out, listed: null };
+		const real = list.match ? valid.filter((a) => list.match!.test(a)) : valid;
+		if (real.length === 0) return { ...out, listed: false };
 		const pbl = real.every((a) => (list.pblAnswers ?? []).includes(a));
 		return { ...out, listed: true, answer: real.join(','), ...(pbl ? { pbl: true } : {}) };
 	} catch (err) {
