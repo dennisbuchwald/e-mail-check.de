@@ -46,7 +46,7 @@ Typische Situationen: Kontaktformular-Mails kommen nicht an, Anbieterwechsel (z.
 - Footer: „Ein Projekt von Dennis Buchwald“ mit Link auf dennisbuchwald.de.
 - Domain: e-mail-check.de (Name = Suchbegriff, bewusst kein Markenaufbau).
 - Wachstum: **rein über SEO**, kein Build in Public, keine Kurzvideos.
-- Ziel: so schnell wie möglich Top 3 bei Google für „e mail check“ und „mail tester“.
+- Ziel: so schnell wie möglich Top 3 bei Google für „mail tester“ (Hauptkeyword der Startseite, entschieden 21.10.2026). „e mail check“ ist Nebenkeyword: Die SERP zeigt dort vor allem Adress- und Leak-Prüfer.
 - Geld: erst Traffic. Später Google-Werbung (dann mit Cookie-Banner) und/oder Test-Pakete bzw. Komfort-Funktionen.
 
 ---
@@ -59,7 +59,7 @@ Typische Situationen: Kontaktformular-Mails kommen nicht an, Anbieterwechsel (z.
 3. **Ergebnis:** Score 0–10 mit einer Nachkommastelle, Ampel, ein Satz Klartext, max. 5 Prüfpunkte, sortiert nach Schwere (Problem → Hinweis → OK).
 4. **Anleitungen pro Anbieter** direkt aus dem Ergebnis heraus, mit Kopier-Button für DNS-Werte.
 5. **Teilbarer Ergebnis-Link** für Kunden (zufällige ID, 7 Tage gültig, `noindex`). Das ist ein Unterscheidungsmerkmal.
-6. **„Lass es einrichten“-Link** bei roten Ergebnissen (dezent).
+6. **„Lass es einrichten“-Link** bei roten Ergebnissen (dezent), vorerst auf https://dennisbuchwald.de/kontakt.
 7. **Unbegrenzt kostenlos**, mit Missbrauchsschutz nach Best Practice (z. B. Rate-Limit pro IP, Richtwert ~10 Tests/Stunde).
 8. **Ratgeber- und Wissensseiten** (Abschnitt 7).
 9. Impressum, Datenschutz, AVV-Vorlage zum Download.
@@ -112,13 +112,13 @@ Fachbegriff immer klein unter dem Klartext, Rohdaten für Profis ganz unten aufk
 
 **Seitenstruktur (Hub-and-Spoke, Vorbild flinkform.de):**
 - `/` Startseite: Tool zuerst und allein im sichtbaren Bereich, darunter FAQ und Ratgeber-Teaser.
-- `/dmarc-check`, `/spf-check`: eigene Tool-Seiten (DNS-Schnellcheck).
+- `/dmarc-check`, `/spf-check`, `/dkim-check`: eigene Tool-Seiten (DNS-Schnellcheck, DKIM auch ohne Selektor).
 - `/anleitung/<anbieter>/<thema>`: z. B. `/anleitung/ionos/dmarc`.
 - `/wissen/<begriff>`: z. B. „Was ist DKIM?“.
 
 **Anbieter zum Launch:** IONOS, Strato, All-Inkl, Hetzner, Google Workspace, Microsoft 365. AT/CH-Hoster später.
 
-**Inhalte:** ca. 20 Seiten zum Launch (6 Anbieter × SPF/DKIM/DMARC + Wissensseiten). KI schreibt, Fachleute prüfen jede Anleitung vor Veröffentlichung gegen die echte Oberfläche des Anbieters.
+**Inhalte:** 26 Seiten zum Launch (Liste: `research/seo-strategie.md`, Hetzner als Sammelseite `/anleitung/hetzner/spf-dkim-dmarc`, Text-Regeln: `docs/content-briefing.md`). KI schreibt, Fachleute prüfen jede Anleitung vor Veröffentlichung gegen die echte Oberfläche des Anbieters.
 
 **Technik-SEO:** statisch und schnell, saubere Überschriften, FAQ mit echten Suchfragen (gern mit FAQ-Schema), interne Links von jeder Anleitung aufs Tool, Sitemap, Google Search Console ab Tag 1.
 
@@ -203,6 +203,14 @@ Die Animation folgt dem echten Fortschritt der Analyse (Events aus der API), nic
 - **läuft:** drehender Ring, Text fett, darunter eine Live-Zeile in IBM Plex Mono, was gerade passiert (z. B. „Suche den SPF-Eintrag deiner Domain …“, „Frage 12 Sperrlisten ab …“). Möglichst echte Details aus der API (Domain, Anzahl Listen).
 - **erledigt:** gefüllter Tinte-Kreis mit weißem Haken, ploppt mit Bounce auf
 Dazu oben eine Statuszeile mit pulsierenden Punkten („Check 3 von 6“).
+
+**Befriedigung ist ein Kernziel der UX.** Das Ergebnis soll sich „aufbauen“, nicht einfach erscheinen:
+- **Score zählt hoch:** Zahl läuft in ca. 1,2 s von 0 auf den Endwert (ease-out), der Ring füllt sich synchron (conic-gradient in Statusfarbe auf `#F0F0F2`).
+- **Prüfpunkte federn nacheinander ein** (Bounce-Kurve, ca. 90 ms Versatz), erst nachdem der Score steht.
+- **Haptik auf Mobilgeräten:** kurzes `navigator.vibrate(10)` pro erledigtem Check, kleines Doppel-Muster wenn das Ergebnis steht. Fehlertolerant (nicht jedes Gerät unterstützt es).
+- **Fertig-Moment:** Ring federt, Funken-Burst.
+- Alles respektiert `prefers-reduced-motion` (dann ohne Bewegung, Ergebnis sofort, keine Vibration).
+- Optional später: dezenter Sound beim Ergebnis, standardmäßig aus.
 
 ---
 

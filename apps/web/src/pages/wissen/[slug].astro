@@ -1,0 +1,80 @@
+---
+import { getCollection, render } from 'astro:content';
+import Article from '../../layouts/Article.astro';
+import { PROVIDERS, guideUrl } from '../../data/site';
+
+export async function getStaticPaths() {
+	const entries = await getCollection('wissen');
+	return entries.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const d = entry.data;
+const topic = (['spf', 'dkim', 'dmarc'] as const).find((t) => t === entry.id);
+const related = (await getCollection('wissen')).filter((e) => e.id !== entry.id).sort((a, b) => a.data.reihenfolge - b.data.reihenfolge);
+---
+
+<Article
+	title={d.titel}
+	seoTitle={d.seoTitel}
+	description={d.beschreibung}
+	path={`/wissen/${entry.id}`}
+	crumbs={[{ href: '/', label: 'Start' }, { href: '/wissen/spf-dkim-dmarc', label: 'Wissen' }, { href: `/wissen/${entry.id}`, label: d.titel }]}
+	kurz={d.kurz}
+	faq={d.faq}
+	quellen={d.quelle}
+	stand={d.stand}
+>
+	<Content />
+	<div slot="after" class="links">
+		{
+			topic && (
+				<section>
+					<h2 class="links-title">{topic.toUpperCase()} bei deinem Anbieter einrichten</h2>
+					<div class="chips">
+						{PROVIDERS.map((p) => (
+							<a class="chip" href={guideUrl(p.slug, topic)}>
+								{p.name}
+							</a>
+						))}
+					</div>
+					<p class="muted">
+						Erst prüfen? <a href={`/${topic}-check`}>{topic.toUpperCase()}-Eintrag prüfen</a>
+					</p>
+				</section>
+			)
+		}
+		<section>
+			<h2 class="links-title">Weiterlesen</h2>
+			<ul>{related.map((e) => <li><a href={`/wissen/${e.id}`}>{e.data.titel}</a></li>)}</ul>
+		</section>
+	</div>
+</Article>
+
+<style>
+	.links {
+		display: flex;
+		flex-direction: column;
+		gap: 36px;
+		margin-top: 48px;
+	}
+	.links-title {
+		font-size: 24px;
+		margin-bottom: 14px;
+	}
+	.chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+	.links ul {
+		margin: 0;
+		padding-left: 1.2em;
+	}
+	.links li + li {
+		margin-top: 6px;
+	}
+	.muted {
+		margin: 14px 0 0;
+	}
+</style>

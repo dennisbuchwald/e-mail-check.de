@@ -1,0 +1,273 @@
+---
+// DNS quick check without a test mail. The page topic is shown first and open.
+interface Props {
+	topic: 'spf' | 'dkim' | 'dmarc';
+	title: string;
+	intro: string;
+}
+const { topic, title, intro } = Astro.props;
+---
+
+<section class="wrap dns" data-dns data-topic={topic}>
+	<div class="dns-head">
+		<h1>{title}</h1>
+		<p class="lead">{intro}</p>
+	</div>
+	<form class="card dns-form" data-dns-form novalidate>
+		<div class="fields">
+			<div class="field grow">
+				<label for="dns-domain">Deine Domain</label>
+				<input id="dns-domain" name="domain" type="text" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="deine-firma.de" required />
+			</div>
+			{
+				topic === 'dkim' && (
+					<div class="field">
+						<label for="dns-selector">
+							Selektor <span class="opt">(optional)</span>
+						</label>
+						<input id="dns-selector" name="selector" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="z. B. selector1" />
+					</div>
+				)
+			}
+		</div>
+		<button type="submit" class="btn btn-ink">Jetzt prüfen</button>
+		<p class="form-error" data-dns-error role="alert" hidden></p>
+	</form>
+
+	<div class="dns-result" data-dns-result hidden aria-live="polite">
+		<div class="dns-summary">
+			<span class="tag" data-dns-light></span>
+			<h2 class="dns-headline" data-dns-headline tabindex="-1"></h2>
+		</div>
+		<div class="card">
+			<ul class="checks" data-dns-findings></ul>
+		</div>
+		<p class="dns-more">
+			Am zuverlässigsten ist der <a href="/">Mail-Test mit einer echten Mail</a>: Er prüft auch, ob deine Mails wirklich unterschrieben ankommen und ob dein Server auf einer Sperrliste steht.
+		</p>
+	</div>
+</section>
+
+<script>
+	import type { DnsCheckResult, Finding } from '@emc/shared';
+	import { copyText, esc, flash } from '../scripts/util';
+	import { PROVIDERS, guideUrl } from '../data/site';
+
+	const root = document.querySelector<HTMLElement>('[data-dns]')!;
+	const form = root.querySelector<HTMLFormElement>('[data-dns-form]')!;
+	const err = root.querySelector<HTMLElement>('[data-dns-error]')!;
+	const out = root.querySelector<HTMLElement>('[data-dns-result]')!;
+	const topic = root.dataset.topic as 'spf' | 'dkim' | 'dmarc';
+	const LIGHT = { ok: 'Alles gut', warn: 'Hinweise', bad: 'Probleme' } as const;
+	const BADGE: Record<Finding['status'], string> = { ok: 'OK', warn: 'Hinweis', bad: 'Problem', skip: 'Nicht geprüft' };
+
+	function render(r: DnsCheckResult) {
+		const light = root.querySelector<HTMLElement>('[data-dns-light]')!;
+		light.className = `tag is-${r.light}`;
+		light.textContent = LIGHT[r.light];
+		root.querySelector('[data-dns-headline]')!.textContent = `${r.domain}: ${r.headline}`;
+		const sorted = r.findings.slice().sort((a, b) => (a.id === topic ? -1 : b.id === topic ? 1 : 0));
+		root.querySelector('[data-dns-findings]')!.innerHTML = sorted
+			.map((f, i) => {
+				const open = i === 0;
+				const record = typeof f.raw.record === 'string' ? `<pre class="code">${esc(f.raw.record)}</pre>` : '';
+				const sug = f.suggestion
+					? `<div class="copybox"><p class="copybox-host">Neuer ${esc(f.suggestion.type)}-Eintrag, Name/Host: <code>${esc(f.suggestion.host)}</code></p><pre class="code">${esc(f.suggestion.value)}</pre><button type="button" class="chip" data-copy="${esc(f.suggestion.value)}">Wert kopieren</button></div>`
+					: '';
+				const guides = f.guide
+					? `<p class="check-text"><strong>So behebst du das:</strong> ${PROVIDERS.map((p) => `<a href="${guideUrl(p.slug, f.guide!)}">${esc(p.name)}</a>`).join(' · ')} · <a href="/wissen/${f.guide}">andere Anbieter</a></p>`
+					: '';
+				return `<li class="check is-${f.status}">
+					<button type="button" class="check-row" aria-expanded="${open}" aria-controls="dns-${i}">
+						<span class="dot" aria-hidden="true"></span>
+						<span class="check-name"><span class="check-title">${esc(f.title)}</span><span class="check-tech">${esc(f.tech)}</span></span>
+						<span class="tag">${BADGE[f.status]}</span>
+					</button>
+					<div class="check-body" id="dns-${i}" ${open ? '' : 'hidden'}>
+						<p class="check-text">${esc(f.text)}</p>${record}${sug}${guides}
+					</div></li>`;
+			})
+			.join('');
+		out.hidden = false;
+		root.querySelector<HTMLElement>('[data-dns-headline]')!.focus();
+	}
+
+	form.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		const data = new FormData(form);
+		const domain = String(data.get('domain') ?? '').trim();
+		err.hidden = true;
+		if (!domain) {
+			err.textContent = 'Gib eine Domain ein, zum Beispiel deine-firma.de.';
+			err.hidden = false;
+			return;
+		}
+		const btn = form.querySelector<HTMLButtonElement>('button[type=submit]')!;
+		btn.disabled = true;
+		btn.textContent = 'Prüfe …';
+		const params = new URLSearchParams({ domain });
+		const sel = String(data.get('selector') ?? '').trim();
+		if (sel) params.set('selector', sel);
+		try {
+			const res = await fetch(`/api/dns?${params}`);
+			const json = await res.json();
+			if (!res.ok) throw new Error(json.message ?? 'Die Prüfung ist fehlgeschlagen.');
+			render(json as DnsCheckResult);
+			history.replaceState(null, '', `?domain=${encodeURIComponent(json.domain)}`);
+		} catch (e2) {
+			err.textContent = (e2 as Error).message || 'Der Server ist gerade nicht erreichbar.';
+			err.hidden = false;
+		} finally {
+			btn.disabled = false;
+			btn.textContent = 'Jetzt prüfen';
+		}
+	});
+
+	root.addEventListener('click', async (e) => {
+		const btn = (e.target as HTMLElement).closest<HTMLElement>('button');
+		if (!btn) return;
+		if (btn.dataset.copy !== undefined) {
+			await copyText(btn.dataset.copy);
+			flash(btn, 'Kopiert');
+		} else if (btn.classList.contains('check-row')) {
+			const open = btn.getAttribute('aria-expanded') !== 'true';
+			btn.setAttribute('aria-expanded', String(open));
+			document.getElementById(btn.getAttribute('aria-controls')!)!.hidden = !open;
+		}
+	});
+
+	const pre = new URLSearchParams(location.search).get('domain');
+	if (pre) {
+		form.querySelector<HTMLInputElement>('#dns-domain')!.value = pre;
+		form.requestSubmit();
+	}
+</script>
+
+<style>
+	.dns {
+		padding-top: 56px;
+		display: flex;
+		flex-direction: column;
+		gap: 32px;
+	}
+	.dns-head {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		max-width: 820px;
+	}
+	.dns-form {
+		padding: 28px;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-end;
+		gap: 16px;
+	}
+	.fields {
+		flex: 1 1 420px;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 16px;
+	}
+	.field {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		flex: 1 1 180px;
+	}
+	.field.grow {
+		flex: 3 1 260px;
+	}
+	label {
+		font-size: 14px;
+		font-weight: 700;
+		color: var(--muted);
+	}
+	.opt {
+		font-weight: 500;
+	}
+	input {
+		height: 56px;
+		border: 2px solid var(--ink);
+		border-radius: 16px;
+		padding: 0 18px;
+		font-family: var(--font-mono);
+		font-size: 17px;
+		font-weight: 500;
+		color: var(--ink);
+		background: var(--bg);
+		width: 100%;
+	}
+	input::placeholder {
+		color: var(--inactive);
+	}
+	input:focus-visible {
+		outline: 3px solid var(--ink);
+		outline-offset: 2px;
+	}
+	.dns-form .btn {
+		flex: 0 0 auto;
+	}
+	.form-error {
+		flex-basis: 100%;
+		margin: 0;
+		font-weight: 600;
+		display: flex;
+		gap: 10px;
+		align-items: center;
+	}
+	.form-error::before {
+		content: '';
+		width: 12px;
+		height: 12px;
+		border-radius: 999px;
+		background: var(--bad);
+		flex: none;
+	}
+	.form-error[hidden] {
+		display: none;
+	}
+	.dns-result {
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+	}
+	.dns-result[hidden] {
+		display: none;
+	}
+	.dns-summary {
+		display: flex;
+		align-items: center;
+		gap: 14px;
+		flex-wrap: wrap;
+	}
+	.dns-headline {
+		font-size: clamp(24px, 3vw, 32px);
+		outline: none;
+		overflow-wrap: anywhere;
+	}
+	.dns-result .card {
+		overflow: hidden;
+	}
+	.checks {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	.dns-more {
+		margin: 0;
+		color: var(--muted);
+		font-size: 15px;
+	}
+	@media (max-width: 820px) {
+		.dns {
+			padding-top: 28px;
+		}
+		.dns-form {
+			padding: 20px;
+		}
+		.dns-form .btn {
+			width: 100%;
+		}
+	}
+</style>

@@ -1,0 +1,79 @@
+---
+import { getCollection, render } from 'astro:content';
+import Article from '../../../layouts/Article.astro';
+import { PROVIDERS, TOPIC_NAMES, guideUrl } from '../../../data/site';
+
+export async function getStaticPaths() {
+	const entries = await getCollection('anleitung');
+	return entries.map((entry) => {
+		const [anbieter, thema] = entry.id.split('/');
+		return { params: { anbieter, thema }, props: { entry } };
+	});
+}
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const d = entry.data;
+const path = `/anleitung/${entry.id}`;
+const siblings = (await getCollection('anleitung')).filter((e) => e.data.anbieter === d.anbieter && e.id !== entry.id);
+const others = PROVIDERS.filter((p) => p.slug !== d.anbieter);
+const main = d.themen[0];
+---
+
+<Article
+	title={d.titel}
+	seoTitle={d.seoTitel}
+	description={d.beschreibung}
+	path={path}
+	crumbs={[{ href: '/', label: 'Start' }, { href: '/anleitung', label: 'Anleitungen' }, { href: path, label: d.titel }]}
+	kurz={d.kurzantwort}
+	faq={d.faq}
+	quellen={d.quelle}
+	stand={d.stand}
+	geprueft={d.geprueft}
+	eyebrow={`${d.anbieterName} · ${d.themen.map((t) => TOPIC_NAMES[t].tech).join(', ')} · ca. ${d.dauer}`}
+>
+	<Content />
+	<div slot="after" class="links">
+		<section>
+			<h2 class="links-title">Mehr für {d.anbieterName}</h2>
+			<ul>
+				{siblings.map((s) => <li><a href={`/anleitung/${s.id}`}>{s.data.titel}</a></li>)}
+				{d.themen.map((t) => <li><a href={`/wissen/${t}`}>Was ist {TOPIC_NAMES[t].tech}? Einfach erklärt</a></li>)}
+				<li><a href={`/${main}-check`}>{TOPIC_NAMES[main].tech}-Eintrag deiner Domain prüfen</a></li>
+			</ul>
+		</section>
+		<section>
+			<h2 class="links-title">Andere Anbieter</h2>
+			<div class="chips">{others.map((p) => <a class="chip" href={guideUrl(p.slug, main)}>{p.name}</a>)}</div>
+			<p class="muted"><a href="/anleitung">Alle Anleitungen im Überblick</a></p>
+		</section>
+	</div>
+</Article>
+
+<style>
+	.links {
+		display: flex;
+		flex-direction: column;
+		gap: 36px;
+		margin-top: 48px;
+	}
+	.links-title {
+		font-size: 24px;
+		margin-bottom: 14px;
+	}
+	.chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+	.links ul {
+		margin: 0;
+		padding-left: 1.2em;
+	}
+	.links li + li {
+		margin-top: 6px;
+	}
+	.muted {
+		margin: 14px 0 0;
+	}
+</style>

@@ -1,0 +1,73 @@
+---
+import { getCollection, getEntry, render } from 'astro:content';
+import Article from '../../layouts/Article.astro';
+import { PROVIDERS, TOPIC_NAMES } from '../../data/site';
+
+const page = await getEntry('seiten', 'anleitung');
+if (!page) throw new Error('content/seiten/anleitung.md missing');
+const { Content } = await render(page);
+const guides = await getCollection('anleitung');
+const byProvider = PROVIDERS.map((p) => ({
+	...p,
+	items: guides
+		.filter((g) => g.data.anbieter === p.slug)
+		.sort((a, b) => ['spf', 'dkim', 'dmarc'].indexOf(a.data.themen[0]) - ['spf', 'dkim', 'dmarc'].indexOf(b.data.themen[0])),
+}));
+---
+
+<Article
+	title={page.data.titel}
+	seoTitle={page.data.seoTitel}
+	description={page.data.beschreibung}
+	path="/anleitung"
+	crumbs={[{ href: '/', label: 'Start' }, { href: '/anleitung', label: 'Anleitungen' }]}
+	kurz={page.data.intro}
+	faq={page.data.faq}
+>
+	<div slot="before" class="grid">
+		{
+			byProvider.map((p) => (
+				<section class="card tile">
+					<h2 class="tile-title">{p.name}</h2>
+					<ul>
+						{p.items.map((g) => (
+							<li>
+								<a href={`/anleitung/${g.id}`}>{g.data.themen.length > 1 ? 'SPF, DKIM und DMARC' : `${TOPIC_NAMES[g.data.themen[0]].klartext} (${TOPIC_NAMES[g.data.themen[0]].tech})`}</a>
+							</li>
+						))}
+					</ul>
+				</section>
+			))
+		}
+	</div>
+	<Content />
+</Article>
+
+<style>
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+		gap: 16px;
+		margin-bottom: 48px;
+	}
+	.tile {
+		padding: 22px 24px;
+		border-width: 2px;
+		border-radius: 24px;
+	}
+	.tile-title {
+		font-size: 22px;
+		margin-bottom: 10px;
+	}
+	.tile ul {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	.tile a {
+		display: block;
+		padding: 7px 0;
+		font-weight: 600;
+		font-size: 15px;
+	}
+</style>

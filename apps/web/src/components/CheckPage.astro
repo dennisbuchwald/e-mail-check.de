@@ -1,0 +1,52 @@
+---
+import { getEntry, render } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import DnsCheck from './DnsCheck.astro';
+import Prose from './Prose.astro';
+import Faq from './Faq.astro';
+import Cta from './Cta.astro';
+import { appSchema, breadcrumbSchema, faqSchema } from '../data/schema';
+
+interface Props {
+	topic: 'spf' | 'dkim' | 'dmarc';
+}
+const { topic } = Astro.props;
+const page = await getEntry('seiten', `${topic}-check`);
+if (!page) throw new Error(`content/seiten/${topic}-check.md missing`);
+const { Content } = await render(page);
+const path = `/${topic}-check`;
+const others = (['spf', 'dkim', 'dmarc'] as const).filter((t) => t !== topic);
+---
+
+<Base
+	title={page.data.seoTitel}
+	description={page.data.beschreibung}
+	path={path}
+	jsonLd={[{ ...appSchema, name: page.data.titel, url: `https://e-mail-check.de${path}` }, breadcrumbSchema([{ href: '/', label: 'Start' }, { href: path, label: page.data.titel }]), ...faqSchema(page.data.faq)]}
+>
+	<DnsCheck topic={topic} title={page.data.titel} intro={page.data.intro} />
+	<div class="wrap below">
+		<div class="narrow">
+			<Prose><Content /></Prose>
+			<Cta title="Vollständiger Test mit echter Mail" text="Der DNS-Check zeigt, was eingetragen ist. Ob deine Mails wirklich ankommen, zeigt der Mail-Test: SPF, DKIM, DMARC, Sperrlisten und Inhalt in 30 Sekunden." />
+			<p class="also">Auch prüfen: {others.map((t, i) => <>{i > 0 && ' · '}<a href={`/${t}-check`}>{t.toUpperCase()}-Check</a></>)}</p>
+		</div>
+		<div class="narrow"><Faq items={page.data.faq} /></div>
+	</div>
+</Base>
+
+<style>
+	.below {
+		display: flex;
+		flex-direction: column;
+		gap: 56px;
+		padding-top: 80px;
+	}
+	.narrow {
+		max-width: 780px;
+	}
+	.also {
+		color: var(--muted);
+		font-weight: 600;
+	}
+</style>

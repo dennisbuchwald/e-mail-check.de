@@ -1,0 +1,48 @@
+---
+import Article from '../layouts/Article.astro';
+---
+
+<Article
+	title="AVV-Vorlage für Agenturen"
+	seoTitle="AVV-Vorlage für Agenturen | e-mail-check.de"
+	description="Du testest Mails deiner Kunden mit e-mail-check.de? Hier steht, welche Daten dabei verarbeitet werden, und eine Vorlage für die Auftragsverarbeitung."
+	path="/avv"
+	crumbs={[{ href: '/', label: 'Start' }, { href: '/avv', label: 'AVV-Vorlage' }]}
+	cta={false}
+	noindex
+>
+	<p class="draft"><strong>Entwurf:</strong> Diese Vorlage ist noch nicht rechtlich geprüft. Sie wird vor dem Livegang fachlich freigegeben und dann zusätzlich als PDF zum Download angeboten.</p>
+
+	<h2>Wann brauchst du das?</h2>
+	<p>Wenn du als Agentur mit e-mail-check.de Mails testest, die personenbezogene Daten deiner Kunden enthalten (zum Beispiel echte Namen oder Adressen in der Testmail), kann eine Vereinbarung zur Auftragsverarbeitung nach Art. 28 DSGVO sinnvoll sein. Am einfachsten vermeidest du das: Schick Testmails ohne echte Kundendaten.</p>
+
+	<h2>Was wir verarbeiten</h2>
+	<ul>
+		<li><strong>Gegenstand:</strong> Technische Prüfung einer an eine Testadresse gesendeten E-Mail auf Zustellbarkeit (SPF, DKIM, DMARC, Sperrlisten, Spamfilter-Bewertung).</li>
+		<li><strong>Daten:</strong> Inhalt der Testmail (nur flüchtig im Arbeitsspeicher), technische Absenderdaten (IP-Adresse, Servername, Absenderadresse), Prüfergebnis.</li>
+		<li><strong>Dauer:</strong> Mail-Inhalt nur für die Dauer der Prüfung (Sekunden), Prüfergebnis 7 Tage.</li>
+		<li><strong>Ort:</strong> Server in Deutschland. [Hosting-Anbieter eintragen]</li>
+		<li><strong>Unterauftragsverarbeiter:</strong> [Hosting-Anbieter]. Sperrlisten-Betreiber erhalten nur die Server-IP als DNS-Anfrage.</li>
+	</ul>
+
+	<h2>Technische und organisatorische Maßnahmen (Kurzfassung)</h2>
+	<ul>
+		<li>Mail-Inhalte werden nie auf Datenträger geschrieben.</li>
+		<li>Ergebnisse nur über zufällige, nicht erratbare Links (128 Bit) erreichbar, nicht in Suchmaschinen.</li>
+		<li>Automatische Löschung nach 7 Tagen.</li>
+		<li>Verschlüsselte Übertragung (HTTPS, STARTTLS für eingehende Mails). [nach Livegang bestätigen]</li>
+		<li>Getrennte Dienste in Containern, Zugriff nur für den Betreiber.</li>
+	</ul>
+
+	<h2>Vorlage anfordern</h2>
+	<p>[Ablauf festlegen, z. B. PDF zum Download oder per Mail an Adresse aus dem Impressum.]</p>
+</Article>
+
+<style>
+	.draft {
+		border: 2px solid var(--ink);
+		border-radius: 16px;
+		padding: 14px 16px;
+		background: var(--divider);
+	}
+</style>

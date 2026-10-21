@@ -31,7 +31,7 @@ button{font-family:inherit}
 .typing span{width:8px;height:8px;border-radius:999px;background:#1D1D1F;animation:blink 1.2s infinite}
 .typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
 .st{width:26px;height:26px;border-radius:999px;box-sizing:border-box;flex:none;display:flex;align-items:center;justify-content:center}
-.st-pending{border:2px solid #D4D4D8}
+.st-pending{border:2px dashed #B8B8BE}
 .st-active{border:3px solid #E4E4E7;border-top-color:#1D1D1F;animation:spin .8s linear infinite}
 .st-done{background:#1D1D1F;animation:pop .45s cubic-bezier(0.34,1.56,0.64,1) both}
 .prog{position:absolute;inset:0;border-radius:999px}
@@ -144,7 +144,7 @@ button{font-family:inherit}
 <sc-for list="{{ steps }}" as="st" hint-placeholder-count="6">
 <div style="display: flex; align-items: center; gap: 16px">
 <span class="{{ st.icClass }}"><sc-if value="{{ st.done }}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-10"></path></svg></sc-if></span>
-<span style="{{ st.lblStyle }}">{{ st.label }}</span>
+<span style="display: flex; flex-direction: column; gap: 3px; min-width: 0"><span style="{{ st.lblStyle }}">{{ st.label }}</span><sc-if value="{{ st.active }}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; line-height: 18px; color: #4D4F4E; font-family: 'IBM Plex Mono', monospace">{{ st.detail }}</span></sc-if></span>
 </div>
 </sc-for>
 </div>
@@ -254,10 +254,11 @@ class Component extends DCLogic {
     const s = this.state;
     const step = s.step || 1;
     const stepLabels = ['Mail empfangen', 'Absender prüfen', 'Unterschrift prüfen', 'Schutzregel prüfen', 'Server-Ruf prüfen', 'Inhalt analysieren'];
+    const details = ['Warte auf den Eingang deiner Mail …', 'Suche den SPF-Eintrag deiner Domain …', 'Prüfe die DKIM-Unterschrift …', 'Lese deine DMARC-Regel …', 'Frage 12 Sperrlisten ab …', 'Analysiere Betreff, Links und Inhalt …'];
     const steps = stepLabels.map((label, i) => {
       const idx = i + 1;
       const st = step > idx ? 'done' : (step === idx ? 'active' : 'pending');
-      return { label, done: st === 'done', icClass: 'st st-' + st, lblStyle: 'font-size: 15px; ' + (st === 'pending' ? 'color: #6B6D6C; font-weight: 500' : 'color: #1D1D1F; font-weight: 700') };
+      return { label, active: st === 'active', detail: details[i], done: st === 'done', icClass: 'st st-' + st, lblStyle: 'font-size: 15px; ' + (st === 'pending' ? 'color: #6B6D6C; font-weight: 500' : 'color: #1D1D1F; font-weight: 700') };
     });
     const badges = { ok: 'OK', warn: 'Hinweis', bad: 'Problem' };
     const base = [

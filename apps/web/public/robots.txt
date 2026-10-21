@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /ergebnis/
+Disallow: /api/
+
+Sitemap: https://e-mail-check.de/sitemap-index.xml

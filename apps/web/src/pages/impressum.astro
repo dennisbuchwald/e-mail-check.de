@@ -1,0 +1,26 @@
+---
+import Article from '../layouts/Article.astro';
+---
+
+<Article title="Impressum" seoTitle="Impressum | e-mail-check.de" description="Impressum von e-mail-check.de, einem Projekt von Dennis Buchwald." path="/impressum" crumbs={[{ href: '/', label: 'Start' }, { href: '/impressum', label: 'Impressum' }]} cta={false}>
+	<p class="draft"><strong>Platzhalter:</strong> Die Angaben in eckigen Klammern trägt Dennis vor dem Livegang ein.</p>
+	<h2>Angaben gemäß § 5 DDG</h2>
+	<p>Dennis Buchwald<br />[Straße und Hausnummer]<br />[PLZ Ort]</p>
+	<h2>Kontakt</h2>
+	<p>E-Mail: [E-Mail-Adresse]<br />Telefon: [Telefonnummer]</p>
+	<h2>Umsatzsteuer</h2>
+	<p>[Umsatzsteuer-Identifikationsnummer, falls vorhanden]</p>
+	<h2>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h2>
+	<p>Dennis Buchwald, [Anschrift wie oben]</p>
+	<h2>Haftung für Inhalte und Links</h2>
+	<p>Die Anleitungen auf dieser Website werden sorgfältig erstellt. Anbieter ändern ihre Oberflächen aber regelmäßig, deshalb übernehmen wir keine Gewähr für Vollständigkeit und Aktualität. Für Inhalte externer Links sind die jeweiligen Betreiber verantwortlich.</p>
+</Article>
+
+<style>
+	.draft {
+		border: 2px solid var(--ink);
+		border-radius: 16px;
+		padding: 14px 16px;
+		background: var(--divider);
+	}
+</style>
