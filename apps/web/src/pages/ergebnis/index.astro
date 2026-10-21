@@ -1,9 +1,9 @@
 ---
-// Shared result shell. Caddy serves this file for /ergebnis/<id>; the id is read client-side.
+// Shared result shell. Caddy serves this file for /ergebnis/<id> and fills in the server-rendered result (infra/caddy/site.caddy).
 import Base from '../../layouts/Base.astro';
 import Tool from '../../components/Tool.astro';
 ---
 
-<Base title="Ergebnis des Mail-Tests | e-mail-check.de" description="Ergebnis eines Mail-Tests auf e-mail-check.de." path="/ergebnis" noindex tool>
+<Base title="Ergebnis des Mail-Tests | e-mail-check.de" description="Ergebnis eines Mail-Tests auf e-mail-check.de." path="/ergebnis" noindex tool="result">
 	<Tool mode="result" />
 </Base>

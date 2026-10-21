@@ -133,7 +133,7 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 
 	<!-- RESULT (packages/shared/src/result-view.ts). On /ergebnis/<id> Caddy fills it server-side, see infra/caddy/site.caddy. -->
 	<div class="screen result wrap" data-screen="result" hidden={mode !== 'result'}>
-		<div data-result-view>{mode === 'result' && <Fragment set:html={'<!--emc{httpInclude (printf "/api/results/%s/view" (placeholder "http.regexp.result.1"))}emc-->'} />}</div>
+		<div data-result-view>{mode === 'result' && <Fragment set:html={'<!--rv--><!--emc{httpInclude (printf "/api/results/%s/view" (placeholder "http.regexp.result.1"))}emc--><!--/rv-->'} />}</div>
 	</div>
 
 	<!-- GUIDE -->
