@@ -6,7 +6,7 @@ import { TestService } from '../src/service.ts';
 import { Store } from '../src/store.ts';
 import { fakeResolver, fixture, GOOD_IP } from './helpers.ts';
 
-const PORT = 25251;
+let PORT = 0;
 const store = new Store(':memory:');
 const service = new TestService({
 	store,
@@ -16,7 +16,8 @@ const service = new TestService({
 });
 const server = createSmtpServer(service, { hostname: 'mx.test', maxMessageBytes: 1024 * 1024, allowXclient: true });
 
-beforeAll(() => new Promise<void>((r) => server.listen(PORT, r)));
+// Port 0: the OS picks a free one, so parallel runs and CI never collide.
+beforeAll(() => new Promise<void>((r) => server.listen(0, () => ((PORT = (server.server.address() as { port: number }).port), r()))));
 afterAll(() => new Promise<void>((r) => server.close(() => r())));
 
 /** Minimal SMTP client: sends commands one by one, returns the reply codes. */

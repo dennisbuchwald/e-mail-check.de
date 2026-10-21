@@ -21,6 +21,10 @@ function selfSigned(cn: string) {
 	return { key, cert };
 }
 
+/** Listens on a free port and returns it. */
+const listenFree = (server: ReturnType<typeof createSmtpServer>) =>
+	new Promise<number>((r) => server.listen(0, () => r((server.server.address() as { port: number }).port)));
+
 /** Speaks SMTP up to STARTTLS and returns the CN of the certificate the server presents. */
 function presentedCn(port: number): Promise<string> {
 	return new Promise((resolve, reject) => {
@@ -68,15 +72,15 @@ describe('STARTTLS certificate', () => {
 		copy(first);
 		const service = new TestService({ store: new Store(':memory:'), testDomain: 'test.e-mail-check.de', testTtlMinutes: 60, deps: { resolver: fakeResolver(), mta: 'mx.test', resultTtlDays: 7, scanContent: null } });
 		const server = createSmtpServer(service, { hostname: 'mx.test', maxMessageBytes: 1024, allowXclient: false, tls: readTls(files)! });
-		await new Promise<void>((r) => server.listen(25261, r));
+		const port = await listenFree(server);
 		const stop = watchTls(server, files, 50);
 		try {
-			expect(await presentedCn(25261)).toBe('erst');
+			expect(await presentedCn(port)).toBe('erst');
 			copy(selfSigned('erneuert'));
 			const later = new Date(Date.now() + 5000);
 			utimesSync(files.cert, later, later);
-			await new Promise((r) => setTimeout(r, 200));
-			expect(await presentedCn(25261)).toBe('erneuert');
+			// Wait for the reload itself instead of a fixed pause (slow CI runners).
+			await expect.poll(() => presentedCn(port), { timeout: 5000, interval: 60 }).toBe('erneuert');
 		} finally {
 			stop();
 			await new Promise<void>((r) => server.close(() => r()));
@@ -88,12 +92,12 @@ describe('STARTTLS certificate', () => {
 		const store = new Store(':memory:');
 		const service = new TestService({ store, testDomain: 'test.e-mail-check.de', testTtlMinutes: 60, deps: { resolver: fakeResolver(), mta: 'mx.test', resultTtlDays: 7, scanContent: null } });
 		const server = createSmtpServer(service, { hostname: 'mx.test', maxMessageBytes: 1 << 20, allowXclient: false, tls: readTls(c)! });
-		await new Promise<void>((r) => server.listen(25262, r));
+		const port = await listenFree(server);
 		const test = service.createTest();
 		const done = new Promise<void>((r) => service.subscribe(test.id, (e) => e.type === 'done' && r()));
 		try {
 			await new Promise<void>((resolve, reject) => {
-				const sock = createConnection(25262, '127.0.0.1');
+				const sock = createConnection(port, '127.0.0.1');
 				let buf = '';
 				sock.on('data', (d) => {
 					buf += d.toString();

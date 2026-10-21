@@ -78,13 +78,17 @@ test('start → mail → animation → result → guide → share', async ({ pag
 	expect(html).toContain('Hier landet viel im Spam.');
 });
 
-test('DNS quick check shows findings for a real domain', async ({ page }) => {
-	await page.goto('/dmarc-check');
-	await page.getByLabel('Deine Domain').fill('example.com');
-	await page.getByRole('button', { name: 'Jetzt prüfen' }).click();
-	await expect(page.locator('[data-dns-headline]')).toContainText('example.com');
-	await expect(page.locator('[data-dns-findings] .check')).toHaveCount(3);
-	await expect(page.locator('[data-dns-findings] .check').first()).toContainText('DMARC');
+test.describe('real DNS', () => {
+	// The only test that asks the internet (example.com via unbound): retried, so a slow resolver is no red build.
+	test.describe.configure({ retries: 2 });
+	test('DNS quick check shows findings for a real domain', async ({ page }) => {
+		await page.goto('/dmarc-check');
+		await page.getByLabel('Deine Domain').fill('example.com');
+		await page.getByRole('button', { name: 'Jetzt prüfen' }).click();
+		await expect(page.locator('[data-dns-headline]')).toContainText('example.com');
+		await expect(page.locator('[data-dns-findings] .check')).toHaveCount(3);
+		await expect(page.locator('[data-dns-findings] .check').first()).toContainText('DMARC');
+	});
 });
 
 test('expired or unknown result shows a friendly message', async ({ page }) => {

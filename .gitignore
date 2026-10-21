@@ -24,3 +24,6 @@ skills-lock.json
 
 # counter backups pulled by scripts/deploy.sh
 /backups/
+
+# test coverage reports
+coverage/

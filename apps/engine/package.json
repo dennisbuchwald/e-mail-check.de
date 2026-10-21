@@ -6,7 +6,8 @@
     "dev": "node --watch --disable-warning=ExperimentalWarning src/main.ts",
     "start": "node --disable-warning=ExperimentalWarning src/main.ts",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:coverage": "vitest run --coverage --coverage.provider=v8 --coverage.include='src/**'"
   },
   "dependencies": {
     "@emc/shared": "workspace:*",
@@ -20,6 +21,7 @@
     "@types/mailparser": "^3.9.0",
     "@types/node": "^26.6.5",
     "@types/smtp-server": "^3.5.13",
+    "@vitest/coverage-v8": "5.0.5",
     "typescript": "^7.0.2",
     "vitest": "^5.0.5"
   },
