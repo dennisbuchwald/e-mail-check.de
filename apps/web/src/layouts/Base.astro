@@ -14,7 +14,8 @@ interface Props {
 	description: string;
 	/** Path without trailing slash, e.g. "/spf-check". Defaults to current path. */
 	path?: string;
-	noindex?: boolean;
+	/** true: noindex, nofollow without canonical (results, 404). "follow": noindex, follow with canonical (legal pages). */
+	noindex?: boolean | 'follow';
 	jsonLd?: Record<string, unknown>[];
 	/** Tool pages: body carries the tool state (start, wait, result …); "result" for /ergebnis/<id>, so the layout is right before JS. */
 	tool?: boolean | 'result';
@@ -35,7 +36,8 @@ const ogImage = new URL('/og.png', SITE.url).href;
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>{title}</title>
 		<meta name="description" content={description} />
-		{noindex ? <meta name="robots" content="noindex, nofollow" /> : <link rel="canonical" href={canonical} />}
+		{noindex === true ? <meta name="robots" content="noindex, nofollow" /> : <link rel="canonical" href={canonical} />}
+		{noindex === 'follow' && <meta name="robots" content="noindex, follow" />}
 		<link rel="preload" href={frauncesUrl} as="font" type="font/woff2" crossorigin />
 		<link rel="preload" href={interUrl} as="font" type="font/woff2" crossorigin />
 		<link rel="icon" href="/favicon.ico" sizes="32x32" />

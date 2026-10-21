@@ -7,8 +7,8 @@ export default defineConfig({
 	build: { format: 'file', inlineStylesheets: 'always' },
 	integrations: [
 		sitemap({
-			// Result pages and legal drafts are not for search engines.
-			filter: (page) => !/\/(ergebnis|404)/.test(page),
+			// Result pages and legal pages are not for search engines (legal pages stay reachable, noindex, follow).
+			filter: (page) => !/\/(ergebnis|404|impressum|datenschutz|avv)(\/|$)/.test(page),
 		}),
 	],
 	server: { port: 4321 },

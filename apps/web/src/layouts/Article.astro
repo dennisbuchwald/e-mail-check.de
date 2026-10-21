@@ -20,7 +20,7 @@ interface Props {
 	quellen?: { titel: string; url: string }[];
 	stand?: string;
 	geprueft?: boolean;
-	noindex?: boolean;
+	noindex?: boolean | 'follow';
 	cta?: boolean;
 	eyebrow?: string;
 	/** Header line figure for the topic (data/figures.ts). */
