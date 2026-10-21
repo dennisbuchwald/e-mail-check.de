@@ -62,7 +62,8 @@ services:
     environment:
       SITE_DOMAIN: ${SITE_DOMAIN:?SITE_DOMAIN fehlt in .env}
       MX_HOSTNAME: ${MX_HOSTNAME}
-      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL fehlt in .env}
+      PREVIEW_USER: ${PREVIEW_USER:-vorschau}
+      PREVIEW_HASH: ${PREVIEW_HASH:?PREVIEW_HASH fehlt in .env}
     command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile.prod", "--adapter", "caddyfile"]
     volumes:
       - caddy-data:/data
