@@ -23,7 +23,7 @@ export function createApi(opts: ApiOptions): Hono {
 	const app = new Hono().basePath('/api');
 	const testLimit = new RateLimiter(opts.rateLimit.tests, 3600_000);
 	const dnsLimit = new RateLimiter(opts.rateLimit.dns, 3600_000);
-	const statsLimit = new RateLimiter(120, 3600_000);
+	const statsLimit = new RateLimiter(600, 3600_000);
 	setInterval(() => {
 		testLimit.sweep();
 		dnsLimit.sweep();

@@ -13,6 +13,8 @@ export default defineConfig({
 	],
 	server: { port: 4321 },
 	vite: {
+		// Never inline scripts: the CSP only allows script-src 'self'.
+		build: { assetsInlineLimit: 0 },
 		server: {
 			proxy: { '/api': { target: process.env.API_URL ?? 'http://localhost:8787', changeOrigin: false } },
 		},
