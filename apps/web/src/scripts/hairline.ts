@@ -16,18 +16,6 @@ export function initHairline(root: ParentNode = document): void {
 	let lib: Promise<Record<string, Make>> | null = null;
 	const load = () => (lib ??= import('./hairline-figures') as unknown as Promise<Record<string, Make>>);
 
-	// Path between the cards fills once the section is in view.
-	const sec = root.querySelector<HTMLElement>('[data-route-sec]');
-	if (sec) {
-		const once = new IntersectionObserver((entries) => {
-			if (entries.some((e) => e.isIntersecting)) {
-				sec.classList.add('is-seen');
-				once.disconnect();
-			}
-		}, { threshold: 0.25 });
-		once.observe(sec);
-	}
-
 	// One figure per element, created exactly once (two observer entries can arrive before the module has loaded).
 	const figures = new Map<HTMLElement, Promise<Figure | null>>();
 	const figureFor = (el: HTMLElement) => {
