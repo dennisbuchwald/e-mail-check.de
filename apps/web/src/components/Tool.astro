@@ -30,6 +30,8 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 			<h1>{title}</h1>
 			{intro && <p class="lead">{intro}</p>}
 		</div>
+		<div class="mw-wrap">
+		<div class="glow" aria-hidden="true"><i class="g-base"></i><i class="g-res"></i></div>
 		<div class="card mailwin">
 			<div class="mw-head"><span class="mw-title">Neue Nachricht</span><span class="mono mw-tag">Testmail</span></div>
 			<div class="mw-row">
@@ -51,6 +53,7 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 				</span>
 			</div>
 		</div>
+		</div>
 		<ul class="trust" aria-label="Datenschutz">
 			<li><span class="chk" aria-hidden="true"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#111113" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4 10-10"></path></svg></span>Server in Deutschland</li>
 			<li><span class="chk" aria-hidden="true"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#111113" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4 10-10"></path></svg></span>Testmail sofort gelöscht</li>
@@ -63,6 +66,7 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 
 	<!-- WAIT / CHECK -->
 	<div class="screen wait" data-screen="wait" hidden>
+		<div class="glow" aria-hidden="true" data-glow><i class="g-base"></i><i class="g-res"></i></div>
 		<div class="wait-visual">
 			<div class="orb" data-orb>
 				<div class="prog" data-prog></div>
@@ -260,6 +264,85 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 		background-size: 22px 22px;
 		-webkit-mask-image: radial-gradient(ellipse 60% 55% at 50% 42%, #000 20%, transparent 75%);
 		mask-image: radial-gradient(ellipse 60% 55% at 50% 42%, #000 20%, transparent 75%);
+	}
+
+	/* One soft green glow behind the mail window (V2 addendum). Breathes while checking,
+	   takes the result colour at the end, then fades out. Only transform/opacity move. */
+	.mw-wrap {
+		position: relative;
+		width: 100%;
+		max-width: 760px;
+	}
+	.mw-wrap .mailwin {
+		position: relative;
+		z-index: 1;
+	}
+	.glow {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		width: 760px;
+		height: 300px;
+		pointer-events: none;
+		transform: translate(-50%, -38%);
+	}
+	.glow i {
+		position: absolute;
+		inset: 0;
+		border-radius: 50%;
+		filter: blur(30px);
+		transition: opacity 0.3s ease;
+	}
+	.g-base {
+		background: radial-gradient(closest-side, rgba(2, 202, 80, 0.14), rgba(2, 202, 80, 0));
+	}
+	.g-res {
+		opacity: 0;
+		background: radial-gradient(closest-side, var(--glow-c, rgba(2, 202, 80, 0.14)), rgba(255, 255, 255, 0));
+	}
+	.wait .glow {
+		transform: translate(-50%, -50%);
+	}
+	.wait > :not(.glow) {
+		position: relative;
+		z-index: 1;
+	}
+	:global(body[data-tool-state='wait']) .wait .glow:not(.fade) {
+		animation: glow-breathe 2.4s ease-in-out infinite alternate;
+	}
+	.glow[data-result='ok'] {
+		--glow-c: rgba(2, 202, 80, 0.14);
+	}
+	.glow[data-result='warn'] {
+		--glow-c: rgba(255, 138, 0, 0.14);
+	}
+	.glow[data-result='bad'] {
+		--glow-c: rgba(255, 64, 52, 0.14);
+	}
+	.glow[data-result] .g-res {
+		opacity: 1;
+	}
+	.glow[data-result] .g-base {
+		opacity: 0;
+	}
+	.glow.fade {
+		opacity: 0;
+		transition: opacity 1.5s ease;
+	}
+	@keyframes glow-breathe {
+		from {
+			opacity: 0.7;
+			transform: translate(-50%, -50%) scale(0.96);
+		}
+		to {
+			opacity: 1;
+			transform: translate(-50%, -50%) scale(1.04);
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		:global(body[data-tool-state='wait']) .wait .glow:not(.fade) {
+			animation: none;
+		}
 	}
 
 	/* HERO */
@@ -1325,6 +1408,10 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 		}
 		.hero h1 {
 			font-size: 40px;
+		}
+		.glow {
+			width: 420px;
+			height: 220px;
 		}
 		.hero .lead {
 			font-size: 16px;
