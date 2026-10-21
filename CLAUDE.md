@@ -214,7 +214,7 @@ Die Animation folgt dem echten Fortschritt der Analyse (Events aus der API), nic
 Dazu oben eine Statuszeile mit pulsierenden Punkten („Check 3 von 6“).
 
 **Befriedigung ist ein Kernziel der UX.** Das Ergebnis soll sich „aufbauen“, nicht einfach erscheinen:
-- **Score zählt hoch:** Zahl läuft in ca. 1,2 s von 0 auf den Endwert (ease-out), der Ring füllt sich synchron (conic-gradient in Statusfarbe auf `#F0F0F2`).
+- **Score zählt hoch:** Zahl läuft ruhig in 2,4 s von 0 auf den Endwert (ease-out-cubic), die Teil-Score-Balken laufen mit derselben Dauer und Kurve. Die Breite ist für „10,0“ reserviert, damit beim Zählen nichts daneben verrutscht (Dennis 21.10.2026: vorher zu schnell und die Balken rutschten). Das Band-Label blendet erst ein, wenn die Zahl steht.
 - **Prüfpunkte federn nacheinander ein** (Bounce-Kurve, ca. 90 ms Versatz), erst nachdem der Score steht.
 - **Haptik auf Mobilgeräten:** kurzes `navigator.vibrate(10)` pro erledigtem Check, kleines Doppel-Muster wenn das Ergebnis steht. Fehlertolerant (nicht jedes Gerät unterstützt es).
 - **Fertig-Moment:** Ring federt, Funken-Burst.
