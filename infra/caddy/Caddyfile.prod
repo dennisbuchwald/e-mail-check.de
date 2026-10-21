@@ -1,7 +1,6 @@
 # Production. Values come from .env (see .env.example).
 {
 	admin off
-	email {$ACME_EMAIL}
 	# Fixed issuer so the certificate path for the MX hostname is predictable (certsync copies it).
 	cert_issuer acme https://acme-v02.api.letsencrypt.org/directory
 }
@@ -10,6 +9,13 @@ import /etc/caddy/site.caddy
 
 {$SITE_DOMAIN} {
 	header Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	# Preview until go-live: password for everything except the health check.
+	# Go-live: delete these lines (see docs/DEPLOYMENT.md).
+	@preview not path /api/health
+	basic_auth @preview {
+		{$PREVIEW_USER} {$PREVIEW_HASH}
+	}
+	header @preview X-Robots-Tag "noindex, nofollow"
 	import site
 }
 
