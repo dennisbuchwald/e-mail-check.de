@@ -3,6 +3,7 @@
 // so everything is visible without JavaScript. JS only switches stations and runs the animations.
 import { ruleTitle } from './rspamd.ts';
 import { BANDS, STATUS_RANK, verdictFor } from './scoring.ts';
+import { sceneConfig, STATE_WORD } from './scene.ts';
 import { initialStation, stationsOf, type Station, type StationId } from './stations.ts';
 import type { MailResult, Status } from './types.ts';
 
@@ -245,11 +246,14 @@ export function renderResultView(r: MailResult, opts: ResultViewOptions): string
 	const at = new Date(r.mail?.receivedAt ?? r.createdAt);
 	const when = `${at.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Berlin' })} · ${at.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' })}`;
 	const duration = rawOf(stations.find((s) => s.id === 'transport'), 'transport').durationSec;
+	// The replay of this one mail (apps/web/scenes/mailroute.js): states per station plus details for the objects.
+	const scene = sceneConfig(stations);
+	const sceneLabel = `Der Weg deiner Mail: ${stations.map((st, i) => `Station ${i + 1} ${st.title}: ${STATE_WORD[st.status]}`).join(', ')}.`;
 
 	const tabs = stations
 		.map(
 			(st, i) => `<button type="button" class="rv-st is-${st.status}" role="tab" id="rv-tab-${i}" aria-controls="rv-panel-${i}" aria-selected="${i === open}" tabindex="${i === open ? 0 : -1}" data-station="${i}" style="--i:${i}">
-<span class="rv-node">${svg(ICONS[st.id])}<span class="rv-badge" aria-hidden="true">${BADGE[st.status]}</span></span><span class="rv-t">${esc(st.title)}</span><span class="rv-v mono">${esc(stationValue(st))}</span><span class="sr-only">: ${STATUS_WORD[st.status]}</span></button>`,
+<span class="rv-node">${svg(ICONS[st.id])}<span class="rv-badge" aria-hidden="true">${BADGE[st.status]}</span></span><span class="sr-only">Station ${i + 1} </span><span class="rv-t">${esc(st.title)}</span><span class="rv-v mono">${esc(stationValue(st))}</span><span class="sr-only">: ${STATE_WORD[st.status]}</span></button>`,
 		)
 		.join('');
 	const panels = stations
@@ -292,7 +296,8 @@ export function renderResultView(r: MailResult, opts: ResultViewOptions): string
 </div>
 ${r.authWarning ? `<div class="card rv-exception" data-auth-warning><span class="tag is-warn">Ausnahme</span><span>SPF, DKIM oder DMARC schlägt fehl. Darum warnen wir, egal wie hoch die Zahl ist: Das allein kann Mails in den Spam schicken.</span></div>` : ''}
 <div class="card rv-route">
-	<div class="rv-route-head"><span class="eyebrow">Der Weg deiner Mail · 6 Stationen</span>${typeof duration === 'number' ? `<span class="mono rv-dur">Unterwegs ${duration} s</span>` : ''}</div>
+	<div class="rv-route-head"><span class="eyebrow">Der Weg deiner Mail · 6 Stationen</span><span class="rv-route-tools">${typeof duration === 'number' ? `<span class="mono rv-dur">Unterwegs ${duration} s</span>` : ''}<button type="button" class="rv-replay" data-action="replay" hidden>↻ Nochmal abspielen</button></span></div>
+	<div class="rv-scene" data-rv-scene data-states="${scene.states.join(',')}" data-details="${esc(JSON.stringify(scene.details))}" data-label="${esc(sceneLabel)}"></div>
 	<div class="rv-track${firstBad >= 0 ? ' has-break' : ''}" role="tablist" aria-label="Stationen deiner Mail" style="--fill:${fill}%"><span class="rv-line" aria-hidden="true"><span class="rv-fill"></span></span>${tabs}</div>
 	${firstBad >= 0 ? `<p class="rv-stuck" style="--at:${firstBad}">Hier bleibt deine Mail hängen.</p>` : ''}
 	<div class="rv-panels">${panels}</div>

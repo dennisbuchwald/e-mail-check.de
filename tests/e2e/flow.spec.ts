@@ -26,12 +26,19 @@ test('start → mail → animation → result → guide → share', async ({ pag
 	await expect(page.locator('[data-auth-warning]')).toBeVisible();
 	await expect(page.locator('[data-mh-from]')).toHaveText('max@example.com');
 
-	// Six stations as tabs; the first one with a problem is open, the route breaks there.
+	// Six stations as tabs (chips under the scene).
 	const tabs = page.getByRole('tab', { name: /Absender|Unterschrift|Schutzregel|Server-Ruf|Transport|Posteingang/ });
 	await expect(tabs).toHaveCount(6);
-	await expect(tabs.first()).toHaveAttribute('aria-selected', 'true');
+	// The scene replays this mail: the replay button appears when the envelope has arrived, the verdict is visible.
+	await expect(page.locator('[data-rv-scene] svg')).toBeVisible();
+	await page.locator('[data-rv-scene]').scrollIntoViewIfNeeded();
+	await expect(page.locator('[data-action="replay"]')).toBeVisible({ timeout: 10_000 });
+	await expect(page.locator('.rv-verdict')).toHaveCSS('opacity', '1');
+	await expect(page.locator('[data-rv-scene] .badge')).not.toHaveAttribute('r', '0');
+	await expect(page.locator('[data-rv-scene]')).toHaveAttribute('aria-label', /Station 1 Absender/);
+	// After the replay the worst station is open (with a hard stop: the station that stopped the mail).
+	await expect(page.locator('.rv-st[aria-selected="true"]')).toHaveClass(/is-bad/);
 	await expect(page.locator('.rv-st.is-bad').first()).toBeVisible();
-	await expect(page.getByText('Hier bleibt deine Mail hängen.')).toBeVisible();
 	await expect(page.locator('.rv-panel[data-open] .rv-fix')).toContainText(/\+\d+,\d Pkt\. bei Behebung/);
 
 	// Keyboard: arrow keys move between stations (tablist).

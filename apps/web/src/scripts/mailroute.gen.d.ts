@@ -1,5 +1,11 @@
 // Types for the generated scene module (scripts/build-mailroute.mjs).
-type Engine = { set(v: number): void; destroy(): void };
+type Engine = {
+	set(v: number): void;
+	jump(v: number): void;
+	configure(cfg: Record<string, unknown>): void;
+	focus(i: number | null): void;
+	destroy(): void;
+};
 type Read = { textContent: string };
 export declare const HL: {
 	inject(root: Node): void;

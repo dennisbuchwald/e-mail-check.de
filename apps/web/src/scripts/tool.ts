@@ -392,6 +392,8 @@ export function initTool(): void {
 			await newTest();
 			window.scrollTo({ top: 0 });
 			$<HTMLButtonElement>('.copy-address').focus({ preventScroll: true });
+		} else if (action === 'replay') {
+			view.replayScene();
 		} else if (action === 'source') {
 			const panel = $('#rv-source');
 			const open = panel.hidden;

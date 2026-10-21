@@ -1,12 +1,28 @@
 // "Der Weg deiner Mail" as one hairline scene (apps/web/scenes/mailroute.js, built by scripts/build-mailroute.mjs).
-// Same shape as the package's figures: mailroute(el, { progress, play, theme, label }) → { update, destroy }.
-// progress 0..1 moves the envelope; play loops it on its own (wait mode, phones); reduced motion shows the end state.
+// Same shape as the package's figures: mailroute(el, options) → { update, replay, focus, destroy }.
+// mode "scroll" (start page): progress 0..1 comes from outside, play loops it.
+// mode "replay" (result): the envelope runs the route of one mail once, with the states of its stations,
+// then onDone fires. Reduced motion shows the end state at once.
 import { HL, spec } from './mailroute.gen.js';
 
-export type MailrouteOptions = { progress?: number; play?: boolean; theme?: 'auto' | 'light' | 'dark'; label?: string };
-export type Mailroute = { update(o: MailrouteOptions): void; destroy(): void };
+export type SceneState = 'ok' | 'warn' | 'bad' | 'skip';
+export type MailrouteOptions = {
+	progress?: number;
+	play?: boolean;
+	theme?: 'auto' | 'light' | 'dark';
+	label?: string;
+	mode?: 'scroll' | 'replay';
+	states?: SceneState[];
+	details?: Record<string, unknown>;
+	/** Extra scale when focusing a station (0.15 = 1.15×). */
+	zoom?: number;
+	onSelect?: (station: number) => void;
+	onDone?: () => void;
+};
+export type Mailroute = { update(o: MailrouteOptions): void; replay(): void; focus(station: number | null): void; destroy(): void };
 
 const LAP_S = 7;
+const REPLAY_S = 4.6;
 const VIEWBOX = '0 35 400 250';
 
 export function mailroute(el: HTMLElement, options: MailrouteOptions = {}): Mailroute {
@@ -27,22 +43,51 @@ export function mailroute(el: HTMLElement, options: MailrouteOptions = {}): Mail
 	const svg = HL.mk('svg', { viewBox: VIEWBOX, 'aria-hidden': 'true' }, el);
 	let text = 'rest';
 	const read = { get textContent() { return text; }, set textContent(v: string) { text = v ?? ''; } };
+	const replayMode = opts.mode === 'replay';
 	const at = () => (reduced ? 1 : Math.min(1, Math.max(0, opts.progress ?? 0)));
-	const engine = spec.mount({ stage: el, svg, read }, at());
+	const engine = spec.mount({ stage: el, svg, read }, replayMode ? (reduced ? 1 : 0) : at());
+	const configure = () => engine.configure({ ...(opts.states ? { states: opts.states } : {}), details: opts.details ?? {}, zoom: opts.zoom, onSelect: opts.onSelect });
+	configure();
 
-	// play: the envelope runs the route in a loop, on the kernel's one frame loop (sleeps offscreen).
+	// play (scroll mode) loops the route; replay runs it once. Both on the kernel's one frame loop (sleeps offscreen).
 	let lap = 0;
+	let replaying = false;
+	let t = 0;
+	const finish = () => {
+		replaying = false;
+		engine.jump(1);
+		opts.onDone?.();
+	};
 	const loop = HL.register(el, (dt: number) => {
-		if (!opts.play || reduced) return false;
+		if (replaying) {
+			t += dt / REPLAY_S;
+			if (t >= 1) {
+				finish();
+				return false;
+			}
+			engine.jump(t);
+			return true;
+		}
+		if (!opts.play || reduced || replayMode) return false;
 		lap = (lap + dt / LAP_S) % 1.15;
 		engine.set(Math.min(1, lap));
 		return true;
 	});
+	const replay = () => {
+		engine.focus(null);
+		if (reduced) return finish();
+		t = 0;
+		engine.jump(0);
+		replaying = true;
+		loop.wake();
+	};
 	const apply = () => {
+		if (replayMode) return;
 		if (!opts.play || reduced) engine.set(at());
 		else loop.wake();
 	};
 	apply();
+	if (replayMode) replay();
 
 	let dead = false;
 	return {
@@ -50,8 +95,11 @@ export function mailroute(el: HTMLElement, options: MailrouteOptions = {}): Mail
 			if (dead) return;
 			Object.assign(opts, next);
 			dress();
+			configure();
 			apply();
 		},
+		replay,
+		focus: (i) => engine.focus(i),
 		destroy() {
 			if (dead) return;
 			dead = true;

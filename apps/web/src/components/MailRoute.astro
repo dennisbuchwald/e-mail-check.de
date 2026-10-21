@@ -1,4 +1,5 @@
 ---
+import '../styles/mailroute.css';
 // "Der Weg deiner Mail": one isometric scene (scripts/mailroute.ts) beside six text steps.
 // Desktop: the scene sticks in the middle of the viewport while the steps scroll; step i centred = envelope at station i.
 // Phones: the scene sticks small at the top. Reduced motion: scene in its end state (logo with check), steps as a list.
@@ -78,69 +79,6 @@ const steps = [
 </script>
 
 <style>
-	.route-sec {
-		/* Colours of the scene (hairline custom properties): ink lines, light helper lines, green only for checks. */
-		--hairline-plate: #ffffff;
-		--hairline-hi: #111113;
-		--hairline-edge: #111113;
-		--hairline-mid: #6b6c70;
-		--hairline-lo: #c9c9cf;
-		--hairline-stroke: 0.9;
-	}
-	/* The scene's own pieces (apps/web/scenes/mailroute.js); sizes in viewBox units, so they scale with the scene. */
-	.route-sec :global([data-hairline='mailroute'] .hi) {
-		stroke-width: 1.5;
-	}
-	.route-sec :global([data-hairline='mailroute'] .ink) {
-		fill: var(--ink);
-		stroke: var(--ink);
-	}
-	.route-sec :global([data-hairline='mailroute'] .knock) {
-		fill: none;
-		stroke: #fff;
-		vector-effect: none;
-	}
-	.route-sec :global([data-hairline='mailroute'] .seal) {
-		fill: var(--ink);
-		stroke: #fff;
-		stroke-width: 0.9;
-		vector-effect: none;
-	}
-	.route-sec :global([data-hairline='mailroute'] .shadow) {
-		fill: rgba(17, 17, 19, 0.09);
-		stroke: none;
-	}
-	.route-sec :global([data-hairline='mailroute'] .mk-open) {
-		fill: #fff;
-		stroke: #b8b8be;
-		stroke-width: 0.9;
-		stroke-dasharray: 1.6 1.4;
-		vector-effect: none;
-	}
-	.route-sec :global([data-hairline='mailroute'] .mk-done),
-	.route-sec :global([data-hairline='mailroute'] .badge) {
-		fill: var(--ok);
-		stroke: none;
-	}
-	.route-sec :global([data-hairline='mailroute'] .ko) {
-		fill: #fff;
-		stroke: none;
-	}
-	.route-sec :global([data-hairline='mailroute'] .mk-check),
-	.route-sec :global([data-hairline='mailroute'] .check) {
-		fill: none;
-		stroke: var(--ink);
-		stroke-width: 1.1;
-		stroke-linecap: round;
-		stroke-linejoin: round;
-		vector-effect: none;
-	}
-	.route-sec :global([data-hairline='mailroute'] .pulse) {
-		fill: none;
-		stroke: var(--ok);
-		stroke-width: 0.8;
-		vector-effect: none;
-	}
 	.route-sec .wrap {
 		container-type: inline-size;
 	}

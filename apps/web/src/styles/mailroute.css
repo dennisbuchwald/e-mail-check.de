@@ -1,0 +1,171 @@
+/* The mailroute scene (apps/web/scenes/mailroute.js), on the start page and in the result.
+   Ink lines, light helper lines; colour only for markers, the final badge and small accents.
+   Sizes in viewBox units (vector-effect: none), so they scale with the scene. */
+[data-hairline='mailroute'] {
+	--hairline-plate: #ffffff;
+	--hairline-hi: #111113;
+	--hairline-edge: #111113;
+	--hairline-mid: #6b6c70;
+	--hairline-lo: #c9c9cf;
+	--hairline-stroke: 0.9;
+}
+[data-hairline='mailroute'] .hi {
+	stroke-width: 1.5;
+}
+[data-hairline='mailroute'] .ink {
+	fill: var(--ink);
+	stroke: var(--ink);
+}
+[data-hairline='mailroute'] .knock {
+	fill: none;
+	stroke: #fff;
+	vector-effect: none;
+}
+[data-hairline='mailroute'] .seal {
+	fill: var(--ink);
+	stroke: #fff;
+	stroke-width: 0.9;
+	vector-effect: none;
+}
+[data-hairline='mailroute'] .seal-weak {
+	stroke-dasharray: 1.1 0.9;
+}
+[data-hairline='mailroute'] .seal-broken {
+	fill: none;
+	stroke: var(--bad);
+	stroke-width: 0.9;
+	vector-effect: none;
+}
+[data-hairline='mailroute'] .shadow {
+	fill: rgba(17, 17, 19, 0.09);
+	stroke: none;
+}
+[data-hairline='mailroute'] .mk-open {
+	fill: #fff;
+	stroke: #b8b8be;
+	stroke-width: 0.9;
+	stroke-dasharray: 1.6 1.4;
+	vector-effect: none;
+}
+[data-hairline='mailroute'] .mk-done,
+[data-hairline='mailroute'] .badge {
+	fill: var(--ok);
+	stroke: none;
+}
+[data-hairline='mailroute'] .is-warn {
+	fill: var(--warn);
+}
+[data-hairline='mailroute'] .is-bad {
+	fill: var(--bad);
+}
+[data-hairline='mailroute'] .mk-done.is-skip {
+	fill: #d4d4d8;
+}
+[data-hairline='mailroute'] .ko {
+	fill: #fff;
+	stroke: none;
+}
+[data-hairline='mailroute'] .mk-check,
+[data-hairline='mailroute'] .glyph {
+	fill: none;
+	stroke: var(--ink);
+	stroke-width: 1.1;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	vector-effect: none;
+}
+[data-hairline='mailroute'] .pulse {
+	fill: none;
+	stroke: var(--ok);
+	stroke-width: 0.8;
+	vector-effect: none;
+}
+[data-hairline='mailroute'] .pulse.is-warn {
+	stroke: var(--warn);
+}
+[data-hairline='mailroute'] .pulse.is-bad {
+	stroke: var(--bad);
+}
+/* Station marks of a replayed result */
+[data-hairline='mailroute'] .tag-warn {
+	fill: #fff;
+	stroke: var(--warn);
+	stroke-width: 0.8;
+	vector-effect: none;
+}
+[data-hairline='mailroute'] .tag-bad {
+	fill: #fff;
+	stroke: var(--bad);
+	stroke-width: 0.8;
+	vector-effect: none;
+}
+[data-hairline='mailroute'] .tag-text {
+	font: 700 5.2px/1 var(--font-body);
+	fill: var(--ink);
+	stroke: none;
+}
+[data-hairline='mailroute'] .tag-text.q {
+	fill: var(--warn);
+	font-size: 6px;
+}
+[data-hairline='mailroute'] .env-bad {
+	fill: var(--bad);
+	stroke: none;
+}
+[data-hairline='mailroute'] .row-bad {
+	fill: none;
+	stroke: var(--bad);
+	stroke-width: 0.9;
+	vector-effect: none;
+}
+[data-hairline='mailroute'] .dot.led-bad {
+	fill: var(--bad);
+}
+[data-hairline='mailroute'] .fake {
+	fill: none;
+	stroke: #a3a4aa;
+	stroke-width: 0.8;
+	stroke-dasharray: 1.6 1.4;
+	vector-effect: none;
+}
+[data-hairline='mailroute'] .weak {
+	fill: none;
+	stroke: var(--warn);
+	stroke-width: 0.9;
+	stroke-dasharray: 1.4 1.2;
+	vector-effect: none;
+}
+[data-hairline='mailroute'] .eye {
+	fill: #fff;
+	stroke: var(--bad);
+	stroke-width: 0.9;
+	vector-effect: none;
+}
+[data-hairline='mailroute'] .eye-pupil {
+	fill: var(--bad);
+	stroke: none;
+}
+[data-hairline='mailroute'] .spam-stripe {
+	fill: none;
+	stroke: var(--bad);
+	stroke-width: 1;
+	vector-effect: none;
+}
+[data-hairline='mailroute'] .spam-text {
+	font: 700 4.2px/1 var(--font-mono);
+	letter-spacing: 0.08em;
+	fill: var(--bad);
+	stroke: none;
+}
+/* Focus: the other stations step back */
+[data-hairline='mailroute'] g {
+	transition: opacity 0.4s ease;
+}
+[data-hairline='mailroute'] .dim {
+	opacity: 0.32;
+}
+@media (prefers-reduced-motion: reduce) {
+	[data-hairline='mailroute'] g {
+		transition: none;
+	}
+}

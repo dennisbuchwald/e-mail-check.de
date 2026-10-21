@@ -1,3 +1,4 @@
+@import './mailroute.css';
 /* Result page V2: delivery route with six stations.
    Global on purpose: the markup comes from packages/shared/src/result-view.ts, rendered by the browser or by the server.
    Motion only via transform/opacity; .rv-anim is set by JS, so without JS or with reduced motion nothing moves. */
@@ -855,5 +856,89 @@
 	.rv-exception {
 		flex-direction: column;
 		align-items: flex-start;
+	}
+}
+
+/* ---- The replayed scene of this mail (apps/web/scenes/mailroute.js, scripts/tool-result.ts) ----
+   With scripting the scene replaces the six icon circles; the station buttons stay below it as chips
+   (tabs: Tab and the arrow keys). Without scripting the icon row stays. The box is reserved before
+   the scene loads, so nothing shifts. */
+.rv-route-tools {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+}
+.rv-replay {
+	min-height: 32px;
+	padding: 0 10px;
+	border: 1px solid var(--border);
+	border-radius: 999px;
+	background: #fff;
+	font: 500 12px/1 var(--font-body);
+	color: var(--ink);
+	cursor: pointer;
+}
+.rv-replay:hover {
+	border-color: var(--border-strong);
+}
+.rv-replay:focus-visible {
+	outline: 2px solid var(--ink);
+	outline-offset: 2px;
+}
+.rv-scene {
+	display: none;
+}
+@media (scripting: enabled) {
+	.rv-scene {
+		display: block;
+		width: 100%;
+		aspect-ratio: 8 / 5;
+		margin: 6px 0 4px;
+		cursor: pointer;
+	}
+	.rv-route .rv-node,
+	.rv-route .rv-line,
+	.rv-route .rv-stuck {
+		display: none;
+	}
+	.rv-route .rv-st {
+		padding-top: 8px;
+	}
+	.rv-route .rv-t {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+	}
+	.rv-route .rv-t::before {
+		content: '';
+		width: 9px;
+		height: 9px;
+		border-radius: 999px;
+		background: var(--status, var(--ok));
+		flex: none;
+	}
+	.rv-route .rv-st.is-ok {
+		--status: var(--ok);
+	}
+	.rv-route .rv-st.is-warn {
+		--status: var(--warn);
+	}
+	.rv-route .rv-st.is-bad {
+		--status: var(--bad);
+	}
+	.rv-route .rv-st.is-skip {
+		--status: #d4d4d8;
+	}
+}
+/* The verdict waits until the envelope has arrived. */
+.rv-verdict {
+	transition: opacity 0.5s ease;
+}
+.rv-replaying .rv-verdict {
+	opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+	.rv-verdict {
+		transition: none;
 	}
 }
