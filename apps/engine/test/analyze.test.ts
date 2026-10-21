@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { MailResult, StepId } from '@emc/shared';
 import { analyzeMessage, type AnalyzeDeps } from '../src/analyze.ts';
+import { reverseIp } from '../src/checks/reputation.ts';
 import { fakeResolver, fixture, GOOD_IP, LISTED_IP } from './helpers.ts';
 
 const deps: AnalyzeDeps = { resolver: fakeResolver(), mta: 'mx.test', resultTtlDays: 7, scanContent: async () => ({ score: 0, symbols: [] }) };
@@ -97,6 +98,17 @@ describe('analyzeMessage', () => {
 		const rep = find(result, 'reputation');
 		expect(rep.status).toBe('bad');
 		expect(rep.text).toContain('Spamhaus');
+		expect(rep.deductions[0].points).toBe(3);
+	});
+
+	it('explains a Spamhaus PBL hit as an end-user connection, not as spam', async () => {
+		const resolver = fakeResolver({ [`${reverseIp(GOOD_IP)}.zen.spamhaus.org A`]: ['127.0.0.10'] });
+		const { result } = await run('gut.eml', { deps: { resolver } });
+		const rep = find(result, 'reputation');
+		expect(rep.status).toBe('bad');
+		expect(rep.title).toBe('Versand direkt vom Internetanschluss');
+		expect(rep.text).toContain('kein Spam-Vorwurf');
+		expect(rep.text).not.toContain('austragen lassen');
 		expect(rep.deductions[0].points).toBe(3);
 	});
 

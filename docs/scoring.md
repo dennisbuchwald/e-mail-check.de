@@ -95,6 +95,8 @@ Auswertung nach RFC 9989 inkl. Alignment (über `mailauth`).
 | kein PTR-Eintrag | 1 (Problem) |
 | PTR zeigt nicht zurück auf die IP | 0,5 (Hinweis) |
 
+Sonderfall **Spamhaus PBL** (Antwort `127.0.0.10` oder `127.0.0.11`): Die IP gehört zu einem normalen Internetanschluss. Das ist kein Spam-Vorwurf, große Anbieter nehmen von dort aber keine Mails direkt an. Die 3 Punkte bleiben, Titel und Text erklären stattdessen den Weg über den Postausgangsserver des Anbieters statt „austragen lassen“.
+
 - Private/lokale IPs werden nicht geprüft (Status „nicht geprüft“, kein Abzug).
 - UCEPROTECT ist bewusst nicht dabei: Austragung kostet Geld, Listungen sind oft pauschal ganze Netze.
 - Abfragen laufen über den eigenen Resolver (unbound). Spamhaus blockt öffentliche Resolver. Antworten `127.255.255.x` gelten als „Abfrage abgelehnt“, nicht als Listung.
