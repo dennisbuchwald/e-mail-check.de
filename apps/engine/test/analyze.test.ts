@@ -64,7 +64,11 @@ describe('analyzeMessage', () => {
 		expect(dmarc.status).toBe('bad');
 		expect(dmarc.title).toBe('Schutzregel fehlt');
 		expect(dmarc.suggestion).toEqual({ type: 'TXT', host: '_dmarc.ohne-dmarc.example.test', value: 'v=DMARC1; p=none; rua=mailto:dmarc@ohne-dmarc.example.test' });
-		expect(result.headline).toBe('1 Problem gefunden');
+		expect(result.headline).toBe('Fast geschafft. Eine Sache hält dich von der 10 ab.');
+		expect(result.band).toBe('solid');
+		expect(result.authWarning).toBe(true);
+		expect(result.findings[0].gain).toBe(1.5);
+		expect(result.findings[0].impact).toBe('hoch');
 	});
 
 	it('detects a softfail', async () => {

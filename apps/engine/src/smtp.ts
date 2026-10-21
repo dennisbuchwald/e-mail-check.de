@@ -41,6 +41,7 @@ export function createSmtpServer(service: TestService, opts: SmtpOptions): SMTPS
 					ip: session.remoteAddress,
 					helo: session.hostNameAppearsAs ?? '',
 					sender: session.envelope.mailFrom ? session.envelope.mailFrom.address : '',
+					tls: session.secure ? { version: (session as unknown as { tlsOptions?: { version?: string } }).tlsOptions?.version ?? null } : null,
 				};
 				const message = Buffer.concat(chunks);
 				chunks.length = 0;
