@@ -6,7 +6,7 @@ export const POINTS = {
 	dkim: { none: 2, fail: 2.5, notAligned: 0.5, temperror: 0.5 },
 	dmarc: { none: 1.5, fail: 2.5, monitorOnly: 0.2, temperror: 0.5 },
 	reputation: { majorList: 3, otherList: 1, listCap: 4, noPtr: 1, ptrMismatch: 0.5 },
-	content: { cap: 4 },
+	content: { cap: 4, deadLink: 0.5, deadLinkCap: 1, shortener: 0.5, noUnsubscribeHeader: 0.5 },
 } as const;
 
 /** rspamd content score → deduction. Up to 1 point is normal for legitimate mail. */

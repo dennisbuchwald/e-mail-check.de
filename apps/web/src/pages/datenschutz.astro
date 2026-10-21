@@ -39,13 +39,17 @@ import Article from '../layouts/Article.astro';
 		<li><strong>Die Mail selbst</strong> (Kopfzeilen, Text, Links, Anhänge): nur im Arbeitsspeicher und nur für die Dauer der Prüfung, meist wenige Sekunden. Danach wird sie verworfen.</li>
 		<li><strong>Technische Absenderdaten</strong>: IP-Adresse und Name des sendenden Servers, die Absenderadresse aus dem Umschlag (MAIL FROM) und die Domain aus dem Absenderfeld.</li>
 		<li><strong>Die Testadresse</strong>: Sie wird zusammen mit Erstell- und Ablaufzeit und dem Bearbeitungsstand 7 Tage lang gespeichert, damit dieselbe Adresse nicht doppelt vergeben wird. Eine IP-Adresse speichern wir dazu nicht.</li>
-		<li><strong>Das Ergebnis</strong>: Score, Prüfpunkte und technische Prüfwerte. Dazu gehören die IP-Adresse und der Name des sendenden Servers, die gefundenen DNS-Einträge, die Signatur-Domains, die Absender-Domain, Sperrlisten-Treffer und die Namen der Spamfilter-Regeln, die angeschlagen haben. Fundstellen aus der Mail (etwa verlinkte Adressen oder Textstellen) speichern wir nicht.</li>
+		<li><strong>Das Ergebnis</strong>: Score, Prüfpunkte und technische Prüfwerte. Dazu gehören die IP-Adresse und der Name des sendenden Servers, die gefundenen DNS-Einträge, die Signatur-Domains, die Absender-Domain, Sperrlisten-Treffer, die Namen der Spamfilter-Regeln, die angeschlagen haben, Domainnamen nicht erreichbarer Links und ob ein Abmelde-Link (List-Unsubscribe) vorhanden ist. Fundstellen aus der Mail (etwa verlinkte Adressen oder Textstellen) speichern wir nicht.</li>
 	</ul>
 	<p>Das Ergebnis ist über einen zufälligen Link abrufbar. Jeder, der den Link kennt, kann es 7 Tage lang sehen. Danach löschen wir es automatisch. Ergebnis-Links werden nicht in Suchmaschinen aufgenommen.</p>
 	<p>Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO, soweit es um deine eigenen Daten geht (du nutzt den Dienst), und im Übrigen Art. 6 Abs. 1 lit. f DSGVO. Unser berechtigtes Interesse ist, den von dir angeforderten Test durchzuführen und das Ergebnis für dich abrufbar zu halten.</p>
 
 	<h3>Daten anderer Personen in deiner Testmail</h3>
 	<p>Eine Testmail kann Daten anderer Menschen enthalten, etwa Namen oder Adressen deiner Kunden. Diese Daten verarbeiten wir ausschließlich für die technische Prüfung und nur so, wie oben beschrieben (Art. 6 Abs. 1 lit. f DSGVO). Bitte schick nach Möglichkeit Testmails ohne echte Personendaten. Für das Ergebnis macht das keinen Unterschied.</p>
+
+	<h2>Prüfung der Links in deiner Testmail</h2>
+	<p>Um tote Links zu finden, rufen wir bis zu 10 Links aus deiner Testmail einmal kurz auf (in der Regel nur die Kopfzeilen der Seite, ohne Inhalt). Der Betreiber der verlinkten Seite sieht dabei eine Anfrage von unserem Server, nicht von dir. Abmelde-Links rufen wir nie auf. Hinweis: Nutzt du ein Newsletter-Tool mit Klick-Statistik, kann es diese Prüfung als Klick zählen.</p>
+	<p>Gespeichert wird nur der Domainname eines nicht erreichbaren Links und der Grund (zum Beispiel „Seite nicht gefunden“), keine vollständigen Adressen. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. Unser berechtigtes Interesse ist, dir ein vollständiges Ergebnis zu liefern.</p>
 
 	<h2>Abfragen bei Dritten (Sperrlisten)</h2>
 	<p>Ob eine Mail im Spam landet, hängt stark davon ab, ob der sendende Server oder die verlinkten Seiten auf öffentlichen Sperrlisten stehen. Um das zu prüfen, stellen wir über unseren eigenen DNS-Server Anfragen an die Betreiber dieser Listen. Den Text deiner Mail erfahren sie dabei nie. Je nach Liste erfahren sie:</p>
@@ -73,7 +77,7 @@ import Article from '../layouts/Article.astro';
 	<p>Website und Mail-Prüfung laufen auf einem Server der Hetzner Online GmbH, Industriestr. 25, 91710 Gunzenhausen, im Rechenzentrum Falkenstein (Deutschland). [Vertrag zur Auftragsverarbeitung nach Art. 28 DSGVO mit Hetzner abschließen, dann diesen Hinweis löschen.] Die Domain und ihre DNS-Einträge verwaltet die IONOS SE, Elgendorfer Str. 57, 56410 Montabaur.</p>
 
 	<h2>Empfänger</h2>
-	<p>Deine Daten erhalten nur der Hosting-Anbieter (als Auftragsverarbeiter) und, im oben beschriebenen Umfang, die Betreiber der Sperrlisten. Wir verkaufen keine Daten und geben sie nicht zu Werbezwecken weiter.</p>
+	<p>Deine Daten erhalten nur der Hosting-Anbieter (als Auftragsverarbeiter) und, im oben beschriebenen Umfang, die Betreiber der Sperrlisten und der verlinkten Seiten. Wir verkaufen keine Daten und geben sie nicht zu Werbezwecken weiter.</p>
 
 	<h2>Keine automatisierte Entscheidung</h2>
 	<p>Der Score ist eine automatische technische Bewertung deiner Mail. Er hat keine rechtliche Wirkung für dich und ist keine automatisierte Entscheidung im Sinne von Art. 22 DSGVO.</p>

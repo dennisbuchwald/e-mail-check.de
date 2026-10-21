@@ -44,7 +44,7 @@ Wir prüfen fünf Dinge. Oben steht immer der Klartext, darunter klein der Fachb
 | Mail unterschrieben | Deine Mail trägt eine digitale Unterschrift, die beweist, dass sie unterwegs nicht verändert wurde. | DKIM |
 | Schutzregel | Deine Domain legt fest, was mit gefälschten Mails in deinem Namen passieren soll. | DMARC |
 | Server-Ruf | Der Server, der deine Mail verschickt, steht auf keiner Sperrliste und hat einen sauberen Namen. | Blacklists, rDNS |
-| Inhalt | Betreff und Text wirken nicht wie typischer Spam. | Spamfilter-Score |
+| Inhalt | Betreff und Text wirken nicht wie Spam, alle Links funktionieren, keine Kurz-Links, Newsletter haben einen Abmelde-Link. | Spamfilter-Score, Link-Check, List-Unsubscribe |
 
 Seit Februar 2024 verlangt Gmail, seit Mai 2025 auch Microsoft für Outlook.com von Vielversendern SPF, DKIM und DMARC. Die Regeln gelten offiziell ab 5.000 Mails pro Tag. Spamfilter werten diese Signale aber bei jedem Absender aus, auch bei deinem Kundenpostfach mit zehn Mails am Tag.
 

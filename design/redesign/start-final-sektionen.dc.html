@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Sektionen unterhalb des Tests</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Fraunces:opsz,wght,SOFT,WONK@9..144,100..900,0..100,0..1&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#111113}a:hover{color:#4A4B50}
+button{font-family:inherit}
+.f{font-family:'Fraunces',Georgia,serif;font-weight:680;font-variation-settings:'SOFT' 0,'WONK' 0;letter-spacing:-0.025em;color:#111113;text-wrap:balance}
+.m{font-family:'IBM Plex Mono',ui-monospace,monospace}
+.eyebrow{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:12px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:#6B6C70}
+.nav{height:72px;box-sizing:border-box;padding:0 48px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #EDEDF0;background:#FFFFFF}
+.nav a{text-decoration:none;font-size:14px;font-weight:500;color:#4A4B50}
+.card{background:#FFFFFF;border:1px solid #E7E7EB;border-radius:20px;box-shadow:0 1px 2px rgba(17,17,19,0.04),0 12px 32px rgba(17,17,19,0.05)}
+.btn{height:52px;padding:0 22px;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .3s cubic-bezier(0.34,1.56,0.64,1),background-color .2s ease}
+.btn:hover{transform:translateY(-1px)}
+.ink{background:#111113;color:#FFFFFF;border:none}.ink:hover{background:#2A2A2E}
+.ghost{background:#FFFFFF;color:#111113;border:1px solid #DCDCE1}.ghost:hover{background:#F6F6F7}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(2,202,80,0.45)}70%{box-shadow:0 0 0 8px rgba(2,202,80,0)}100%{box-shadow:0 0 0 0 rgba(2,202,80,0)}}
+.live{width:8px;height:8px;border-radius:999px;background:#02CA50;animation:pulse 1.8s infinite;flex:none}
+@keyframes nudge{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
+.nudge{animation:nudge 1.6s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pend{width:18px;height:18px;border-radius:999px;border:1.5px dashed #B9B9C0;box-sizing:border-box;flex:none}
+.pend-d{width:18px;height:18px;border-radius:999px;border:1.5px dashed #5A5B60;box-sizing:border-box;flex:none}
+@keyframes drift{0%{transform:translate(-50%,-50%) scale(1)}100%{transform:translate(-46%,-54%) scale(1.12)}}
+@keyframes drift2{0%{transform:translate(-50%,-50%) scale(1.05)}100%{transform:translate(-55%,-46%) scale(0.95)}}
+.aura{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.aura i{position:absolute;left:50%;top:50%;border-radius:999px;filter:blur(90px)}
+.a1{width:820px;height:420px;background:radial-gradient(closest-side,rgba(2,202,80,0.30),rgba(2,202,80,0));animation:drift 12s ease-in-out infinite alternate}
+.a2{width:640px;height:520px;background:radial-gradient(closest-side,rgba(150,170,190,0.45),rgba(150,170,190,0));animation:drift2 15s ease-in-out infinite alternate}
+.a3{width:1100px;height:560px;background:radial-gradient(closest-side,rgba(255,255,255,0.9),rgba(255,255,255,0));animation:drift2 18s ease-in-out infinite alternate}
+.d1{width:900px;height:520px;background:radial-gradient(closest-side,rgba(2,202,80,0.22),rgba(2,202,80,0));animation:drift 12s ease-in-out infinite alternate}
+.d2{width:1200px;height:700px;background:radial-gradient(closest-side,rgba(48,70,110,0.55),rgba(48,70,110,0));animation:drift2 16s ease-in-out infinite alternate}
+.glass{background:rgba(255,255,255,0.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1720px; box-sizing: border-box; position: relative; overflow: hidden; background: #FAFAFB; font-family: Inter, system-ui, sans-serif; color: #111113; display: flex; flex-direction: column">
+<div style="padding: 96px 120px 0 120px; display: flex; flex-direction: column; gap: 28px">
+<span class="eyebrow">Was wir prüfen</span>
+<h2 class="f" style="margin: 0; font-size: 44px; line-height: 1.1">Alles, worauf Gmail und Outlook schauen.</h2>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px">
+<div class="card" style="padding: 28px; display: flex; flex-direction: column; gap: 14px">
+<span style="font-size: 20px; font-weight: 600">Absender &amp; Unterschrift</span>
+<span style="font-size: 15px; line-height: 23px; color: #5B5C61">SPF, DKIM und DMARC entscheiden, ob deine Mail als echt gilt. Wir prüfen alle drei und zeigen dir in Klartext, was fehlt.</span>
+<div style="background: #F6F6F7; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; justify-content: space-between; padding: 0 4px 4px 4px"><span class="eyebrow" style="font-size: 11px">Prüfung · beispiel.de</span><span class="m" style="font-size: 12px; font-weight: 600; color: #D7271E">4/5 OK</span></div>
+<div style="display: flex; align-items: center; gap: 14px; padding: 11px 12px; background: #FFFFFF; border: 1px solid #EEEEF1; border-radius: 10px"><span class="m" style="width: 52px; font-size: 12px; font-weight: 600">SPF</span><span style="width: 150px; font-size: 13px">Absender bestätigt</span><span class="m" style="flex: 1; font-size: 12px; color: #6B6C70">include:_spf.ionos.com</span><span style="font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #E3F8EC">ok</span></div><div style="display: flex; align-items: center; gap: 14px; padding: 11px 12px; background: #FFFFFF; border: 1px solid #EEEEF1; border-radius: 10px"><span class="m" style="width: 52px; font-size: 12px; font-weight: 600">DKIM</span><span style="width: 150px; font-size: 13px">Mail unterschrieben</span><span class="m" style="flex: 1; font-size: 12px; color: #6B6C70">selector s1 · 2048 Bit</span><span style="font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #E3F8EC">ok</span></div><div style="display: flex; align-items: center; gap: 14px; padding: 11px 12px; background: #FFFFFF; border: 1px solid #EEEEF1; border-radius: 10px"><span class="m" style="width: 52px; font-size: 12px; font-weight: 600">DMARC</span><span style="width: 150px; font-size: 13px">Schutzregel</span><span class="m" style="flex: 1; font-size: 12px; color: #6B6C70">kein Eintrag gefunden</span><span style="font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #FFE9E7">fehlt</span></div><div style="display: flex; align-items: center; gap: 14px; padding: 11px 12px; background: #FFFFFF; border: 1px solid #EEEEF1; border-radius: 10px"><span class="m" style="width: 52px; font-size: 12px; font-weight: 600">rDNS</span><span style="width: 150px; font-size: 13px">Server-Name</span><span class="m" style="flex: 1; font-size: 12px; color: #6B6C70">mout.kundenserver.de</span><span style="font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #E3F8EC">ok</span></div><div style="display: flex; align-items: center; gap: 14px; padding: 11px 12px; background: #FFFFFF; border: 1px solid #EEEEF1; border-radius: 10px"><span class="m" style="width: 52px; font-size: 12px; font-weight: 600">TLS</span><span style="width: 150px; font-size: 13px">Verschlüsselt</span><span class="m" style="flex: 1; font-size: 12px; color: #6B6C70">TLS 1.3</span><span style="font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #E3F8EC">ok</span></div>
+</div>
+</div>
+<div class="card" style="padding: 28px; display: flex; flex-direction: column; gap: 14px">
+<span style="font-size: 20px; font-weight: 600">Server-Ruf &amp; Sperrlisten</span>
+<span style="font-size: 15px; line-height: 23px; color: #5B5C61">Steht dein Server auf einer Sperrliste, kommt fast nichts mehr an. Wir fragen die wichtigsten Listen live ab.</span>
+<div style="background: #F6F6F7; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; justify-content: space-between; padding: 0 4px 4px 4px"><span class="eyebrow" style="font-size: 11px">Sperrlisten · 203.0.113.8</span><span class="m" style="font-size: 12px; font-weight: 600; color: #0B8A3A">12/12 sauber</span></div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px"><div style="display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; background: #FFFFFF; border: 1px solid #EEEEF1; border-radius: 10px"><span style="font-size: 13px">Spamhaus ZEN</span><span style="font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #E3F8EC">sauber</span></div><div style="display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; background: #FFFFFF; border: 1px solid #EEEEF1; border-radius: 10px"><span style="font-size: 13px">SpamCop</span><span style="font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #E3F8EC">sauber</span></div><div style="display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; background: #FFFFFF; border: 1px solid #EEEEF1; border-radius: 10px"><span style="font-size: 13px">Barracuda</span><span style="font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #E3F8EC">sauber</span></div><div style="display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; background: #FFFFFF; border: 1px solid #EEEEF1; border-radius: 10px"><span style="font-size: 13px">SURBL</span><span style="font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #E3F8EC">sauber</span></div><div style="display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; background: #FFFFFF; border: 1px solid #EEEEF1; border-radius: 10px"><span style="font-size: 13px">UCEProtect L1</span><span style="font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #E3F8EC">sauber</span></div><div style="display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; background: #FFFFFF; border: 1px solid #EEEEF1; border-radius: 10px"><span style="font-size: 13px">URIBL</span><span style="font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #E3F8EC">sauber</span></div><div style="display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; background: #FFFFFF; border: 1px solid #EEEEF1; border-radius: 10px"><span style="font-size: 13px">PSBL</span><span style="font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #E3F8EC">sauber</span></div><div style="display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; background: #FFFFFF; border: 1px solid #EEEEF1; border-radius: 10px"><span style="font-size: 13px">Spamhaus DBL</span><span style="font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #E3F8EC">sauber</span></div><div style="display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; background: #FFFFFF; border: 1px solid #EEEEF1; border-radius: 10px"><span style="font-size: 13px">Mailspike</span><span style="font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #E3F8EC">sauber</span></div><div style="display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; background: #FFFFFF; border: 1px solid #EEEEF1; border-radius: 10px"><span style="font-size: 13px">DroneBL</span><span style="font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #E3F8EC">sauber</span></div><div style="display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; background: #FFFFFF; border: 1px solid #EEEEF1; border-radius: 10px"><span style="font-size: 13px">Invaluement</span><span style="font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #E3F8EC">sauber</span></div><div style="display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; background: #FFFFFF; border: 1px solid #EEEEF1; border-radius: 10px"><span style="font-size: 13px">Hostkarma</span><span style="font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #E3F8EC">sauber</span></div></div>
+</div>
+</div>
+</div>
+</div>
+<div style="padding: 96px 120px 96px 120px; display: flex; flex-direction: column; gap: 28px">
+<span class="eyebrow">Dein Score</span>
+<h2 class="f" style="margin: 0; font-size: 44px; line-height: 1.1">Was bedeutet die Zahl?</h2>
+<div class="card" style="padding: 36px; display: flex; flex-direction: column; gap: 28px">
+<div style="display: flex; flex-direction: column; gap: 10px"><div style="display: flex; gap: 6px"><div style="flex: 50; height: 10px; border-radius: 999px; background: #FF4034"></div><div style="flex: 20; height: 10px; border-radius: 999px; background: #FF8A00"></div><div style="flex: 20; height: 10px; border-radius: 999px; background: #9A9BA0"></div><div style="flex: 10; height: 10px; border-radius: 999px; background: #02CA50"></div></div>
+<div class="m" style="display: flex; justify-content: space-between; font-size: 12px; color: #6B6C70"><span>0</span><span style="margin-left: 38%">5</span><span>7</span><span>9</span><span>10</span></div></div>
+<div style="display: flex; gap: 32px"><div style="flex: 1; display: flex; flex-direction: column; gap: 6px"><span style="display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600"><span style="width: 9px; height: 9px; border-radius: 999px; background: #FF4034"></span>Hohes Risiko</span><span class="m" style="font-size: 12px; color: #6B6C70">0 bis 4,9</span><span style="font-size: 14px; line-height: 21px; color: #4A4B50">Viele Mails landen im Spam. Erst beheben, dann versenden.</span></div><div style="flex: 1; display: flex; flex-direction: column; gap: 6px"><span style="display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600"><span style="width: 9px; height: 9px; border-radius: 999px; background: #FF8A00"></span>Gefährdet</span><span class="m" style="font-size: 12px; color: #6B6C70">5 bis 6,9</span><span style="font-size: 14px; line-height: 21px; color: #4A4B50">Echtes Spam-Risiko. Die markierten Punkte zuerst angehen.</span></div><div style="flex: 1; display: flex; flex-direction: column; gap: 6px"><span style="display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600"><span style="width: 9px; height: 9px; border-radius: 999px; background: #9A9BA0"></span>Solide</span><span class="m" style="font-size: 12px; color: #6B6C70">7 bis 8,9</span><span style="font-size: 14px; line-height: 21px; color: #4A4B50">Kommt meist an. Ein paar Details bringen Sicherheit.</span></div><div style="flex: 1; display: flex; flex-direction: column; gap: 6px"><span style="display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600"><span style="width: 9px; height: 9px; border-radius: 999px; background: #02CA50"></span>Sehr gut</span><span class="m" style="font-size: 12px; color: #6B6C70">9 bis 10</span><span style="font-size: 14px; line-height: 21px; color: #4A4B50">Alles im grünen Bereich. Weiter so.</span></div></div>
+<div style="border-top: 1px solid #EEEEF1; padding-top: 20px; display: flex; align-items: center; gap: 14px"><span class="m" style="font-size: 11px; font-weight: 600; letter-spacing: 0.1em; padding: 5px 10px; border-radius: 999px; background: #FFF1E0">AUSNAHME</span><span style="font-size: 14px; color: #4A4B50">Schlägt SPF, DKIM oder DMARC fehl, warnen wir immer, egal wie hoch die Zahl ist. Das allein kann Mails in den Spam schicken.</span></div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1720}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

@@ -77,7 +77,21 @@ rspamd bewertet nur den Inhalt. SPF/DKIM/DMARC/ARC, IP-Sperrlisten, Received-Hea
 - Abzug = 0 bis 1 Punkt rspamd, darüber `(score − 1) × 0,5`, höchstens 4.
 - Abzug ≥ 2 → Problem, sonst Hinweis.
 - GTUBE (Spam-Testmuster) führt in rspamd zur sofortigen Ablehnung ohne Punkte, wird deshalb als volle Spam-Punktzahl gewertet.
-- rspamd nicht erreichbar → „nicht geprüft“, kein Abzug.
+- rspamd nicht erreichbar → „nicht geprüft“, kein Abzug (Link- und Abmelde-Prüfung laufen trotzdem).
+
+### Inhalt: Links und Newsletter (gleicher Prüfpunkt)
+| Befund | Abzug |
+|---|---|
+| toter Link (404, 410, Domain existiert nicht, Verbindung abgelehnt), je Link | 0,5, höchstens 1 |
+| Kurz-Link (bit.ly, tinyurl.com …) | 0,5 |
+| sieht aus wie Newsletter, aber keine `List-Unsubscribe`-Kopfzeile | 0,5 |
+| `List-Unsubscribe` da, aber kein One-Click (`List-Unsubscribe-Post`) | 0, nur Tipp |
+
+- Geprüft werden höchstens 10 Links, Abmelde-Links nie (das würde den Absender abmelden).
+- 401/403/429/5xx und Zeitüberschreitungen zählen **nicht** als tot (oft Bot-Schutz oder kurzer Ausfall).
+- SSRF-Schutz: nur öffentliche IPs, nur Port 80/443, jede Weiterleitung wird neu geprüft, keine Zugangsdaten in URLs.
+- Gespeichert werden nur Domainnamen und Grund, nie vollständige Adressen.
+- „Newsletter“ heißt: `List-Unsubscribe`, `List-Id`, `Precedence: bulk/list`, typische Newsletter-Kopfzeilen (Mailchimp, Brevo, Mailjet, CleverReach …) oder ein Abmelde-Link im Text.
 
 ## Beispiele
 

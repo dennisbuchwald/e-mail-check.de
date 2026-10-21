@@ -160,6 +160,8 @@ Backlinks: zuerst eigene Seiten (dennisbuchwald.de, flinkform.de), dann Tool-Ver
 
 ## 9. Design
 
+> **Hinweis (21.10.2026):** Redesign beschlossen, weg von dicken Outlines zu cleanem SaaS-Stil. Maßgeblich sind `REDESIGN-PROMPT.md` und `design/redesign/`. Die Angaben zu Rahmen und Formen unten sind dadurch überholt.
+
 **Grundhaltung:** UX radikal einfach (Vorbild Trade Republic: Komplexes simpel darstellen), Look wie ein hochwertiges SaaS-Produkt. Formensprache vom dbw-media-Styleguide (Outline statt Fläche), aber eigene Identität.
 
 **Prototyp (klickbar):** https://claude.ai/artifact/MS321wZJK4B77Q1jJnYmJW → Reihe „Final“ (Mobile + Desktop). Ältere Varianten dort dienen nur dem Vergleich.

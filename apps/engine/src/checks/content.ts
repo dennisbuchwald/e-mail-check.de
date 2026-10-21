@@ -1,6 +1,8 @@
 // Content score via rspamd. Authentication and IP reputation symbols are ignored,
 // because SPF/DKIM/DMARC/blocklists are scored by our own checks.
-import { contentDeduction, round1, type Finding } from '@emc/shared';
+import { contentDeduction, POINTS, round1, type Deduction, type Finding } from '@emc/shared';
+import type { LinkReport } from './links.ts';
+import type { UnsubscribeReport } from './unsubscribe.ts';
 import type { SmtpEnvelope } from './auth.ts';
 
 export interface RspamdSymbol {
@@ -92,38 +94,88 @@ export async function scanWithRspamd(url: string, message: Buffer, env: SmtpEnve
 	return { score, symbols };
 }
 
-export function contentFinding(analysis: ContentAnalysis | null, error?: string): Finding {
-	const base = { id: 'content' as const, tech: 'Spam-Score' };
-	if (!analysis) {
+export interface ContentExtras {
+	error?: string;
+	links?: LinkReport | null;
+	unsubscribe?: UnsubscribeReport | null;
+}
+
+export function contentFinding(analysis: ContentAnalysis | null, extras: ContentExtras = {}): Finding {
+	const base = { id: 'content' as const, tech: 'Spam-Score, Links, Abmelde-Link' };
+	const { links, unsubscribe } = extras;
+	const deductions: Deduction[] = [];
+	const problems: string[] = [];
+	const tips: string[] = [];
+
+	// 1. Spam filter (rspamd)
+	const rspamdPoints = analysis ? contentDeduction(analysis.score) : 0;
+	if (analysis) {
+		const hits = analysis.symbols.filter((s) => s.score > 0).sort((a, b) => b.score - a.score);
+		const explained = hits.slice(0, 3).map((s) => TEXTS[s.name] ?? `Spamfilter-Regel ${s.name}${s.description ? `: ${s.description}` : ''}.`);
+		if (rspamdPoints > 0) {
+			deductions.push({ reason: `Spamfilter-Punkte: ${analysis.score}`, points: rspamdPoints });
+			problems.push(...explained);
+		} else if (explained.length > 0 && hits[0].score >= 0.5) {
+			tips.push(explained[0]);
+		}
+	}
+
+	// 2. Links
+	if (links?.dead.length) {
+		const n = links.dead.length;
+		deductions.push({ reason: `${n} ${n === 1 ? 'Link funktioniert' : 'Links funktionieren'} nicht`, points: round1(Math.min(POINTS.content.deadLinkCap, n * POINTS.content.deadLink)) });
+		problems.push(`${n === 1 ? 'Ein Link führt' : `${n} Links führen`} ins Leere: ${links.dead.map((d) => `${d.host} (${d.reason})`).join(', ')}. Tote Links wirken auf Spamfilter und Leser unseriös.`);
+	}
+	if (links?.shorteners.length) {
+		deductions.push({ reason: 'Kurz-Links', points: POINTS.content.shortener });
+		problems.push(`Die Mail enthält Kurz-Links (${links.shorteners.join(', ')}). Spamfilter misstrauen ihnen, weil sie das Ziel verstecken. Verlinke lieber direkt auf deine Seite.`);
+	}
+
+	// 3. Newsletter: List-Unsubscribe
+	if (unsubscribe?.bulk && !unsubscribe.header) {
+		deductions.push({ reason: 'Newsletter ohne Abmelde-Kopfzeile', points: POINTS.content.noUnsubscribeHeader });
+		problems.push('Das sieht nach einem Newsletter aus, aber die Abmelde-Kopfzeile (List-Unsubscribe) fehlt. Gmail und Yahoo verlangen sie seit 2024 von Massenversendern. In den meisten Newsletter-Tools ist das eine Einstellung.');
+	} else if (unsubscribe?.bulk && !unsubscribe.oneClick) {
+		tips.push('Ergänze die Abmeldung mit einem Klick (List-Unsubscribe-Post). Gmail und Yahoo erwarten sie von Massenversendern.');
+	}
+
+	const raw = {
+		rspamdScore: analysis?.score ?? null,
+		symbols: analysis?.symbols ?? [],
+		...(analysis ? {} : { spamfilterError: extras.error ?? 'unavailable' }),
+		links: links ? { found: links.total, checked: links.checked, dead: links.dead, shorteners: links.shorteners } : null,
+		unsubscribe: unsubscribe ?? null,
+	};
+	const linkNote = links && links.checked > 0 && !links.dead.length ? ` Alle ${links.checked} geprüften Links funktionieren.` : '';
+	const tipText = tips.length ? ` Tipp: ${tips.join(' ')}` : '';
+
+	if (!analysis && problems.length === 0) {
 		return {
 			...base,
 			status: 'skip',
 			title: 'Inhalt nicht geprüft',
-			text: 'Der Spamfilter war gerade nicht erreichbar. Die anderen Prüfungen sind davon nicht betroffen.',
-			deductions: [],
-			raw: { error: error ?? 'unavailable' },
-		};
-	}
-	const points = contentDeduction(analysis.score);
-	const hits = analysis.symbols.filter((s) => s.score > 0).sort((a, b) => b.score - a.score);
-	const explained = hits.slice(0, 3).map((s) => TEXTS[s.name] ?? `Spamfilter-Regel ${s.name}${s.description ? `: ${s.description}` : ''}.`);
-	const raw = { rspamdScore: analysis.score, symbols: analysis.symbols };
-	const deductions = points > 0 ? [{ reason: `Spamfilter-Punkte: ${analysis.score}`, points }] : [];
-	if (points === 0) {
-		return {
-			...base,
-			status: 'ok',
-			title: 'Inhalt unauffällig',
-			text: explained.length > 0 && hits[0].score >= 0.5 ? `Der Spamfilter hat nichts Ernstes gefunden. Kleiner Tipp: ${explained[0]}` : 'Der Spamfilter hat in Betreff, Text und Links nichts Verdächtiges gefunden.',
+			text: `Der Spamfilter war gerade nicht erreichbar. Die anderen Prüfungen sind davon nicht betroffen.${linkNote}${tipText}`,
 			deductions,
 			raw,
 		};
 	}
+	if (problems.length === 0) {
+		const good = unsubscribe?.bulk && unsubscribe.oneClick ? ' Die Abmeldung mit einem Klick ist korrekt eingerichtet.' : '';
+		return {
+			...base,
+			status: 'ok',
+			title: 'Inhalt unauffällig',
+			text: `Der Spamfilter hat in Betreff, Text und Links nichts Verdächtiges gefunden.${linkNote}${good}${tipText}`,
+			deductions,
+			raw,
+		};
+	}
+	const bad = rspamdPoints >= 2;
 	return {
 		...base,
-		status: points >= 2 ? 'bad' : 'warn',
-		title: points >= 2 ? 'Inhalt wirkt wie Spam' : 'Inhalt: kleine Auffälligkeiten',
-		text: explained.join(' '),
+		status: bad ? 'bad' : 'warn',
+		title: bad ? 'Inhalt wirkt wie Spam' : 'Inhalt: kleine Auffälligkeiten',
+		text: `${problems.join(' ')}${analysis ? '' : ' (Der Spamfilter selbst war gerade nicht erreichbar.)'}${tipText}`,
 		deductions,
 		raw,
 	};
