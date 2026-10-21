@@ -82,4 +82,54 @@ describe('STARTTLS certificate', () => {
 			await new Promise<void>((r) => server.close(() => r()));
 		}
 	});
+
+	it('reports the negotiated TLS version, not the cipher suite minimum (audit I4)', async () => {
+		const c = selfSigned('mx');
+		const store = new Store(':memory:');
+		const service = new TestService({ store, testDomain: 'test.e-mail-check.de', testTtlMinutes: 60, deps: { resolver: fakeResolver(), mta: 'mx.test', resultTtlDays: 7, scanContent: null } });
+		const server = createSmtpServer(service, { hostname: 'mx.test', maxMessageBytes: 1 << 20, allowXclient: false, tls: readTls(c)! });
+		await new Promise<void>((r) => server.listen(25262, r));
+		const test = service.createTest();
+		const done = new Promise<void>((r) => service.subscribe(test.id, (e) => e.type === 'done' && r()));
+		try {
+			await new Promise<void>((resolve, reject) => {
+				const sock = createConnection(25262, '127.0.0.1');
+				let buf = '';
+				sock.on('data', (d) => {
+					buf += d.toString();
+					if (/^220 .*\r\n$/m.test(buf) && !buf.includes('250')) sock.write('EHLO test\r\n');
+					else if (/^250 /m.test(buf) && !buf.includes('STARTTLS sent')) {
+						buf += 'STARTTLS sent';
+						sock.write('STARTTLS\r\n');
+					} else if (buf.includes('STARTTLS sent') && /220 [^\n]*\r\n$/.test(buf)) {
+						sock.removeAllListeners('data');
+						// TLS 1.2 with a CBC suite: getCipher().version would say TLSv1.0
+						const t = connect({ socket: sock, rejectUnauthorized: false, maxVersion: 'TLSv1.2', ciphers: 'ECDHE-ECDSA-AES128-SHA' }, () => {
+							const cmds = ['EHLO test', 'MAIL FROM:<a@b.de>', `RCPT TO:<${test.address}>`, 'DATA', 'Subject: x\r\n\r\nhallo\r\n.', 'QUIT'];
+							let tb = '';
+							t.on('data', (d) => {
+								tb += d.toString();
+								while (/^\d{3} .*\r\n/m.test(tb)) {
+									const m = /^(\d{3}) .*\r\n/m.exec(tb)!;
+									tb = tb.slice(m.index + m[0].length);
+									const next = cmds.shift();
+									if (next) t.write(next + '\r\n');
+									else t.end();
+								}
+							});
+							t.write(cmds.shift() + '\r\n');
+						});
+						t.on('end', () => resolve());
+						t.on('error', reject);
+					}
+				});
+				sock.on('error', reject);
+			});
+			await done;
+			const result = service.result(service.status(test.id)!.resultId!)!;
+			expect(result.mail.tls).toEqual({ used: true, version: 'TLSv1.2' });
+		} finally {
+			await new Promise<void>((r) => server.close(() => r()));
+		}
+	});
 });

@@ -69,6 +69,11 @@ export class Store {
 		if (state === 'done' && Number(changed.changes) > 0) this.db.prepare("UPDATE counters SET value = value + 1 WHERE name = 'mails_checked'").run();
 	}
 
+	/** Tests still "analyzing" from before a restart can never finish: mark them failed. */
+	failStaleTests(): number {
+		return Number(this.db.prepare("UPDATE tests SET state = 'error' WHERE state = 'analyzing'").run().changes);
+	}
+
 	saveResult(result: MailResult): void {
 		this.db.prepare('INSERT INTO results (id, json, expires_at) VALUES (?, ?, ?)').run(result.id, JSON.stringify(result), result.expiresAt);
 	}

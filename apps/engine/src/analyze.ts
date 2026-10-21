@@ -136,18 +136,61 @@ export function previewOf(parsed: ParsedMail): MailPreview {
 	return { text: text?.slice(0, CAP.text) ?? null, html: html?.slice(0, CAP.html) ?? null, headers: headers.slice(0, CAP.headers), truncated };
 }
 
+/** Longest HTML we read for counts; mails larger than this are not made more readable by more text. */
+const HTML_SCAN = 300_000;
+
+/**
+ * Visible text of an HTML body, in linear time (C1 audit 21.10.2026: `<[^>]+>` over a body of `<<<<…`
+ * was quadratic and stalled the single engine process for minutes).
+ */
+export function htmlToReadable(input: string): string {
+	const html = input.length > HTML_SCAN ? input.slice(0, HTML_SCAN) : input;
+	const lower = html.toLowerCase();
+	let out = '';
+	let i = 0;
+	// style and script blocks are skipped with indexOf, never with a backtracking regex
+	while (i < html.length) {
+		const s = lower.indexOf('<style', i), c = lower.indexOf('<script', i);
+		const at = s < 0 ? c : c < 0 ? s : Math.min(s, c);
+		if (at < 0) {
+			out += html.slice(i);
+			break;
+		}
+		out += html.slice(i, at) + ' ';
+		const close = lower.indexOf(at === s ? '</style' : '</script', at);
+		if (close < 0) break;
+		const end = lower.indexOf('>', close);
+		i = end < 0 ? html.length : end + 1;
+	}
+	return out.replace(/<[^<>]*>/g, ' ').replace(/&[a-z#0-9]{1,10};/gi, ' ');
+}
+
+/** Does the MIME structure have a real text/plain part (not an attachment, not quoted text)? */
+export function hasTextPart(message: Buffer): boolean {
+	const lines = message.toString('latin1', 0, Math.min(message.length, 2_000_000)).split(/\r?\n/);
+	for (let k = 0; k < lines.length; k++) {
+		if (!/^content-type:\s*text\/plain\b/i.test(lines[k])) continue;
+		// the part's other headers follow until the first empty line
+		let attachment = false;
+		for (let j = k + 1; j < lines.length && lines[j].trim() !== '' && j < k + 12; j++) if (/^content-disposition:\s*attachment/i.test(lines[j])) attachment = true;
+		for (let j = k - 1; j >= 0 && lines[j].trim() !== '' && j > k - 12; j--) if (/^content-disposition:\s*attachment/i.test(lines[j])) attachment = true;
+		if (!attachment) return true;
+	}
+	return false;
+}
+
 /** Words, images and parts of the mail: counts only, the text itself is not kept. */
 export function bodyStats(parsed: ParsedMail | null, message: Buffer): BodyStats | null {
 	if (!parsed) return null;
 	const html = typeof parsed.html === 'string' ? parsed.html : '';
-	const hasText = !html || /content-type:\s*text\/plain/i.test(message.toString('latin1'));
+	// mailparser fills `text` from the HTML when there is no text part, so the MIME structure decides.
+	const hasText = !html || hasTextPart(message);
 	// With a real text part count that; otherwise the HTML without tags (mailparser's own text would add link and image markers).
-	const readable = hasText ? (parsed.text ?? '') : html.replace(/<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&[a-z#0-9]+;/gi, ' ');
+	const readable = hasText ? (parsed.text ?? '').slice(0, HTML_SCAN) : htmlToReadable(html);
 	return {
 		words: (readable.match(/[\p{L}\p{N}]{2,}/gu) ?? []).length,
-		images: (html.match(/<img\b/gi) ?? []).length,
+		images: (html.slice(0, HTML_SCAN).match(/<img\b/gi) ?? []).length,
 		hasHtml: html.length > 0,
-		// mailparser fills `text` from the HTML when there is no text part, so the MIME structure decides.
 		hasText,
 		htmlChars: html.length,
 	};
@@ -162,7 +205,7 @@ async function runContentChecks(message: Buffer, parsed: ParsedMail | null, env:
 	let links: string[] = [];
 	if (parsed) {
 		headerLines = parsed.headerLines.map((h) => [h.key.toLowerCase(), h.line.slice(h.line.indexOf(':') + 1).trim()]);
-		links = extractLinks(typeof parsed.html === 'string' ? parsed.html : undefined, parsed.text);
+		links = extractLinks(typeof parsed.html === 'string' ? parsed.html.slice(0, HTML_SCAN) : undefined, parsed.text?.slice(0, HTML_SCAN));
 	}
 	const summary = summarizeLinks(links);
 	const body = bodyStats(parsed, message);

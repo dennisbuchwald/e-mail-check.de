@@ -9,7 +9,7 @@ Was mit einer Testmail technisch passiert, wo es im Code steht und was gespeiche
 | Empfang | `apps/engine/src/smtp.ts` | Mail nur im Arbeitsspeicher, unbekannte Adressen werden beim `RCPT TO` abgelehnt | nein |
 | Prüfung | `apps/engine/src/analyze.ts` | SPF/DKIM/DMARC, Sperrlisten, rspamd, eigene Inhalts-Checks, Zustellkette | nein, nur das Ergebnis unten |
 | Ergebnis | `apps/engine/src/store.ts` (SQLite) | Score, Prüfpunkte, technische Prüfwerte | ja, 7 Tage, dann automatisch gelöscht |
-| Betreff + Absender | `apps/engine/src/service.ts` (`headers`-Map) | für die erste Stunde im Ergebnis-Kopf | nur RAM, höchstens 60 Minuten |
+| Betreff + Absender | `received`-Schritt im Live-Stream (`/api/tests/<id>/events`), nur mit der Test-ID | im Ergebnis-Kopf der Person, die getestet hat | nur RAM, bis 60 s nach der Prüfung; `/api/results/<id>` liefert sie nie (Audit C3, 21.10.2026) |
 | Text, HTML, Kopfzeilen („Mail-Quelle & Header“) | `previewOf` in `analyze.ts`, `done`-Event in `service.ts` | einmal live an den Browser des Testers geschickt, gekürzt (Text 100.000, HTML 300.000, Kopfzeilen 30.000 Zeichen) | **nein**, weder Datenbank noch Ergebnis-Link; ein späterer Abonnent (SSE-Replay) bekommt es nicht |
 | Geteilter Link | `GET /api/results/<id>/view`, Caddy-Templates | serverseitig gerendert, ohne Betreff und Absender | nur das Ergebnis |
 
