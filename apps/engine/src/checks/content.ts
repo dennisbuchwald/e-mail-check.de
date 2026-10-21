@@ -17,6 +17,9 @@ const IGNORED = [
 	/^ONCE_RECEIVED/, /^DMARC_POLICY/, /^FORGED_SENDER$/, /^R_MISSING_CHARSET$/, /^HFILTER_HELO/, /^RDNS_/, /^HFILTER_HOSTNAME/,
 ];
 
+/** Symbols caused by common mail programs, not by the sender: never shown as a tip. */
+const CLIENT_QUIRKS = new Set(['MV_CASE']);
+
 /** Plain-language explanations for common content symbols. */
 const TEXTS: Record<string, string> = {
 	MISSING_MIME_VERSION: 'Der Mail fehlt die technische Angabe „MIME-Version“. Das passiert meist bei selbst gebauten Formularen oder Skripten.',
@@ -117,8 +120,11 @@ export function contentFinding(analysis: ContentAnalysis | null, extras: Content
 		if (rspamdPoints > 0) {
 			deductions.push({ reason: `Spamfilter-Punkte: ${analysis.score}`, points: rspamdPoints });
 			problems.push(...explained);
-		} else if (explained.length > 0 && hits[0].score >= 0.5) {
-			tips.push(explained[0]);
+		} else {
+			// Tips only for things the sender can change. Quirks of the mail program itself
+			// (e.g. Apple Mail writes "Mime-Version") stay in the raw data.
+			const tip = hits.find((s) => s.score >= 0.3 && TEXTS[s.name] && !CLIENT_QUIRKS.has(s.name));
+			if (tip) tips.push(TEXTS[tip.name]);
 		}
 	}
 

@@ -18,7 +18,7 @@ faq:
   - frage: "Was ist ein guter Score?"
     antwort: "Ab 9 von 10 bist du im grünen Bereich: Spamfilter haben keinen technischen Grund, deine Mail auszusortieren. 7 bis 8,9 ist solide, 5 bis 6,9 gefährdet, darunter landet viel im Spam. Ausnahme: Schlägt SPF, DKIM oder DMARC fehl, warnen wir immer, auch wenn die Zahl hoch ist."
   - frage: "Wie kann ich prüfen, ob ich auf einer Blacklist stehe?"
-    antwort: "Schick eine Testmail. Wir prüfen die IP-Adresse deines sendenden Servers automatisch gegen Spamhaus, SpamCop, Barracuda, NiX Spam und PSBL. Steht dein Server auf einer Liste, siehst du das im Prüfpunkt Server-Ruf."
+    antwort: "Schick eine Testmail. Wir prüfen die IP-Adresse deines sendenden Servers automatisch gegen Spamhaus, SpamCop, Barracuda und PSBL. Steht dein Server auf einer Liste, siehst du das im Prüfpunkt Server-Ruf."
 stand: "2026-10-21"
 ---
 
