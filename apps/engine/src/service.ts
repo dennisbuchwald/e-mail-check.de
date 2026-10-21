@@ -5,7 +5,7 @@ import type { MailResult, ProgressEvent, TestStatus } from '@emc/shared';
 import { analyzeMessage, newId, type AnalyzeDeps } from './analyze.ts';
 import type { SmtpEnvelope } from './checks/auth.ts';
 import type { Store } from './store.ts';
-import { TestsToday } from './stats.ts';
+import { CheckedCounter } from './stats.ts';
 
 // No 0/o/1/l/i: addresses get typed by hand sometimes.
 const HEADER_TTL_MS = 3600_000;
@@ -30,7 +30,7 @@ export class TestService {
 	private readonly bus = new EventEmitter();
 	/** Finished steps of running analyses; kept briefly for late subscribers and polling. */
 	private readonly progress = new Map<string, Extract<ProgressEvent, { type: 'step' }>[]>();
-	private readonly today = new TestsToday({ count: (since) => this.opts.store.countDoneSince(since), now: () => this.now() });
+	private readonly checked = new CheckedCounter({ count: () => this.opts.store.mailsChecked(), now: () => this.now() });
 	private readonly headers = new Map<string, { from: string | null; subject: string | null }>();
 
 	constructor(opts: ServiceOptions) {
@@ -110,9 +110,9 @@ export class TestService {
 		return r && h ? { ...r, mail: { ...r.mail, ...h } } : r;
 	}
 
-	/** Finished tests since midnight Berlin, or null below 50 (see stats.ts). */
-	testsToday(): number | null {
-		return this.today.get();
+	/** All-time number of analyzed mails, or null below 100 (see stats.ts). */
+	mailsChecked(): number | null {
+		return this.checked.get();
 	}
 
 	/** Finished steps with their live extras, for replaying to late subscribers. */

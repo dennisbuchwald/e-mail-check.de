@@ -47,7 +47,7 @@ Er ersetzt den V1-Hero mit Aura. Die Aura komplett entfernen, aus dem Code und a
 - **Mail-Fenster** (Card, Radius 18 px):
   - Kopf: „Neue Nachricht“, rechts „TESTMAIL“ in Mono.
   - Zeile „An“: Testadresse in Mono 21 px, Button „Kopieren“ mit Feedback „Kopiert ✓“.
-  - Zeile „Betreff“: „Egal. Am besten so, wie du sonst schreibst.“
+  - ~~Zeile „Betreff“~~ entfernt (Dennis, 21.10.2026: so simpel wie möglich).
   - Fuß: pulsierender Punkt mit „Wir warten auf deine Mail.“, Button „Mail ist raus →“ (Ink).
   - Die bestehende Logik bleibt: Adresse erzeugen, SSE und Polling, Prüf-Modus.
 - **Vertrauenszeile:** grüne Kreise 18 px `#02CA50` mit Ink-Häkchen. Texte: „Server in Deutschland“, „Testmail sofort gelöscht“, „Keine Cookies, kein Konto“. Nur stehen lassen, was technisch stimmt.

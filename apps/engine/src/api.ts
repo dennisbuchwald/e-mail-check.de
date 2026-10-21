@@ -55,7 +55,7 @@ export function createApi(opts: ApiOptions): Hono {
 	app.get('/stats', (c) => {
 		const wait = statsLimit.hit(ipOf(c));
 		if (wait) return tooMany(c, wait);
-		return c.json({ testsToday: opts.service.testsToday() });
+		return c.json({ mailsChecked: opts.service.mailsChecked() });
 	});
 
 	app.post('/tests', (c) => {
