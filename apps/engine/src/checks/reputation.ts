@@ -10,6 +10,8 @@ export interface Blocklist {
 	ipv6: boolean;
 	/** Answers that mean "query refused", not "listed" (e.g. Spamhaus via public resolver). */
 	errorAnswers?: string[];
+	/** Answers that only mean "end-user IP range" (Spamhaus PBL), not "spam seen". */
+	pblAnswers?: string[];
 	delistUrl: string;
 }
 
@@ -21,6 +23,7 @@ export const BLOCKLISTS: Blocklist[] = [
 		major: true,
 		ipv6: true,
 		errorAnswers: ['127.255.255.252', '127.255.255.254', '127.255.255.255'],
+		pblAnswers: ['127.0.0.10', '127.0.0.11'],
 		delistUrl: 'https://check.spamhaus.org/',
 	},
 	{ name: 'SpamCop', zone: 'bl.spamcop.net', major: false, ipv6: false, delistUrl: 'https://www.spamcop.net/bl.shtml' },
@@ -53,7 +56,7 @@ function expandIpv6(ip: string): string {
 	return [...h, ...fill, ...t].map((g) => g.padStart(4, '0')).join(':');
 }
 
-type ListResult = { list: string; listed: boolean | null; answer?: string; delistUrl: string; major: boolean };
+type ListResult = { list: string; listed: boolean | null; answer?: string; pbl?: boolean; delistUrl: string; major: boolean };
 
 async function queryList(resolve: DnsResolver, ip: string, list: Blocklist): Promise<ListResult> {
 	const name = `${reverseIp(ip)}.${list.zone}`;
@@ -62,7 +65,8 @@ async function queryList(resolve: DnsResolver, ip: string, list: Blocklist): Pro
 		const answers: string[] = await resolve(name, 'A');
 		const real = answers.filter((a) => a.startsWith('127.') && !(list.errorAnswers ?? []).includes(a));
 		if (real.length === 0) return { ...out, listed: answers.length > 0 ? null : false };
-		return { ...out, listed: true, answer: real.join(',') };
+		const pbl = real.every((a) => (list.pblAnswers ?? []).includes(a));
+		return { ...out, listed: true, answer: real.join(','), ...(pbl ? { pbl: true } : {}) };
 	} catch (err) {
 		return { ...out, listed: isNotFound(err) ? false : null };
 	}
@@ -113,6 +117,18 @@ export async function checkReputation(ip: string, resolve: DnsResolver, lists: B
 	else if (!ptr.matches) deductions.push({ reason: 'rDNS passt nicht zur IP', points: POINTS.reputation.ptrMismatch });
 
 	const raw = { ip, ptr: ptr.ptr, ptrMatches: ptr.matches, lists: results };
+	// Only Spamhaus PBL: an ordinary internet connection sends straight to the recipient.
+	// Not an accusation of spam, but big providers refuse it, so the points stay.
+	if (listed.length > 0 && listed.every((r) => r.pbl)) {
+		return {
+			...base,
+			status: 'bad',
+			title: 'Versand direkt vom Internetanschluss',
+			text: `Die Mail kam direkt von ${ip}. Spamhaus führt diese Adresse in seiner Liste für normale Internetanschlüsse (PBL). Das ist kein Spam-Vorwurf, aber Gmail, Outlook und Co. nehmen von solchen Adressen keine Mails direkt an. Lösung: Verschick über den Postausgangsserver (SMTP mit Anmeldung) deines Mail-Anbieters. Das betrifft oft Kontaktformulare auf eigenen Servern, Scanner oder einen eigenen Mailserver im Büro. Austragen lohnt sich nur, wenn du an dieser Adresse bewusst einen eigenen Mailserver mit fester IP betreibst.`,
+			deductions,
+			raw,
+		};
+	}
 	if (listed.length > 0) {
 		return {
 			...base,

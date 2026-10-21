@@ -97,7 +97,7 @@ export function stepInfo(f: Finding): StepInfo {
 		} else if (f.id === 'reputation' && Array.isArray(raw.lists)) {
 			const asked = raw.lists.filter((l: { listed: boolean | null }) => l.listed !== null);
 			const hits = asked.filter((l: { listed: boolean | null }) => l.listed);
-			detail = hits.length ? `Auf ${hits.length} von ${asked.length} Sperrlisten: ${hits.map((l: { list: string }) => l.list).join(', ')}` : `${asked.length} Sperrlisten abgefragt, alle sauber`;
+			detail = hits.length ? `Auf ${hits.length} von ${asked.length} Sperrlisten: ${hits.map((l: { list: string; pbl?: boolean }) => (l.pbl ? 'Spamhaus PBL (Internetanschluss)' : l.list)).join(', ')}` : `${asked.length} Sperrlisten abgefragt, alle sauber`;
 		} else if (f.id === 'content' && typeof raw.rspamdScore === 'number') {
 			const links = raw.links?.checked ? ` · ${raw.links.checked} ${raw.links.checked === 1 ? 'Link' : 'Links'} geprüft` : '';
 			detail = `Spam-Score ${fmt(raw.rspamdScore)}${links}`;
