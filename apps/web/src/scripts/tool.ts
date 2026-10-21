@@ -18,6 +18,15 @@ const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 /** Each check stays visible at least this long, so the animation stays readable when analysis is fast. */
 const STEP_MS = reduced ? 120 : 560;
 
+/** Rotating tips while we wait for the mail. */
+const WAIT_TIPS = [
+	'Tipp: Schick die Mail aus deinem echten Postfach, mit Signatur. Dann ist das Ergebnis ehrlich.',
+	'Tipp: Du kannst die Adresse auch in dein Kontaktformular oder Newsletter-Tool eintragen.',
+	'Wir prüfen gleich fünf Dinge: Absender, Unterschrift, Schutzregel, Server-Ruf und Inhalt.',
+	'Gut zu wissen: Den Inhalt deiner Mail speichern wir nicht. Er wird direkt nach der Prüfung gelöscht.',
+];
+const WAIT_HELP = 'Noch nichts da? Prüf, ob die Adresse genau stimmt. Manche Postfächer brauchen ein bis zwei Minuten.';
+
 const TOPIC_TITLES: Record<GuideTopic, { title: string; lead: string }> = {
 	spf: { title: 'Absender bestätigen', lead: 'Dauert etwa 5 Minuten. Fachbegriff: SPF-Eintrag.' },
 	dkim: { title: 'Unterschrift einrichten', lead: 'Dauert etwa 10 Minuten. Fachbegriff: DKIM.' },
@@ -129,6 +138,11 @@ export function initTool(): void {
 		$('[data-address]').innerHTML = `<span class="nw">${esc(local)}@</span><wbr><span class="nw">${esc(domain)}</span>`;
 		$('[data-address-small]').textContent = test.address;
 		$$('[data-action="copy"], [data-action="sent"]').forEach((b) => ((b as HTMLButtonElement).disabled = false));
+		const mailto = `mailto:${test.address}?subject=${encodeURIComponent('Kurzer Test')}&body=${encodeURIComponent('Hallo,\n\ndas ist ein Test meiner Mail-Einstellungen.\n\nViele Grüße')}`;
+		for (const a of $$('[data-mailto]')) {
+			a.setAttribute('href', mailto);
+			a.removeAttribute('aria-disabled');
+		}
 	}
 
 	async function resumeOrCreate() {
@@ -233,11 +247,61 @@ export function initTool(): void {
 		$('[data-env-got]').setAttribute('hidden', '');
 		$('[data-wait-title]').textContent = 'Wir warten auf deine Mail';
 		$('[data-wait-sub]').textContent = 'Die Seite aktualisiert sich von selbst';
+		for (const lamp of $$('[data-lamp]')) delete lamp.dataset.status;
+		for (const li of $$('[data-step]')) {
+			delete li.dataset.status;
+			const d = li.querySelector<HTMLElement>('.step-detail')!;
+			d.dataset.placeholder ??= d.textContent ?? '';
+			d.textContent = d.dataset.placeholder;
+		}
+		$('[data-fly]').hidden = true;
+		$('[data-wait-mail]').hidden = true;
+		$('[data-wait-addr]').hidden = false;
+		stopWaitTicker();
+	}
+
+	// ---- waiting: clock and rotating tips ----
+	let waitTicker = 0;
+	let waitStarted = 0;
+	function startWaitTicker() {
+		stopWaitTicker();
+		if (!test) return;
+		waitStarted = Date.now();
+		const opened = new Date(test.expiresAt).getTime() - 60 * 60_000;
+		const until = new Date(test.expiresAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+		const hint = $('[data-wait-hint]');
+		let tip = 0;
+		const setHint = (text: string) => {
+			if (hint.textContent === text) return;
+			if (reduced) return void (hint.textContent = text);
+			hint.classList.add('fade');
+			setTimeout(() => {
+				hint.textContent = text;
+				hint.classList.remove('fade');
+			}, 400);
+		};
+		hint.textContent = WAIT_TIPS[0];
+		$('[data-wait-clock]').hidden = false;
+		hint.hidden = false;
+		const tick = () => {
+			const sec = Math.max(0, Math.floor((Date.now() - opened) / 1000));
+			$('[data-wait-clock]').textContent = `Postfach offen seit ${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')} · gültig bis ${until} Uhr`;
+			const waited = (Date.now() - waitStarted) / 1000;
+			if (waited > 45) setHint(WAIT_HELP);
+			else if (Math.floor(waited / 7) !== tip) setHint(WAIT_TIPS[(tip = Math.floor(waited / 7)) % WAIT_TIPS.length]);
+		};
+		tick();
+		waitTicker = window.setInterval(tick, 1000);
+	}
+	function stopWaitTicker() {
+		clearInterval(waitTicker);
+		waitTicker = 0;
 	}
 
 	function goWait() {
 		if (!$('[data-screen="wait"]').hidden) return;
 		show('wait');
+		if (!seen.has('received')) startWaitTicker();
 		$('[data-wait-title]').focus?.();
 	}
 
@@ -250,8 +314,8 @@ export function initTool(): void {
 		while (queue.length && gen === generation) {
 			const e = queue.shift()!;
 			if (e.type === 'step') {
-				markDone(e.step);
-				await sleep(e.step === 'received' ? STEP_MS * 1.4 : STEP_MS);
+				markDone(e);
+				await sleep(e.step === 'received' ? (reduced ? 200 : 1500) : STEP_MS);
 			} else if (e.type === 'done') {
 				await finish(e.resultId, gen);
 			}
@@ -259,20 +323,49 @@ export function initTool(): void {
 		pumping = false;
 	}
 
-	function markDone(step: StepId) {
+	function markDone(e: Extract<ProgressEvent, { type: 'step' }>) {
+		const step: StepId = e.step;
 		const idx = STEPS.indexOf(step);
 		const items = $$('[data-step]');
 		items[idx].dataset.state = 'done';
+		if (e.status) {
+			items[idx].dataset.status = e.status;
+			const lamp = root!.querySelector<HTMLElement>(`[data-lamp="${step}"]`);
+			if (lamp) lamp.dataset.status = e.status;
+		}
+		if (e.detail) items[idx].querySelector<HTMLElement>('.step-detail')!.textContent = e.detail;
+		if (!reduced && step !== 'received' && 'vibrate' in navigator && matchMedia('(pointer: coarse)').matches) navigator.vibrate?.(8);
 		if (items[idx + 1]) items[idx + 1].dataset.state = 'active';
 		doneCount = items.filter((li) => li.dataset.state === 'done').length;
 		$('[data-prog]').style.setProperty('--p', `${Math.round((doneCount / STEPS.length) * 100)}%`);
 		if (step === 'received') {
-			$('[data-orb]').className = 'orb';
-			$('[data-env-wait]').setAttribute('hidden', '');
-			$('[data-env-got]').removeAttribute('hidden');
-			$('[data-scan]').hidden = false;
+			stopWaitTicker();
+			$('[data-wait-clock]').hidden = true;
+			$('[data-wait-hint]').hidden = true;
+			$('[data-wait-addr]').hidden = true;
 			$('[data-wait-title]').textContent = 'Mail ist da. Wir prüfen sie';
 			announce('Mail empfangen. Die Prüfung läuft.');
+			if (e.mail?.from || e.mail?.subject) {
+				$('[data-wm-from]').textContent = e.mail.from ?? 'unbekannt';
+				$('[data-wm-subject]').textContent = e.mail.subject ?? '';
+				$('[data-wm-subject-row]').hidden = !e.mail.subject;
+				$('[data-wait-mail]').hidden = false;
+			}
+			// The envelope flies into the ring, lands, then the scan starts.
+			$('[data-env-wait]').setAttribute('hidden', '');
+			const land = () => {
+				$('[data-fly]').hidden = true;
+				$('[data-orb]').className = 'orb arrived';
+				$('[data-env-got]').removeAttribute('hidden');
+				$('[data-scan]').hidden = false;
+				if (!reduced && 'vibrate' in navigator && matchMedia('(pointer: coarse)').matches) navigator.vibrate?.([14, 30, 14]);
+			};
+			if (reduced) land();
+			else {
+				$('[data-orb]').className = 'orb';
+				$('[data-fly]').hidden = false;
+				setTimeout(land, 720);
+			}
 		}
 		$('[data-wait-sub]').textContent = doneCount >= STEPS.length ? `Alle ${STEPS.length} Checks erledigt` : `Check ${doneCount} von ${STEPS.length}`;
 	}
@@ -498,6 +591,8 @@ export function initTool(): void {
 	// ---- actions ----
 	root.addEventListener('click', async (ev) => {
 		const t = ev.target as HTMLElement;
+		// Opening the mail program counts as "on its way": switch to waiting right after.
+		if (t.closest('[data-mailto]') && test) return void setTimeout(goWait, 400);
 		const btn = t.closest<HTMLElement>('button, [data-action]');
 		if (!btn) return;
 		const action = btn.dataset.action;

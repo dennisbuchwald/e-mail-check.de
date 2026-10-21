@@ -59,6 +59,11 @@ describe('API', () => {
 		const text = await res.text();
 		expect(text.match(/event: step/g)).toHaveLength(6);
 		expect(text).toContain('event: done');
+		// Live extras: who sent it, interim status and real values per check.
+		const steps = [...text.matchAll(/event: step\ndata: (.+)/g)].map((m) => JSON.parse(m[1]));
+		expect(steps[0].mail).toEqual({ from: 'max@gut.example.test', subject: 'Angebot Website' });
+		expect(steps.find((e) => e.step === 'spf')).toMatchObject({ status: 'ok', detail: expect.stringContaining('gut.example.test erlaubt') });
+		expect(steps.find((e) => e.step === 'reputation').detail).toMatch(/Sperrlisten abgefragt, alle sauber/);
 	});
 
 	it('rate-limits test creation per IP', async () => {

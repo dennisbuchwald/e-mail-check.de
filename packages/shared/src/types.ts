@@ -102,9 +102,17 @@ export interface TestStatus {
 	expiresAt: string;
 }
 
+/** Live extras for one finished step: interim status and a short line with real values. */
+export interface StepInfo {
+	status?: Finding['status'];
+	detail?: string;
+	/** Only on "received": shown to the person running the test, kept in RAM only. */
+	mail?: { from: string | null; subject: string | null };
+}
+
 /** Server-sent event payloads. */
 export type ProgressEvent =
-	| { type: 'step'; step: StepId }
+	| ({ type: 'step'; step: StepId } & StepInfo)
 	| { type: 'done'; resultId: string }
 	| { type: 'error'; message: string }
 	| { type: 'expired' };
