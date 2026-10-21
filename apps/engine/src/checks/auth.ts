@@ -192,8 +192,8 @@ export function dkimFinding(signatures: DkimSignature[], fromDomain: string | nu
 			status: 'ok',
 			title: 'Mail unterschrieben',
 			text: weak
-				? `Deine Mail trägt eine gültige Unterschrift von ${aligned.signingDomain}. Tipp: Der Schlüssel ist mit ${aligned.modulusLength} Bit kurz, empfohlen sind 2048 Bit.`
-				: `Deine Mail trägt eine gültige Unterschrift von ${aligned.signingDomain}. Empfänger sehen, dass sie unterwegs nicht verändert wurde.`,
+				? `Deine Mail trägt eine gültige Unterschrift von ${aligned.signingDomain} (Selektor: ${aligned.selector}). Tipp: Der Schlüssel ist mit ${aligned.modulusLength} Bit kurz, empfohlen sind 2048 Bit.`
+				: `Deine Mail trägt eine gültige Unterschrift von ${aligned.signingDomain} (Selektor: ${aligned.selector}). Empfänger sehen, dass sie unterwegs nicht verändert wurde.`,
 			deductions: [],
 			raw,
 		};

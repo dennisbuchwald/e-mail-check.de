@@ -1,0 +1,60 @@
+---
+// Wraps rendered markdown: typography, copy buttons for code blocks, tables scroll on small screens.
+interface Props {
+	class?: string;
+}
+const { class: cls = '' } = Astro.props;
+---
+
+<div class:list={['prose', cls]} data-prose>
+	<slot />
+</div>
+
+<script>
+	import { copyText, flash } from '../scripts/util';
+	for (const pre of document.querySelectorAll<HTMLPreElement>('[data-prose] pre')) {
+		const wrap = document.createElement('div');
+		wrap.className = 'pre-wrap';
+		pre.replaceWith(wrap);
+		wrap.appendChild(pre);
+		const btn = document.createElement('button');
+		btn.type = 'button';
+		btn.className = 'chip';
+		btn.textContent = 'Kopieren';
+		btn.addEventListener('click', async () => {
+			await copyText(pre.innerText.trim());
+			flash(btn, 'Kopiert');
+		});
+		wrap.appendChild(btn);
+	}
+	for (const table of document.querySelectorAll<HTMLTableElement>('[data-prose] table')) {
+		const wrap = document.createElement('div');
+		wrap.className = 'table-wrap';
+		wrap.tabIndex = 0;
+		table.replaceWith(wrap);
+		wrap.appendChild(table);
+	}
+</script>
+
+<style is:global>
+	.prose .pre-wrap {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		align-items: flex-start;
+	}
+	.prose .pre-wrap pre {
+		width: 100%;
+		margin: 0;
+		white-space: pre-wrap;
+		overflow-wrap: anywhere;
+		background: var(--bg) !important;
+		color: var(--ink) !important;
+	}
+	.prose .table-wrap {
+		overflow-x: auto;
+	}
+	.prose a {
+		font-weight: 600;
+	}
+</style>

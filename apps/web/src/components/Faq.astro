@@ -1,0 +1,102 @@
+---
+// FAQ list. The FAQPage JSON-LD is built by the page via faqSchema().
+interface Props {
+	items: { frage: string; antwort: string }[];
+	title?: string;
+}
+const { items, title = 'Häufige Fragen' } = Astro.props;
+---
+
+{
+	items.length > 0 && (
+		<section class="faq" aria-labelledby="faq-title">
+			<h2 id="faq-title">{title}</h2>
+			<div class="card faq-card">
+				{items.map((q) => (
+					<details class="faq-item">
+						<summary>
+							<span>{q.frage}</span>
+							<span class="faq-plus" aria-hidden="true" />
+						</summary>
+						<p>{q.antwort}</p>
+					</details>
+				))}
+			</div>
+		</section>
+	)
+}
+
+<style>
+	.faq {
+		display: flex;
+		flex-direction: column;
+		gap: 24px;
+	}
+	.faq-card {
+		overflow: hidden;
+	}
+	.faq-item + .faq-item {
+		border-top: 2px solid var(--divider);
+	}
+	summary {
+		list-style: none;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		padding: 22px 28px;
+		min-height: 72px;
+		font-size: 17px;
+		font-weight: 700;
+		line-height: 1.35;
+	}
+	summary::-webkit-details-marker {
+		display: none;
+	}
+	summary:hover span:first-child {
+		text-decoration: underline;
+		text-underline-offset: 4px;
+	}
+	.faq-plus {
+		position: relative;
+		width: 28px;
+		height: 28px;
+		border: 2px solid var(--ink);
+		border-radius: 999px;
+		flex: none;
+		transition: transform 0.35s var(--bounce);
+	}
+	.faq-plus::before,
+	.faq-plus::after {
+		content: '';
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		width: 12px;
+		height: 2px;
+		margin: -1px 0 0 -6px;
+		background: var(--ink);
+	}
+	.faq-plus::after {
+		transform: rotate(90deg);
+	}
+	details[open] .faq-plus {
+		transform: rotate(45deg);
+	}
+	.faq-item p {
+		margin: 0;
+		padding: 0 28px 24px;
+		color: var(--muted);
+		max-width: 46em;
+	}
+	@media (max-width: 820px) {
+		summary {
+			padding: 18px 20px;
+			font-size: 16px;
+		}
+		.faq-item p {
+			padding: 0 20px 20px;
+		}
+	}
+</style>

@@ -1,0 +1,801 @@
+---
+// The mail test: start → wait/check animation → result → guide. Logic in src/scripts/tool.ts.
+// mode "result" renders a shared result from /ergebnis/<id> without starting a new test.
+import { STEP_LABELS, STEPS } from '@emc/shared';
+import { PROVIDERS, SITE } from '../data/site';
+
+interface Props {
+	mode?: 'test' | 'result';
+	title?: string;
+	intro?: string;
+}
+const { mode = 'test', title = 'Kommt deine Mail an?', intro = '' } = Astro.props;
+const details: Record<string, string> = {
+	received: 'Warte auf den Eingang deiner Mail …',
+	spf: 'Suche den SPF-Eintrag deiner Domain …',
+	dkim: 'Prüfe die DKIM-Unterschrift …',
+	dmarc: 'Lese deine DMARC-Regel …',
+	reputation: 'Frage Sperrlisten und rDNS ab …',
+	content: 'Analysiere Betreff, Links und Inhalt …',
+};
+---
+
+<section class="wrap tool" id="tool" data-mode={mode} data-setup-url={SITE.setupUrl} aria-live="polite">
+	<!-- START -->
+	<div class="screen screen-start" data-screen="start" hidden={mode === 'result'}>
+		<div class="start-copy">
+			<span class="pill">Kostenlos · ohne Konto · DSGVO-konform</span>
+			<h1>{title}</h1>
+			{intro && <p class="lead">{intro}</p>}
+		</div>
+		<div class="card start-card">
+			<div class="label">Deine Testadresse</div>
+			<div class="address" data-address aria-live="off">
+				<span class="address-loading">Adresse wird erstellt …</span>
+			</div>
+			<div class="start-actions">
+				<button type="button" class="btn btn-line" data-action="copy" disabled>Adresse kopieren</button>
+				<button type="button" class="btn btn-ink" data-action="sent" disabled>Mail ist raus</button>
+			</div>
+			<p class="hint" data-start-hint>
+				Schick eine ganz normale Mail an diese Adresse, am besten aus dem Postfach oder Tool, das du testen willst.
+			</p>
+			<ul class="trust" aria-label="Datenschutz">
+				<li>Server in Deutschland</li>
+				<li>Testmail sofort gelöscht</li>
+				<li>Ergebnis 7 Tage</li>
+			</ul>
+		</div>
+	</div>
+
+	<!-- WAIT / CHECK -->
+	<div class="screen screen-wait" data-screen="wait" hidden>
+		<div class="wait-visual">
+			<div class="orb" data-orb>
+				<div class="prog" data-prog></div>
+				<div class="prog-mask"></div>
+				<div class="ring2"></div>
+				<div class="sat" data-sat><span></span></div>
+				<div class="burst" data-burst hidden>{Array.from({ length: 12 }, (_, i) => <i style={`--a: ${i * 30}deg`} />)}</div>
+				<div class="core">
+					<div class="scan" data-scan hidden></div>
+					<svg class="env env-wait" data-env-wait width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+						><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 7l9 6 9-6"></path></svg
+					>
+					<svg class="env pop" data-env-got hidden width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+						><path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8"></path><path d="M3 7l9 6 9-6"></path><path d="M16 19l2 2 4-4"></path></svg
+					>
+				</div>
+			</div>
+			<div class="wait-text">
+				<h2 class="wait-title" data-wait-title>Wir warten auf deine Mail</h2>
+				<p class="wait-sub"><span class="typing" aria-hidden="true"><span></span><span></span><span></span></span><span data-wait-sub>Die Seite aktualisiert sich von selbst</span></p>
+				<p class="wait-addr">An: <span class="mono" data-address-small></span> <button type="button" class="linkbtn" data-action="copy">kopieren</button></p>
+			</div>
+		</div>
+		<div class="card steps-card">
+			<ol class="steps" data-steps>
+				{
+					STEPS.map((id) => (
+						<li class="step" data-step={id} data-state="pending">
+							<span class="st" aria-hidden="true">
+								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+									<path d="M5 12l4 4 10-10" />
+								</svg>
+							</span>
+							<span class="step-text">
+								<span class="step-label">{STEP_LABELS[id]}</span>
+								<span class="step-detail mono">{details[id]}</span>
+							</span>
+						</li>
+					))
+				}
+			</ol>
+		</div>
+	</div>
+
+	<!-- RESULT -->
+	<div class="screen screen-result" data-screen="result" hidden>
+		<div class="result-summary">
+			<div class="ring" data-ring>
+				<div class="h ring-score" data-score>–</div>
+				<div class="ring-of">von 10</div>
+			</div>
+			<div class="result-head">
+				<h1 class="result-title" data-headline tabindex="-1">Dein Ergebnis</h1>
+				<p class="result-sub" data-sub></p>
+				<p class="result-meta" data-meta></p>
+			</div>
+			<div class="result-actions">
+				<button type="button" class="btn btn-line" data-action="share">Bericht für Kunden teilen</button>
+				<button type="button" class="btn btn-ink" data-action="reset" data-new-test>Neuen Test starten</button>
+				<p class="setup" data-setup hidden>Keine Zeit? <a href={SITE.setupUrl} rel="noopener">Lass es einrichten</a></p>
+			</div>
+		</div>
+		<div class="card checks-card">
+			<ul class="checks" data-checks></ul>
+		</div>
+	</div>
+
+	<!-- GUIDE -->
+	<div class="screen screen-guide" data-screen="guide" hidden>
+		<button type="button" class="back" data-action="back">← Zurück zum Ergebnis</button>
+		<div class="guide-grid">
+			<div class="guide-intro">
+				<h2 class="guide-title" data-guide-title tabindex="-1">Schutzregel einrichten</h2>
+				<p class="lead guide-lead" data-guide-lead></p>
+				<div class="guide-pick">
+					<div class="label" id="provider-label">Wo liegt deine Domain?</div>
+					<div class="chips" role="group" aria-labelledby="provider-label" data-providers>
+						{PROVIDERS.map((p) => <button type="button" class="chip" data-provider={p.slug} aria-pressed="false">{p.name}</button>)}
+						<button type="button" class="chip" data-provider="andere" aria-pressed="false">Anderer Anbieter</button>
+					</div>
+				</div>
+			</div>
+			<div class="card guide-card">
+				<ol class="guide-steps" data-guide-steps></ol>
+				<p class="guide-note">Neue Einträge brauchen manchmal ein paar Minuten, bis sie überall sichtbar sind.</p>
+				<div class="guide-actions">
+					<button type="button" class="btn btn-ink" data-action="retest">Erneut testen</button>
+					<a class="btn btn-line" data-guide-link href="/anleitung">Ausführliche Anleitung</a>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- MESSAGE (expired, error, not found) -->
+	<div class="screen screen-msg" data-screen="msg" hidden>
+		<div class="card msg-card">
+			<h1 class="msg-title" data-msg-title tabindex="-1">Diese Adresse ist abgelaufen</h1>
+			<p class="lead" data-msg-text>Testadressen gelten 60 Minuten. Hol dir einfach eine neue.</p>
+			<button type="button" class="btn btn-ink" data-action="reset">Neue Testadresse</button>
+		</div>
+	</div>
+	<div class="sr-only" data-announce aria-live="assertive"></div>
+</section>
+
+<script>
+	import { initTool } from '../scripts/tool';
+	initTool();
+</script>
+
+<style>
+	.tool {
+		padding-top: 56px;
+		padding-bottom: 32px;
+	}
+	.screen[hidden] {
+		display: none !important;
+	}
+	.label {
+		font-size: 14px;
+		font-weight: 700;
+		color: var(--muted);
+	}
+
+	/* START */
+	.screen-start {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 64px;
+		align-items: center;
+		padding-top: 24px;
+	}
+	.start-copy {
+		flex: 1 1 440px;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+	}
+	.start-card {
+		flex: 1 1 420px;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 18px;
+		padding: 36px;
+	}
+	.address {
+		font-family: var(--font-mono);
+		font-weight: 600;
+		font-size: 22px;
+		letter-spacing: -0.01em;
+		overflow-wrap: anywhere;
+		min-height: 1.3em;
+		line-height: 1.25;
+	}
+	.address :global(.nw) {
+		white-space: nowrap;
+	}
+	.address-loading {
+		color: var(--inactive);
+		font-family: var(--font-body);
+		font-size: 18px;
+		font-weight: 500;
+		letter-spacing: 0;
+	}
+	.start-actions {
+		display: flex;
+		gap: 12px;
+		flex-wrap: wrap;
+	}
+	.start-actions .btn {
+		flex: 1 1 170px;
+	}
+	.hint {
+		margin: 0;
+		font-size: 15px;
+		line-height: 1.5;
+		color: var(--muted);
+	}
+	.trust {
+		list-style: none;
+		margin: 0;
+		padding: 4px 0 0;
+		display: flex;
+		gap: 6px 16px;
+		flex-wrap: wrap;
+		font-size: 13px;
+		font-weight: 600;
+		color: var(--muted);
+	}
+	.trust li::before {
+		content: '';
+		display: inline-block;
+		width: 8px;
+		height: 8px;
+		border-radius: 999px;
+		background: var(--ok);
+		margin-right: 7px;
+		vertical-align: 1px;
+	}
+
+	/* WAIT */
+	.screen-wait {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 64px;
+		align-items: center;
+		justify-content: center;
+		padding-top: 24px;
+	}
+	.wait-visual {
+		flex: 1 1 340px;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 28px;
+		text-align: center;
+	}
+	.wait-text {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 12px;
+	}
+	.wait-title {
+		font-size: clamp(24px, 3vw, 36px);
+	}
+	.wait-sub {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		font-size: 17px;
+		color: var(--muted);
+		margin: 0;
+	}
+	.wait-addr {
+		margin: 0;
+		font-size: 14px;
+		color: var(--muted);
+		overflow-wrap: anywhere;
+	}
+	.linkbtn {
+		border: none;
+		background: none;
+		padding: 8px 4px;
+		font-size: 14px;
+		font-weight: 700;
+		text-decoration: underline;
+		text-underline-offset: 3px;
+		cursor: pointer;
+	}
+	.orb {
+		position: relative;
+		width: 180px;
+		height: 180px;
+		flex: none;
+		margin: 24px 0;
+		transform: scale(1.35);
+	}
+	.prog {
+		position: absolute;
+		inset: 0;
+		border-radius: 999px;
+		background: conic-gradient(var(--ink) var(--p, 0%), var(--track) 0);
+		transition: --p 0.5s ease;
+	}
+	.prog-mask {
+		position: absolute;
+		inset: 9px;
+		border-radius: 999px;
+		background: var(--bg);
+	}
+	.ring2 {
+		position: absolute;
+		inset: 22px;
+		border-radius: 999px;
+		border: 3px dashed var(--ink);
+		opacity: 0.3;
+		animation: spinr 7s linear infinite;
+	}
+	.sat {
+		position: absolute;
+		inset: 0;
+		animation: spin 2.4s linear infinite;
+	}
+	.sat span {
+		position: absolute;
+		top: -6px;
+		left: 50%;
+		margin-left: -9px;
+		width: 18px;
+		height: 18px;
+		border-radius: 999px;
+		background: var(--ink);
+		box-shadow: 0 0 0 4px var(--bg);
+	}
+	.core {
+		position: absolute;
+		inset: 46px;
+		border-radius: 999px;
+		background: var(--bg);
+		border: 4px solid var(--ink);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		overflow: hidden;
+	}
+	.scan {
+		position: absolute;
+		left: 14%;
+		right: 14%;
+		height: 3px;
+		border-radius: 999px;
+		background: var(--ink);
+		box-shadow: 0 0 14px 3px rgba(29, 29, 31, 0.25);
+		animation: scan 0.9s ease-in-out infinite alternate;
+	}
+	.pop {
+		animation: pop 0.55s var(--bounce) both;
+	}
+	.orb.waiting .core {
+		animation: breathe 1.6s ease-in-out infinite;
+	}
+	.orb.done {
+		animation: bump 0.6s var(--bounce);
+	}
+	.burst {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+	}
+	.burst i {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		width: 12px;
+		height: 12px;
+		margin: -6px 0 0 -6px;
+		border-radius: 999px;
+		background: var(--ink);
+		animation: burst 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+	}
+	.burst i:nth-child(3n + 2) {
+		background: var(--ok);
+	}
+	.burst i:nth-child(3n) {
+		width: 8px;
+		height: 8px;
+		margin: -4px 0 0 -4px;
+	}
+	.typing {
+		display: inline-flex;
+		gap: 5px;
+	}
+	.typing span {
+		width: 8px;
+		height: 8px;
+		border-radius: 999px;
+		background: var(--ink);
+		animation: blink 1.2s infinite;
+	}
+	.typing span:nth-child(2) {
+		animation-delay: 0.15s;
+	}
+	.typing span:nth-child(3) {
+		animation-delay: 0.3s;
+	}
+	.steps-card {
+		flex: 1 1 420px;
+		max-width: 520px;
+		min-width: 0;
+		padding: 32px 36px;
+	}
+	.steps {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 18px;
+	}
+	.step {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+	}
+	.st {
+		width: 26px;
+		height: 26px;
+		border-radius: 999px;
+		flex: none;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border: 2px solid var(--inactive-border);
+	}
+	.st svg {
+		opacity: 0;
+	}
+	.step[data-state='active'] .st {
+		border: 3px solid var(--track);
+		border-top-color: var(--ink);
+		animation: spin 0.8s linear infinite;
+	}
+	.step[data-state='done'] .st {
+		border: none;
+		background: var(--ink);
+		animation: pop 0.45s var(--bounce) both;
+	}
+	.step[data-state='done'] .st svg {
+		opacity: 1;
+	}
+	.step-text {
+		display: flex;
+		flex-direction: column;
+		gap: 3px;
+		min-width: 0;
+	}
+	.step-label {
+		font-size: 15px;
+		font-weight: 500;
+		color: var(--inactive);
+	}
+	.step[data-state='active'] .step-label,
+	.step[data-state='done'] .step-label {
+		font-weight: 700;
+		color: var(--ink);
+	}
+	.step-detail {
+		display: none;
+		font-size: 13px;
+		line-height: 18px;
+		color: var(--muted);
+	}
+	.step[data-state='active'] .step-detail {
+		display: block;
+	}
+
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+	@keyframes spinr {
+		to {
+			transform: rotate(-360deg);
+		}
+	}
+	@keyframes pop {
+		0% {
+			transform: scale(0.3);
+			opacity: 0;
+		}
+		100% {
+			transform: scale(1);
+			opacity: 1;
+		}
+	}
+	@keyframes blink {
+		0%,
+		80%,
+		100% {
+			opacity: 0.25;
+			transform: scale(0.75);
+		}
+		40% {
+			opacity: 1;
+			transform: scale(1);
+		}
+	}
+	@keyframes scan {
+		from {
+			top: 20%;
+		}
+		to {
+			top: 76%;
+		}
+	}
+	@keyframes burst {
+		from {
+			transform: rotate(var(--a)) translateY(0) scale(1);
+			opacity: 1;
+		}
+		to {
+			transform: rotate(var(--a)) translateY(-122px) scale(0.3);
+			opacity: 0;
+		}
+	}
+	@keyframes bump {
+		0% {
+			transform: scale(1.35);
+		}
+		40% {
+			transform: scale(1.46);
+		}
+		100% {
+			transform: scale(1.35);
+		}
+	}
+	@keyframes breathe {
+		0%,
+		100% {
+			transform: scale(0.94);
+		}
+		50% {
+			transform: scale(1);
+		}
+	}
+	@property --p {
+		syntax: '<percentage>';
+		inherits: false;
+		initial-value: 0%;
+	}
+
+	/* RESULT */
+	.screen-result {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 64px;
+		align-items: flex-start;
+	}
+	.result-summary {
+		flex: 1 1 340px;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 24px;
+	}
+	.ring {
+		width: 208px;
+		height: 208px;
+		border-radius: 999px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		border: 16px solid var(--status, var(--track));
+		animation: pop 0.55s var(--bounce) both;
+	}
+	.ring-score {
+		font-size: 58px;
+		letter-spacing: -0.03em;
+		line-height: 62px;
+	}
+	.ring-of {
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--muted);
+	}
+	.result-head {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+	.result-title {
+		font-size: clamp(30px, 3.4vw, 40px);
+		outline: none;
+	}
+	.result-sub {
+		margin: 0;
+		font-size: 17px;
+		line-height: 26px;
+		color: var(--muted);
+		text-wrap: pretty;
+	}
+	.result-meta {
+		margin: 0;
+		font-size: 13px;
+		color: var(--muted);
+	}
+	.result-actions {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		align-items: flex-start;
+	}
+	.setup {
+		margin: 0;
+		font-size: 15px;
+		color: var(--muted);
+	}
+	.setup a {
+		font-weight: 700;
+	}
+	.checks-card {
+		flex: 999 1 520px;
+		min-width: 0;
+		overflow: hidden;
+	}
+	.checks {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	/* GUIDE */
+	.back {
+		border: none;
+		background: none;
+		padding: 12px 12px 12px 0;
+		font-size: 15px;
+		font-weight: 600;
+		color: var(--muted);
+		cursor: pointer;
+		margin-bottom: 16px;
+	}
+	.guide-grid {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 64px;
+		align-items: flex-start;
+	}
+	.guide-intro {
+		flex: 1 1 340px;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 24px;
+	}
+	.guide-title {
+		font-size: clamp(30px, 3.6vw, 44px);
+		outline: none;
+	}
+	.guide-lead {
+		font-size: 17px;
+	}
+	.guide-pick {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+	.chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+	.guide-card {
+		flex: 999 1 520px;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 22px;
+		padding: 36px;
+	}
+	.guide-steps {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 22px;
+		counter-reset: g;
+	}
+	.guide-note {
+		margin: 0;
+		font-size: 15px;
+		line-height: 22px;
+		color: var(--muted);
+	}
+	.guide-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 12px;
+	}
+
+	/* MESSAGE */
+	.msg-card {
+		max-width: 640px;
+		margin: 24px auto 0;
+		padding: 40px;
+		display: flex;
+		flex-direction: column;
+		gap: 18px;
+		align-items: flex-start;
+	}
+	.msg-title {
+		font-size: clamp(28px, 3.4vw, 40px);
+		outline: none;
+	}
+
+	@media (max-width: 820px) {
+		.tool {
+			padding-top: 28px;
+		}
+		.screen-start,
+		.screen-wait,
+		.screen-result,
+		.guide-grid {
+			gap: 28px;
+		}
+		.screen-start {
+			padding-top: 0;
+		}
+		.start-card,
+		.guide-card {
+			padding: 20px;
+		}
+		.address {
+			font-size: 17px;
+		}
+		.orb {
+			transform: none;
+			margin: 0;
+		}
+		@keyframes bump {
+			0% {
+				transform: scale(1);
+			}
+			40% {
+				transform: scale(1.08);
+			}
+			100% {
+				transform: scale(1);
+			}
+		}
+		.steps-card {
+			padding: 18px 20px;
+			max-width: none;
+			width: 100%;
+		}
+		.steps {
+			gap: 14px;
+		}
+		.result-summary {
+			align-items: center;
+			text-align: center;
+		}
+		.result-actions {
+			align-items: stretch;
+			width: 100%;
+		}
+		.setup {
+			text-align: center;
+		}
+		.ring {
+			width: 176px;
+			height: 176px;
+			border-width: 14px;
+		}
+		.ring-score {
+			font-size: 46px;
+			line-height: 50px;
+		}
+		.msg-card {
+			padding: 24px;
+		}
+	}
+</style>

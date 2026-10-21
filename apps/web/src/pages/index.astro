@@ -1,0 +1,37 @@
+---
+import { getEntry, render } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Tool from '../components/Tool.astro';
+import Faq from '../components/Faq.astro';
+import Prose from '../components/Prose.astro';
+import { appSchema, faqSchema, websiteSchema } from '../data/schema';
+
+const page = await getEntry('seiten', 'index');
+if (!page) throw new Error('content/seiten/index.md missing');
+const { Content } = await render(page);
+---
+
+<Base title={page.data.seoTitel} description={page.data.beschreibung} path="/" tool jsonLd={[websiteSchema, appSchema, ...faqSchema(page.data.faq)]}>
+	<Tool title={page.data.titel} intro={page.data.intro} />
+	<div class="wrap below">
+		<Prose class="narrow"><Content /></Prose>
+		<div class="narrow"><Faq items={page.data.faq} /></div>
+	</div>
+</Base>
+
+<style>
+	.below {
+		display: flex;
+		flex-direction: column;
+		gap: 64px;
+		padding-top: 96px;
+	}
+	.narrow {
+		max-width: 780px;
+	}
+	@media (max-width: 820px) {
+		.below {
+			padding-top: 56px;
+		}
+	}
+</style>

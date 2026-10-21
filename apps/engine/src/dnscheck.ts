@@ -18,7 +18,40 @@ export function normalizeDomain(input: string): string | null {
 }
 
 /** Common DKIM selectors, probed when the user does not know theirs. */
-export const COMMON_SELECTORS = ['default', 'dkim', 'mail', 'selector1', 'selector2', 'google', 's1', 's2', 'k1', 'k2', 'key1', 'dkim1', 'smtp', 'sig1', 'mx'];
+export const COMMON_SELECTORS = ['default', 'dkim', 'mail', 'selector1', 'selector2', 'google', 's1-ionos', 's2-ionos', 's1', 's2', 'k1', 'k2', 'key1', 'dkim1', 'smtp', 'sig1', 'mx'];
+
+/** Known SPF includes → service name, so users see who may send for them. */
+const KNOWN_SENDERS: [RegExp, string][] = [
+	[/ionos|kundenserver\.de/, 'IONOS'],
+	[/strato/, 'STRATO'],
+	[/kasserver\.com|all-inkl/, 'ALL-INKL'],
+	[/your-server\.de|hetzner/, 'Hetzner'],
+	[/spf\.protection\.outlook\.com/, 'Microsoft 365'],
+	[/_spf\.google\.com/, 'Google Workspace'],
+	[/sendgrid\.net/, 'SendGrid'],
+	[/mailgun\.org/, 'Mailgun'],
+	[/sendinblue\.com|brevo\.com/, 'Brevo'],
+	[/mcsv\.net|mandrillapp\.com/, 'Mailchimp'],
+	[/amazonses\.com/, 'Amazon SES'],
+	[/rapidmail/, 'rapidmail'],
+	[/cleverreach/, 'CleverReach'],
+	[/hubspot/, 'HubSpot'],
+	[/zoho/, 'Zoho'],
+	[/mailjet\.com/, 'Mailjet'],
+	[/postmarkapp\.com|mtasv\.net/, 'Postmark'],
+	[/klaviyo/, 'Klaviyo'],
+];
+
+export function spfSenders(record: string): string[] {
+	const names = new Set<string>();
+	for (const m of record.matchAll(/(?:include:|redirect=)(\S+)/g)) {
+		const hit = KNOWN_SENDERS.find(([re]) => re.test(m[1].toLowerCase()));
+		names.add(hit ? hit[1] : m[1]);
+	}
+	if (/\s[+]?(a|mx)(\s|:|\/|$)/.test(` ${record} `)) names.add('eigene Server (a/mx)');
+	if (/ip[46]:/.test(record)) names.add('feste IP-Adressen');
+	return [...names];
+}
 
 const LOOKUP_TERMS = /^[+\-~?]?(include:|a\b|mx\b|ptr\b|exists:)|^redirect=/;
 
@@ -51,7 +84,8 @@ export async function spfDnsFinding(domain: string, resolve: DnsResolver): Promi
 	const rec = records[0];
 	const lookups = await countSpfLookups(rec, resolve);
 	const all = /\s([+\-~?]?)all(\s|$)/i.exec(` ${rec}`);
-	const raw = { record: rec, lookups };
+	const senders = spfSenders(rec);
+	const raw = { record: rec, lookups, senders };
 	if (lookups > 10) {
 		return { ...base, status: 'bad', title: 'Absender-Eintrag zu lang', text: `Dein SPF-Eintrag braucht ${lookups} Nachfragen, erlaubt sind 10. Empfänger werten ihn deshalb als Fehler. Entferne Dienste, die du nicht mehr nutzt.`, deductions: [], raw };
 	}
@@ -69,7 +103,7 @@ export async function spfDnsFinding(domain: string, resolve: DnsResolver): Promi
 		guide: undefined,
 		status: 'ok',
 		title: 'Absender-Eintrag vorhanden',
-		text: lookups >= 9 ? `SPF-Eintrag gültig. Er nutzt ${lookups} von 10 erlaubten Nachfragen, viel Luft ist nicht mehr.` : 'Dein SPF-Eintrag ist gültig und legt fest, welche Server für dich senden dürfen.',
+		text: `Dein SPF-Eintrag ist gültig.${senders.length ? ` Senden dürfen: ${senders.join(', ')}.` : ''} Er nutzt ${lookups} von 10 erlaubten Nachfragen${lookups >= 9 ? ', viel Luft ist nicht mehr' : ''}. Fehlt ein Dienst, der für dich Mails verschickt, landen dessen Mails im Spam.`,
 		deductions: [],
 		raw,
 	};

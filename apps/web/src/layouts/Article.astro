@@ -1,0 +1,126 @@
+---
+// Content page (knowledge, guides, legal): breadcrumbs, H1, short answer, body, CTA, FAQ, sources.
+import Base from './Base.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import Prose from '../components/Prose.astro';
+import Faq from '../components/Faq.astro';
+import Cta from '../components/Cta.astro';
+import { articleSchema, breadcrumbSchema, faqSchema } from '../data/schema';
+
+interface Props {
+	title: string;
+	seoTitle: string;
+	description: string;
+	path: string;
+	crumbs: { href: string; label: string }[];
+	kurz?: string;
+	faq?: { frage: string; antwort: string }[];
+	quellen?: { titel: string; url: string }[];
+	stand?: string;
+	geprueft?: boolean;
+	noindex?: boolean;
+	cta?: boolean;
+	eyebrow?: string;
+}
+const { title, seoTitle, description, path, crumbs, kurz, faq = [], quellen = [], stand, geprueft, noindex = false, cta = true, eyebrow } = Astro.props;
+const standDe = stand ? new Date(stand).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+const jsonLd = noindex ? [] : [breadcrumbSchema(crumbs), ...(stand ? [articleSchema({ title, description, path, date: stand })] : []), ...faqSchema(faq)];
+---
+
+<Base title={seoTitle} description={description} path={path} noindex={noindex} jsonLd={jsonLd}>
+	<article class="wrap article">
+		<div class="narrow head">
+			<Breadcrumbs items={crumbs} />
+			{eyebrow && <span class="pill">{eyebrow}</span>}
+			<h1>{title}</h1>
+			{kurz && <p class="lead kurz">{kurz}</p>}
+			{
+				stand && (
+					<p class="meta">
+						Stand {standDe}
+						{geprueft === false && ' · Anleitung wird gerade gegen die Oberfläche des Anbieters geprüft'}
+					</p>
+				)
+			}
+		</div>
+		<div class="narrow">
+			<slot name="before" />
+			<Prose><slot /></Prose>
+			<slot name="after" />
+			{cta && <Cta />}
+		</div>
+		{
+			faq.length > 0 && (
+				<div class="narrow">
+					<Faq items={faq} />
+				</div>
+			)
+		}
+		{
+			quellen.length > 0 && (
+				<div class="narrow sources">
+					<h2 class="sources-title">Quellen</h2>
+					<ul>
+						{quellen.map((q) => (
+							<li>
+								<a href={q.url} rel="noopener">
+									{q.titel}
+								</a>
+							</li>
+						))}
+					</ul>
+				</div>
+			)
+		}
+	</article>
+</Base>
+
+<style>
+	.article {
+		padding-top: 40px;
+		display: flex;
+		flex-direction: column;
+		gap: 48px;
+	}
+	.narrow {
+		max-width: 780px;
+		width: 100%;
+	}
+	.head {
+		display: flex;
+		flex-direction: column;
+		gap: 18px;
+	}
+	.head h1 {
+		font-size: clamp(34px, 5vw, 54px);
+	}
+	.kurz {
+		color: var(--ink);
+		font-size: clamp(18px, 1.8vw, 21px);
+	}
+	.meta {
+		margin: 0;
+		font-size: 14px;
+		color: var(--muted);
+	}
+	.sources-title {
+		font-size: 22px;
+		margin-bottom: 12px;
+	}
+	.sources ul {
+		margin: 0;
+		padding-left: 1.2em;
+		color: var(--muted);
+		font-size: 15px;
+		overflow-wrap: anywhere;
+	}
+	.sources li + li {
+		margin-top: 6px;
+	}
+	@media (max-width: 820px) {
+		.article {
+			padding-top: 24px;
+			gap: 36px;
+		}
+	}
+</style>
