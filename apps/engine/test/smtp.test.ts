@@ -74,7 +74,9 @@ describe('SMTP intake', () => {
 		const status = service.status(test.id)!;
 		expect(status.state).toBe('done');
 		const result = service.result(status.resultId!)!;
-		expect(result.score).toBe(10);
+		// Test client sends without STARTTLS: only the transport hint (−0,5).
+		expect(result.score).toBe(9.5);
+		expect(result.findings.find((f) => f.id === 'transport')?.status).toBe('warn');
 		// A used address does not accept a second mail.
 		expect(service.acceptsRecipient(test.address)).toBe(false);
 	});

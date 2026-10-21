@@ -2,7 +2,7 @@
 
 export type Status = 'ok' | 'warn' | 'bad' | 'skip';
 
-export type CheckId = 'spf' | 'dkim' | 'dmarc' | 'reputation' | 'content';
+export type CheckId = 'spf' | 'sender' | 'dkim' | 'dmarc' | 'reputation' | 'transport' | 'content';
 
 /** Topics a "So behebst du das" guide exists for. */
 export type GuideTopic = 'spf' | 'dkim' | 'dmarc';
@@ -67,8 +67,10 @@ export interface MailResult {
 	/** True if SPF, DKIM or DMARC failed: we always warn, whatever the score. */
 	authWarning: boolean;
 	subScores: SubScores;
-	/** Verdict headline in plain language. */
+	/** Verdict headline in plain language (both lines joined). */
 	headline: string;
+	/** Two-line verdict for the result page: line 1 ink, line 2 grey. Older results lack it. */
+	verdict?: { line1: string; line2: string };
 	/** "Was das für dich bedeutet". */
 	sub: string;
 	mail: MailMeta;
