@@ -20,16 +20,42 @@ test('start → mail → animation → result → guide → share', async ({ pag
 	// The animation follows real events: the received step turns done.
 	await expect(page.locator('[data-step="received"]')).toHaveAttribute('data-state', 'done', { timeout: 20_000 });
 	await expect(page).toHaveURL(/\/ergebnis\/[\w-]{22}$/, { timeout: 30_000 });
-	await expect(page.locator('[data-score]')).toHaveText(/^\d+,\d$/);
-	await expect(page.locator('[data-band]')).toHaveText('Hohes Risiko');
+	const score = page.locator('[data-score-value]');
+	await expect(score).toHaveText(/^\d+,\d$/);
+	await expect(page.locator('.rv-chips')).toContainText('Hohes Risiko');
 	await expect(page.locator('[data-auth-warning]')).toBeVisible();
-	await expect(page.locator('[data-subs] .sub-row')).toHaveCount(3);
-	await expect(page.locator('.action.is-bad').first()).toBeVisible();
-	await expect(page.locator('.action-gain').first()).toHaveText(/^\+\d+,\d Pkt\.$/);
 	await expect(page.locator('[data-mh-from]')).toHaveText('max@example.com');
 
-	// The biggest fix comes first and is open with a guide button.
-	await page.getByRole('button', { name: 'Anleitung für deinen Anbieter' }).first().click();
+	// Six stations as tabs; the first one with a problem is open, the route breaks there.
+	const tabs = page.getByRole('tab', { name: /Absender|Unterschrift|Schutzregel|Server-Ruf|Transport|Posteingang/ });
+	await expect(tabs).toHaveCount(6);
+	await expect(tabs.first()).toHaveAttribute('aria-selected', 'true');
+	await expect(page.locator('.rv-st.is-bad').first()).toBeVisible();
+	await expect(page.getByText('Hier bleibt deine Mail hängen.')).toBeVisible();
+	await expect(page.locator('.rv-panel[data-open] .rv-fix')).toContainText(/\+\d+,\d Pkt\. bei Behebung/);
+
+	// Keyboard: arrow keys move between stations (tablist).
+	await tabs.first().focus();
+	await page.keyboard.press('ArrowRight');
+	await expect(tabs.nth(1)).toBeFocused();
+	await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true');
+	await expect(page.locator('#rv-panel-1')).toBeVisible();
+	await expect(page.locator('#rv-panel-0')).toBeHidden();
+	await page.keyboard.press('ArrowLeft');
+
+	// Action plan (more than one problem) jumps to a station.
+	await page.locator('[data-goto]').first().click();
+
+	// Mail source: text, HTML and headers come only from the live session.
+	await page.getByRole('button', { name: 'Mail-Quelle & Header' }).click();
+	await expect(page.locator('[data-preview-text]')).toContainText('Hallo, hier das Angebot.');
+	await page.locator('[data-src="headers"]').click();
+	await expect(page.locator('[data-preview-headers]')).toContainText('Subject: Angebot');
+
+	// The fix leads to the provider guide.
+	await page.locator('#rv-panel-0').evaluate(() => undefined);
+	await tabs.first().click();
+	await page.locator('.rv-panel[data-open] [data-fix]').click();
 	await expect(page.locator('[data-guide-title]')).toBeVisible();
 	await page.getByRole('button', { name: 'STRATO' }).click();
 	await expect(page.getByRole('button', { name: 'STRATO' })).toHaveAttribute('aria-pressed', 'true');
@@ -41,8 +67,15 @@ test('start → mail → animation → result → guide → share', async ({ pag
 	const shared = await context.newPage();
 	const res = await shared.goto(url);
 	expect(res?.headers()['x-robots-tag']).toContain('noindex');
-	await expect(shared.locator('[data-score]')).toHaveText(await page.locator('[data-score]').innerText());
+	await expect(shared.locator('[data-score-value]')).toHaveText(await score.innerText());
 	await expect(shared.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
+	// The shared page never has the mail itself.
+	await shared.getByRole('button', { name: 'Mail-Quelle & Header' }).click();
+	await expect(shared.locator('[data-preview-missing]').first()).toBeVisible();
+	// Server-rendered: the stations are in the HTML even without JavaScript.
+	const html = await (await shared.request.get(url)).text();
+	expect(html.match(/role="tab"/g)?.length).toBeGreaterThanOrEqual(6);
+	expect(html).toContain('Hier landet viel im Spam.');
 });
 
 test('DNS quick check shows findings for a real domain', async ({ page }) => {

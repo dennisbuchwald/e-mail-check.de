@@ -1,6 +1,6 @@
 // Mail test UI: drives the screens in Tool.astro from real API events (SSE, polling fallback).
-import type { Finding, GuideTopic, MailResult, ProgressEvent, StepId, TestStatus } from '@emc/shared';
-import { STEPS } from '@emc/shared';
+import type { GuideTopic, MailPreview, MailResult, ProgressEvent, StepId, TestStatus } from '@emc/shared';
+import { renderResultView, STEPS } from '@emc/shared';
 import { copyText, esc, flash, inline } from './util';
 
 type Screen = 'start' | 'wait' | 'result' | 'guide' | 'msg';
@@ -221,7 +221,10 @@ export function initTool(): void {
 			storage()?.removeItem(STORE_KEY);
 			return message('Da ist etwas schiefgelaufen', 'Die Auswertung deiner Mail ist fehlgeschlagen. Starte bitte einen neuen Test.');
 		}
-		if (e.type === 'done') closeStream();
+		if (e.type === 'done') {
+			closeStream();
+			preview = e.preview ?? null;
+		}
 		if (root!.querySelector('[data-screen="start"]:not([hidden])')) goWait();
 		queue.push(e);
 		pump();
@@ -390,47 +393,20 @@ export function initTool(): void {
 		renderResult(res.data);
 	}
 
-	// ---- result ----
+	// ---- result (markup: packages/shared/src/result-view.ts, same as the server renders) ----
 	const fmt = (n: number) => n.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 	const COPY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
-	const CHEVRON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
 	const BAND_LABEL: Record<MailResult['band'], string> = { risk: 'Hohes Risiko', endangered: 'Gefährdet', solid: 'Solide', good: 'Sehr gut' };
-	const BAND_STATUS: Record<MailResult['band'], string> = { risk: 'bad', endangered: 'warn', solid: 'skip', good: 'ok' };
-	const IMPACT: Record<string, { label: string; cls: string }> = {
-		hoch: { label: 'Hohe Wirkung', cls: 'is-bad' },
-		mittel: { label: 'Mittlere Wirkung', cls: 'is-warn' },
-		gering: { label: 'Geringe Wirkung', cls: '' },
-	};
-	const reduced2 = reduced;
+	/** The mail itself from the live done event. Only in this page's memory, never stored. */
+	let preview: MailPreview | null = null;
 
 	const copyRow = (value: string, label = 'Kopieren') =>
 		`<div class="copyrow"><span class="mono">${esc(value)}</span><button type="button" class="copybtn" data-copy="${esc(value)}">${COPY_ICON}<span>${label}</span></button></div>`;
 
-	/** Short technical detail for the "passed" list. */
-	function passedDetail(f: Finding): string {
-		const raw = f.raw as Record<string, unknown>;
-		if (f.id === 'spf') return `SPF · ${raw.result ?? 'pass'}`;
-		if (f.id === 'dkim') {
-			const sig = (raw.signatures as { bits?: number | null; selector?: string }[] | undefined)?.find((s) => s.selector);
-			return sig?.bits ? `DKIM · ${sig.bits} Bit` : sig?.selector ? `DKIM · ${sig.selector}` : 'DKIM · pass';
-		}
-		if (f.id === 'dmarc') return `DMARC · p=${raw.policy ?? '?'}`;
-		if (f.id === 'reputation') {
-			const lists = (raw.lists as { listed: boolean | null }[] | undefined) ?? [];
-			const checked = lists.filter((l) => l.listed !== null).length;
-			return `IP · 0 von ${checked} Listen`;
-		}
-		if (f.id === 'content') return `Spam-Score ${raw.rspamdScore ?? 0}`;
-		return f.tech;
-	}
-
-	/** Calm count-up: same duration and ease-out curve as the bars, so number and bars arrive together. */
+	/** Calm count-up (2.4 s, ease-out); the width is reserved for "10,0", so nothing next to it moves. */
 	const COUNT_MS = 2400;
-	function countUp(el: HTMLElement, to: number, onDone: () => void) {
-		if (reduced2) {
-			el.textContent = fmt(to);
-			return onDone();
-		}
+	function countUp(el: HTMLElement, to: number) {
+		if (reduced) return void (el.textContent = fmt(to));
 		el.textContent = fmt(0);
 		const start = performance.now();
 		const tick = (now: number) => {
@@ -438,120 +414,75 @@ export function initTool(): void {
 			const eased = 1 - Math.pow(1 - t, 3);
 			el.textContent = fmt(Math.round(to * eased * 10) / 10);
 			if (t < 1) requestAnimationFrame(tick);
-			else onDone();
 		};
 		requestAnimationFrame(tick);
 	}
 
+	function selectStation(i: number, focus = false) {
+		const tabs = $$('.rv-st');
+		if (!tabs[i]) return;
+		tabs.forEach((t, j) => {
+			t.setAttribute('aria-selected', String(j === i));
+			t.tabIndex = j === i ? 0 : -1;
+		});
+		for (const p of $$('[data-panel]')) {
+			const on = Number(p.dataset.panel) === i;
+			if (on && !p.hasAttribute('data-open')) {
+				// Restart the swap animation on the newly opened panel.
+				p.classList.remove('rv-swap');
+				void p.offsetWidth;
+				p.classList.add('rv-swap');
+			}
+			p.toggleAttribute('data-open', on);
+		}
+		if (focus) tabs[i].focus();
+	}
+
+	function fillPreview() {
+		const view = $('[data-result-view]');
+		if (!preview) return;
+		for (const m of view.querySelectorAll<HTMLElement>('[data-preview-missing]')) m.hidden = true;
+		const text = view.querySelector<HTMLElement>('[data-preview-text]');
+		if (text) {
+			text.textContent = preview.text ?? '(Die Mail hat keine Textfassung.)';
+			text.hidden = false;
+		}
+		const headers = view.querySelector<HTMLElement>('[data-preview-headers]');
+		if (headers) {
+			headers.textContent = preview.headers + (preview.truncated ? '\n\n(gekürzt)' : '');
+			headers.hidden = false;
+		}
+		const frame = view.querySelector<HTMLIFrameElement>('[data-preview-html]');
+		if (frame) {
+			// sandbox="" blocks scripts and forms; the CSP inside blocks every external load (images, fonts, tracking pixels).
+			const csp = '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; img-src data:">';
+			frame.srcdoc = preview.html ? csp + preview.html : `${csp}<p style="font:14px system-ui;color:#555">Die Mail hat keine HTML-Fassung.</p>`;
+			frame.hidden = false;
+		}
+	}
+
+	/** Behaviour for the result markup, whether the browser or the server rendered it. */
+	function hydrate(r: MailResult | null, animate: boolean) {
+		const view = $('[data-result-view]');
+		const rv = view.querySelector<HTMLElement>('[data-rv]');
+		if (!rv) return;
+		rv.dataset.js = '';
+		if (animate && !reduced) rv.classList.add('rv-anim');
+		const value = rv.querySelector<HTMLElement>('[data-score-value]');
+		if (value && animate) countUp(value, Number(rv.dataset.final));
+		selectStation(Number(rv.dataset.open ?? 0));
+		fillPreview();
+		if (r) result = r;
+	}
+
 	function renderResult(r: MailResult) {
 		result = r;
-		// Mail header
-		const m = r.mail;
-		$('[data-mh-from]').textContent = m?.from ?? r.fromDomain ?? 'unbekannt';
-		// Subject is only kept in RAM for an hour, a later shared link has none.
-		$('[data-mh-subject]').textContent = m?.subject ?? '';
-		$('[data-mh-subject]').closest<HTMLElement>('[data-mh-row]')!.hidden = !m?.subject;
-		const at = new Date(m?.receivedAt ?? r.createdAt);
-		$('[data-mh-time]').textContent = `${at.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })} · ${at.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`;
-
-		// Verdict + score
-		$('[data-headline]').textContent = r.headline;
-		$('[data-sub]').textContent = r.sub;
-		const band = $('[data-band]');
-		band.className = `tag with-dot is-${BAND_STATUS[r.band] ?? 'skip'}`;
-		band.textContent = BAND_LABEL[r.band] ?? '';
-		const scoreBlock = $('.score-block');
-		scoreBlock.dataset.counting = '';
-		countUp($('[data-score]'), r.score, () => delete scoreBlock.dataset.counting);
-		$('[data-auth-warning]').hidden = !r.authWarning;
-
-		// Sub scores
-		const subs: [string, number | null][] = [
-			['Authentifizierung', r.subScores?.auth ?? null],
-			['Server-Ruf', r.subScores?.reputation ?? null],
-			['Inhalt', r.subScores?.content ?? null],
-		];
-		$('[data-subs]').innerHTML = subs
-			.filter(([, v]) => v !== null)
-			.map(([label, v]) => {
-				const cls = v! >= 90 ? 'is-ok' : v! >= 60 ? 'is-warn' : 'is-bad';
-				return `<div class="sub-row ${cls}"><div class="sub-row-head"><strong>${label}</strong><span class="mono">${v} %</span></div><div class="bar"><i data-w="${v}"></i></div></div>`;
-			})
-			.join('');
-		requestAnimationFrame(() =>
-			requestAnimationFrame(() => {
-				for (const bar of $$('[data-subs] .bar i')) bar.style.transform = `scaleX(${Number(bar.dataset.w) / 100})`;
-			}),
-		);
-
-		// Action plan: problems and hints, biggest effect first
-		const todo = r.findings.filter((f) => f.status === 'bad' || f.status === 'warn');
-		$('[data-plan-head]').hidden = todo.length === 0;
-		// The first card that has a fix starts open (a blocklist entry has no DNS fix).
-		const firstFix = todo.findIndex((f) => f.suggestion || f.guide);
-		$('[data-plan]').innerHTML = todo
-			.map((f, i) => {
-				const gain = f.gain ?? f.deductions.reduce((s, d) => s + d.points, 0);
-				const impact = IMPACT[f.impact ?? 'gering'];
-				const hasFix = !!(f.suggestion || f.guide);
-				const open = i === firstFix;
-				const fix = hasFix
-					? `<div class="action-fix" id="fix-${i}" ${open ? '' : 'hidden'}>
-							${f.suggestion ? `<p class="copybox-host">Neuer ${esc(f.suggestion.type)}-Eintrag, Name/Host <code>${esc(f.suggestion.host)}</code></p>${copyRow(f.suggestion.value)}` : ''}
-							${f.guide ? `<button type="button" class="action-guide" data-fix="${f.guide}">Anleitung für deinen Anbieter ›</button>` : ''}
-						</div>`
-					: '';
-				return `<li class="card action ${f.status === 'bad' ? 'is-bad' : 'is-warn'}" style="--d:${0.25 + i * 0.09}s">
-					<div class="action-meta">
-						<span class="action-num">${String(i + 1).padStart(2, '0')}</span>
-						${gain > 0 ? `<span class="tag ${impact.cls}">${impact.label}</span>` : '<span class="tag">Tipp</span>'}
-						${gain > 0 ? `<span class="action-gain">+${fmt(gain)} Pkt.</span>` : ''}
-					</div>
-					<h3 class="action-title">${esc(f.title)} <span class="mono">${esc(f.tech)}</span></h3>
-					<p class="action-text">${esc(f.text)}</p>
-					${hasFix ? `<button type="button" class="action-toggle" aria-expanded="${open}" aria-controls="fix-${i}">So behebst du das ${CHEVRON}</button>${fix}` : ''}
-				</li>`;
-			})
-			.join('');
-
-		// Passed checks (never show "not checked" entries)
-		const passed = r.findings.filter((f) => f.status === 'ok');
-		const tlsRow = r.mail?.tls?.used ? `<li class="passed-item is-ok"><span class="dot"></span><span class="grow">Verschlüsselt übertragen</span><span class="mono">${esc(r.mail.tls.version ?? 'TLS')}</span></li>` : '';
-		const count = passed.length + (tlsRow ? 1 : 0);
-		$('[data-passed-wrap]').hidden = count === 0;
-		$('[data-passed-head]').textContent = count === 1 ? '1 Prüfung bestanden' : `${count} Prüfungen bestanden`;
-		$('[data-passed]').innerHTML =
-			passed.map((f) => `<li class="passed-item is-ok"><span class="dot"></span><span class="grow">${esc(f.title)}</span><span class="mono">${esc(passedDetail(f))}</span></li>`).join('') + tlsRow;
-
-		// Share link
-		const url = `${location.origin}/ergebnis/${r.id}`;
-		$('[data-share-url]').textContent = url.replace(/^https?:\/\//, '');
-		const until = new Date(r.expiresAt).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-		$('[data-share-note]').textContent = `Gültig bis ${until} · nicht in Google auffindbar`;
-		$('[data-setup]').hidden = !r.findings.some((f) => f.status === 'bad');
-
-		// Technical details
-		const block = (title: string, rows: [string, unknown][]) =>
-			`<div class="tech-block"><h3>${esc(title)}</h3><dl>${rows
-				.filter(([, v]) => v !== null && v !== undefined && v !== '')
-				.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(typeof v === 'string' ? v : JSON.stringify(v))}</dd>`)
-				.join('')}</dl></div>`;
-		$('[data-tech]').innerHTML =
-			block('Mail', [
-				['from', m?.from],
-				['subject', m?.subject],
-				['received', m?.receivedAt],
-				['tls', m?.tls?.used ? (m.tls.version ?? 'ja') : 'nein'],
-				['score', `${r.score} (${r.band})`],
-			]) +
-			r.findings
-				.filter((f) => f.status !== 'skip' || Object.keys(f.raw ?? {}).length)
-				.map((f) => block(`${f.tech} · ${f.status}${f.deductions.length ? ` · −${fmt(f.deductions.reduce((s, d) => s + d.points, 0))}` : ''}`, Object.entries(f.raw ?? {})))
-				.join('');
-
+		$('[data-result-view]').innerHTML = renderResultView(r, { shareUrl: `${location.origin}/ergebnis/${r.id}`, setupUrl: root!.dataset.setupUrl });
+		hydrate(r, true);
 		show('result');
 		window.scrollTo({ top: 0 });
-		announce(`Ergebnis: ${fmt(r.score)} von 10, ${BAND_LABEL[r.band]}. ${r.headline}`);
+		const v = r.verdict ?? { line1: r.headline, line2: '' };
+		announce(`Ergebnis: ${fmt(r.score)} von 10, ${BAND_LABEL[r.band]}. ${v.line1} ${v.line2}`);
 		$('[data-headline]').focus({ preventScroll: true });
 		if (!reduced && 'vibrate' in navigator && matchMedia('(pointer: coarse)').matches) navigator.vibrate?.([12, 40, 18]);
 	}
@@ -605,8 +536,10 @@ export function initTool(): void {
 		const t = ev.target as HTMLElement;
 		// Opening the mail program counts as "on its way": switch to waiting right after.
 		if (t.closest('[data-mailto]') && test) return void setTimeout(goWait, 400);
-		const btn = t.closest<HTMLElement>('button, [data-action]');
+		const btn = t.closest<HTMLElement>('button, [data-action], [data-fix]');
 		if (!btn) return;
+		// Links in the result work without JS; with JS they act in place.
+		if (btn.tagName === 'A' && (btn.dataset.fix || mode === 'test')) ev.preventDefault();
 		const action = btn.dataset.action;
 		if (action === 'copy' && test) {
 			await copyText(test.address);
@@ -620,6 +553,20 @@ export function initTool(): void {
 			await newTest();
 			window.scrollTo({ top: 0 });
 			$<HTMLButtonElement>('.copy-address').focus({ preventScroll: true });
+		} else if (action === 'source') {
+			const panel = $('#rv-source');
+			const open = panel.hidden;
+			panel.hidden = !open;
+			btn.setAttribute('aria-expanded', String(open));
+			if (open) panel.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+		} else if (btn.dataset.src) {
+			for (const tab of $$('[data-src]')) tab.setAttribute('aria-selected', String(tab === btn));
+			for (const p of $$('[data-src-panel]')) p.hidden = p.dataset.srcPanel !== btn.dataset.src;
+		} else if (btn.dataset.station !== undefined) {
+			selectStation(Number(btn.dataset.station));
+		} else if (btn.dataset.goto !== undefined) {
+			selectStation(Number(btn.dataset.goto), true);
+			$('.rv-route').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
 		} else if (action === 'share' && result) {
 			const url = `${location.origin}/ergebnis/${result.id}`;
 			if (navigator.share && matchMedia('(pointer: coarse)').matches) {
@@ -638,17 +585,19 @@ export function initTool(): void {
 		} else if (btn.dataset.copy !== undefined) {
 			await copyText(btn.dataset.copy);
 			flash(btn, 'Kopiert');
-		} else if (btn.classList.contains('action-toggle')) {
-			const body = document.getElementById(btn.getAttribute('aria-controls')!)!;
-			const open = btn.getAttribute('aria-expanded') !== 'true';
-			btn.setAttribute('aria-expanded', String(open));
-			body.hidden = !open;
-		} else if (btn.classList.contains('check-row')) {
-			const body = document.getElementById(btn.getAttribute('aria-controls')!)!;
-			const open = btn.getAttribute('aria-expanded') !== 'true';
-			btn.setAttribute('aria-expanded', String(open));
-			body.hidden = !open;
 		}
+	});
+
+	// Stations are a tablist: arrow keys, Home and End move between them (WAI-ARIA tabs).
+	root.addEventListener('keydown', (ev) => {
+		const tab = (ev.target as HTMLElement).closest<HTMLElement>('.rv-st');
+		if (!tab) return;
+		const i = Number(tab.dataset.station);
+		const n = $$('.rv-st').length;
+		const next = { ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1, Home: 0, End: n - 1 }[ev.key];
+		if (next === undefined) return;
+		ev.preventDefault();
+		selectStation((next + n) % n, true);
 	});
 
 	window.addEventListener('popstate', () => {
@@ -657,10 +606,17 @@ export function initTool(): void {
 
 	// ---- boot ----
 	if (mode === 'result') {
+		// Caddy has already rendered the result into the page (or "not found"). With JS we re-render it from the API,
+		// because only that response carries the subject during the tester's first hour.
+		const ssr = !!root.querySelector('[data-rv]');
+		if (root.querySelector('[data-rv-missing]')) return;
 		const id = location.pathname.split('/').filter(Boolean)[1] ?? '';
 		api<MailResult & { message?: string }>(`/api/results/${encodeURIComponent(id)}`)
-			.then((res) => (res.ok ? renderResult(res.data) : message('Ergebnis nicht gefunden', 'Ergebnisse werden nach 7 Tagen automatisch gelöscht. Mach einfach einen neuen Test.')))
-			.catch(() => message('Gerade geht es nicht', 'Der Server ist nicht erreichbar. Probier es gleich noch einmal.'));
+			.then((res) => {
+				if (res.ok) return renderResult(res.data);
+				if (!ssr) message('Ergebnis nicht gefunden', 'Ergebnisse werden nach 7 Tagen automatisch gelöscht. Mach einfach einen neuen Test.');
+			})
+			.catch(() => (ssr ? hydrate(null, true) : message('Gerade geht es nicht', 'Der Server ist nicht erreichbar. Probier es gleich noch einmal.')));
 	} else {
 		resetAnimation();
 		resumeOrCreate();

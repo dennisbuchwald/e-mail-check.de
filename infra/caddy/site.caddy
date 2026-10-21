@@ -23,12 +23,18 @@
 		reverse_proxy umami:3000
 	}
 
-	# Shared results: one static shell, id is read client-side.
-	@result path_regexp ^/ergebnis/[A-Za-z0-9_-]{22}$
+	# Shared results: the static shell plus the server-rendered result (engine /api/results/<id>/view),
+	# included via templates so it is visible without JavaScript. Custom delimiters: nothing else in the page is parsed.
+	@result path_regexp result ^/ergebnis/([A-Za-z0-9_-]{22})$
 	handle @result {
 		root * /srv
 		header X-Robots-Tag "noindex, nofollow"
+		header Cache-Control "no-store"
 		rewrite * /ergebnis.html
+		templates {
+			mime text/html
+			between "<!--emc{" "}emc-->"
+		}
 		file_server
 	}
 
