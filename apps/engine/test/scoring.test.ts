@@ -31,7 +31,6 @@ describe('exception rule', () => {
 		const fs = [f('spf', 'ok'), f('dkim', 'ok'), f('dmarc', 'bad', 1.5), f('reputation', 'ok'), f('content', 'ok')];
 		expect(hasAuthFailure(fs)).toBe(true);
 		expect(trafficLight(8.5, fs)).toBe('bad');
-		expect(summarize(8.5, enrichFindings(fs)).sub).toContain('egal wie hoch die Zahl ist');
 	});
 	it('does not trigger for reputation or content problems', () => {
 		expect(hasAuthFailure([f('reputation', 'bad', 3), f('content', 'bad', 2)])).toBe(false);

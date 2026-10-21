@@ -38,6 +38,18 @@ describe('API', () => {
 		expect(JSON.stringify(result)).not.toContain('Angebot für die neue Website');
 	});
 
+	it('keeps subject and From address in RAM only, never in the database', async () => {
+		const { app, service, store } = setup();
+		const test = await (await app.request('/api/tests', { method: 'POST' })).json();
+		const res = (await service.handleMessage(test.address, fixture('gut.eml'), { ip: GOOD_IP, helo: 'x', sender: 'max@gut.example.test' }))!;
+		const stored = store.getResult(res.id)!;
+		expect(stored.mail.subject).toBeNull();
+		expect(stored.mail.from).toBeNull();
+		const served = (await (await app.request(`/api/results/${res.id}`)).json()) as MailResult;
+		expect(served.mail.subject).toBe('Angebot Website');
+		expect(served.mail.from).toBe('max@gut.example.test');
+	});
+
 	it('streams progress via SSE, replaying finished steps', async () => {
 		const { app, service } = setup();
 		const test = service.createTest();

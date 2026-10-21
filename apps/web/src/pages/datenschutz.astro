@@ -36,7 +36,7 @@ import Article from '../layouts/Article.astro';
 	<h2>Mail-Test</h2>
 	<p>Wenn du einen Test startest, erzeugen wir eine zufällige Testadresse. Sie nimmt 60 Minuten lang Mail an, und zwar nur bis zur ersten eingegangenen Mail. Dabei verarbeiten wir:</p>
 	<ul>
-		<li><strong>Die Mail selbst</strong> (Kopfzeilen, Text, Links, Anhänge): nur im Arbeitsspeicher und nur für die Dauer der Prüfung, meist wenige Sekunden. Danach wird sie verworfen.</li>
+		<li><strong>Die Mail selbst</strong> (Kopfzeilen, Text, Links, Anhänge): nur im Arbeitsspeicher und nur für die Dauer der Prüfung, meist wenige Sekunden. Danach wird sie verworfen. Betreff und Absenderadresse halten wir zusätzlich bis zu 60 Minuten nur im Arbeitsspeicher, damit du sie oben im Ergebnis siehst. In die Datenbank gelangen sie nicht.</li>
 		<li><strong>Technische Absenderdaten</strong>: IP-Adresse und Name des sendenden Servers, die Absenderadresse aus dem Umschlag (MAIL FROM) und die Domain aus dem Absenderfeld.</li>
 		<li><strong>Die Testadresse</strong>: Sie wird zusammen mit Erstell- und Ablaufzeit und dem Bearbeitungsstand 7 Tage lang gespeichert, damit dieselbe Adresse nicht doppelt vergeben wird. Eine IP-Adresse speichern wir dazu nicht.</li>
 		<li><strong>Das Ergebnis</strong>: Score, Prüfpunkte und technische Prüfwerte. Dazu gehören die IP-Adresse und der Name des sendenden Servers, die gefundenen DNS-Einträge, die Signatur-Domains, die Absender-Domain, Sperrlisten-Treffer, die Namen der Spamfilter-Regeln, die angeschlagen haben, Domainnamen nicht erreichbarer Links und ob ein Abmelde-Link (List-Unsubscribe) vorhanden ist. Fundstellen aus der Mail (etwa verlinkte Adressen oder Textstellen) speichern wir nicht.</li>
@@ -97,9 +97,9 @@ import Article from '../layouts/Article.astro';
 
 <style>
 	.draft {
-		border: 2px solid var(--ink);
+		border: 1px solid var(--warn-tint);
 		border-radius: 16px;
 		padding: 14px 16px;
-		background: var(--divider);
+		background: var(--warn-tint);
 	}
 </style>

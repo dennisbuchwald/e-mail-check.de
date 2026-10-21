@@ -7,6 +7,7 @@ import type { SmtpEnvelope } from './checks/auth.ts';
 import type { Store } from './store.ts';
 
 // No 0/o/1/l/i: addresses get typed by hand sometimes.
+const HEADER_TTL_MS = 3600_000;
 const ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
 
 export function newLocalPart(length = 8): string {
@@ -28,6 +29,7 @@ export class TestService {
 	private readonly bus = new EventEmitter();
 	/** Finished steps of running analyses; kept briefly for late subscribers and polling. */
 	private readonly progress = new Map<string, StepId[]>();
+	private readonly headers = new Map<string, { from: string | null; subject: string | null }>();
 
 	constructor(opts: ServiceOptions) {
 		this.opts = opts;
@@ -81,7 +83,11 @@ export class TestService {
 				steps.push(step);
 				this.emit(t.id, { type: 'step', step });
 			});
-			this.opts.store.saveResult(result);
+			// Subject and From address are mail content: they stay in RAM for one hour for
+			// the person who just ran the test and never reach the database.
+			this.opts.store.saveResult({ ...result, mail: { ...result.mail, from: null, subject: null } });
+			this.headers.set(result.id, { from: result.mail.from, subject: result.mail.subject });
+			setTimeout(() => this.headers.delete(result.id), HEADER_TTL_MS).unref();
 			this.opts.store.setTestState(t.id, 'done', result.id);
 			this.emit(t.id, { type: 'done', resultId: result.id });
 			return result;
@@ -96,7 +102,9 @@ export class TestService {
 	}
 
 	result(id: string): MailResult | undefined {
-		return this.opts.store.getResult(id, this.now());
+		const r = this.opts.store.getResult(id, this.now());
+		const h = r && this.headers.get(id);
+		return r && h ? { ...r, mail: { ...r.mail, ...h } } : r;
 	}
 
 	subscribe(id: string, fn: (e: ProgressEvent) => void): () => void {
