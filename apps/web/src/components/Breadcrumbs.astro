@@ -22,6 +22,7 @@ const { items } = Astro.props;
 		padding: 0;
 		display: flex;
 		flex-wrap: wrap;
+		align-items: center;
 		gap: 4px 8px;
 		font-size: 14px;
 		color: var(--muted);
@@ -29,9 +30,10 @@ const { items } = Astro.props;
 	.crumbs li + li::before {
 		content: '/';
 		margin-right: 8px;
-		color: var(--inactive-border);
+		color: var(--border-strong);
 	}
-	.crumbs a {
+	.crumbs a,
+	.crumbs span {
 		color: var(--muted);
 		display: inline-block;
 		padding: 6px 0;

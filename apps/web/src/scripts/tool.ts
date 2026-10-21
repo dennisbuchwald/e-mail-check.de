@@ -294,56 +294,161 @@ export function initTool(): void {
 	}
 
 	// ---- result ----
-	const BADGE: Record<Finding['status'], string> = { ok: 'OK', warn: 'Hinweis', bad: 'Problem', skip: 'Nicht geprüft' };
 	const fmt = (n: number) => n.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+	const COPY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
+	const CHEVRON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+	const BAND_LABEL: Record<MailResult['band'], string> = { risk: 'Hohes Risiko', endangered: 'Gefährdet', solid: 'Solide', good: 'Sehr gut' };
+	const BAND_STATUS: Record<MailResult['band'], string> = { risk: 'bad', endangered: 'warn', solid: 'skip', good: 'ok' };
+	const IMPACT: Record<string, { label: string; cls: string }> = {
+		hoch: { label: 'Hohe Wirkung', cls: 'is-bad' },
+		mittel: { label: 'Mittlere Wirkung', cls: 'is-warn' },
+		gering: { label: 'Geringe Wirkung', cls: '' },
+	};
+	const reduced2 = reduced;
+
+	const copyRow = (value: string, label = 'Kopieren') =>
+		`<div class="copyrow"><span class="mono">${esc(value)}</span><button type="button" class="copybtn" data-copy="${esc(value)}">${COPY_ICON}<span>${label}</span></button></div>`;
+
+	/** Short technical detail for the "passed" list. */
+	function passedDetail(f: Finding): string {
+		const raw = f.raw as Record<string, unknown>;
+		if (f.id === 'spf') return `SPF · ${raw.result ?? 'pass'}`;
+		if (f.id === 'dkim') {
+			const sig = (raw.signatures as { bits?: number | null; selector?: string }[] | undefined)?.find((s) => s.selector);
+			return sig?.bits ? `DKIM · ${sig.bits} Bit` : sig?.selector ? `DKIM · ${sig.selector}` : 'DKIM · pass';
+		}
+		if (f.id === 'dmarc') return `DMARC · p=${raw.policy ?? '?'}`;
+		if (f.id === 'reputation') {
+			const lists = (raw.lists as { listed: boolean | null }[] | undefined) ?? [];
+			const checked = lists.filter((l) => l.listed !== null).length;
+			return `IP · 0 von ${checked} Listen`;
+		}
+		if (f.id === 'content') return `Spam-Score ${raw.rspamdScore ?? 0}`;
+		return f.tech;
+	}
+
+	function countUp(el: HTMLElement, to: number) {
+		if (reduced2) return void (el.textContent = fmt(to));
+		const start = performance.now();
+		const dur = 900;
+		const tick = (now: number) => {
+			const t = Math.min(1, (now - start) / dur);
+			const eased = 1 - Math.pow(1 - t, 3);
+			el.textContent = fmt(Math.round(to * eased * 10) / 10);
+			if (t < 1) requestAnimationFrame(tick);
+		};
+		requestAnimationFrame(tick);
+	}
 
 	function renderResult(r: MailResult) {
 		result = r;
-		const ring = $('[data-ring]');
-		ring.className = `ring is-${r.light}`;
-		$('[data-score]').textContent = fmt(r.score);
+		// Mail header
+		const m = r.mail;
+		$('[data-mh-from]').textContent = m?.from ?? r.fromDomain ?? 'unbekannt';
+		// Subject is only kept in RAM for an hour, a later shared link has none.
+		$('[data-mh-subject]').textContent = m?.subject ?? '';
+		$('[data-mh-subject]').closest<HTMLElement>('[data-mh-row]')!.hidden = !m?.subject;
+		const at = new Date(m?.receivedAt ?? r.createdAt);
+		$('[data-mh-time]').textContent = `${at.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })} · ${at.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`;
+
+		// Verdict + score
 		$('[data-headline]').textContent = r.headline;
 		$('[data-sub]').textContent = r.sub;
+		const band = $('[data-band]');
+		band.className = `tag with-dot is-${BAND_STATUS[r.band] ?? 'skip'}`;
+		band.textContent = BAND_LABEL[r.band] ?? '';
+		countUp($('[data-score]'), r.score);
+		$('[data-auth-warning]').hidden = !r.authWarning;
+
+		// Sub scores
+		const subs: [string, number | null][] = [
+			['Authentifizierung', r.subScores?.auth ?? null],
+			['Server-Ruf', r.subScores?.reputation ?? null],
+			['Inhalt', r.subScores?.content ?? null],
+		];
+		$('[data-subs]').innerHTML = subs
+			.filter(([, v]) => v !== null)
+			.map(([label, v]) => {
+				const cls = v! >= 90 ? 'is-ok' : v! >= 60 ? 'is-warn' : 'is-bad';
+				return `<div class="sub-row ${cls}"><div class="sub-row-head"><strong>${label}</strong><span class="mono">${v} %</span></div><div class="bar"><i data-w="${v}"></i></div></div>`;
+			})
+			.join('');
+		requestAnimationFrame(() =>
+			requestAnimationFrame(() => {
+				for (const bar of $$('[data-subs] .bar i')) bar.style.transform = `scaleX(${Number(bar.dataset.w) / 100})`;
+			}),
+		);
+
+		// Action plan: problems and hints, biggest effect first
+		const todo = r.findings.filter((f) => f.status === 'bad' || f.status === 'warn');
+		$('[data-plan-head]').hidden = todo.length === 0;
+		// The first card that has a fix starts open (a blocklist entry has no DNS fix).
+		const firstFix = todo.findIndex((f) => f.suggestion || f.guide);
+		$('[data-plan]').innerHTML = todo
+			.map((f, i) => {
+				const gain = f.gain ?? f.deductions.reduce((s, d) => s + d.points, 0);
+				const impact = IMPACT[f.impact ?? 'gering'];
+				const hasFix = !!(f.suggestion || f.guide);
+				const open = i === firstFix;
+				const fix = hasFix
+					? `<div class="action-fix" id="fix-${i}" ${open ? '' : 'hidden'}>
+							${f.suggestion ? `<p class="copybox-host">Neuer ${esc(f.suggestion.type)}-Eintrag, Name/Host <code>${esc(f.suggestion.host)}</code></p>${copyRow(f.suggestion.value)}` : ''}
+							${f.guide ? `<button type="button" class="action-guide" data-fix="${f.guide}">Anleitung für deinen Anbieter ›</button>` : ''}
+						</div>`
+					: '';
+				return `<li class="card action ${f.status === 'bad' ? 'is-bad' : 'is-warn'}" style="--d:${0.25 + i * 0.09}s">
+					<div class="action-meta">
+						<span class="action-num">${String(i + 1).padStart(2, '0')}</span>
+						${gain > 0 ? `<span class="tag ${impact.cls}">${impact.label}</span>` : '<span class="tag">Tipp</span>'}
+						${gain > 0 ? `<span class="action-gain">+${fmt(gain)} Pkt.</span>` : ''}
+					</div>
+					<h3 class="action-title">${esc(f.title)} <span class="mono">${esc(f.tech)}</span></h3>
+					<p class="action-text">${esc(f.text)}</p>
+					${hasFix ? `<button type="button" class="action-toggle" aria-expanded="${open}" aria-controls="fix-${i}">So behebst du das ${CHEVRON}</button>${fix}` : ''}
+				</li>`;
+			})
+			.join('');
+
+		// Passed checks (never show "not checked" entries)
+		const passed = r.findings.filter((f) => f.status === 'ok');
+		const tlsRow = r.mail?.tls?.used ? `<li class="passed-item is-ok"><span class="dot"></span><span class="grow">Verschlüsselt übertragen</span><span class="mono">${esc(r.mail.tls.version ?? 'TLS')}</span></li>` : '';
+		const count = passed.length + (tlsRow ? 1 : 0);
+		$('[data-passed-wrap]').hidden = count === 0;
+		$('[data-passed-head]').textContent = count === 1 ? '1 Prüfung bestanden' : `${count} Prüfungen bestanden`;
+		$('[data-passed]').innerHTML =
+			passed.map((f) => `<li class="passed-item is-ok"><span class="dot"></span><span class="grow">${esc(f.title)}</span><span class="mono">${esc(passedDetail(f))}</span></li>`).join('') + tlsRow;
+
+		// Share link
+		const url = `${location.origin}/ergebnis/${r.id}`;
+		$('[data-share-url]').textContent = url.replace(/^https?:\/\//, '');
 		const until = new Date(r.expiresAt).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-		$('[data-meta]').textContent = `${r.fromDomain ? `Absender-Domain: ${r.fromDomain} · ` : ''}Ergebnis abrufbar bis ${until}`;
+		$('[data-share-note]').textContent = `Gültig bis ${until} · nicht in Google auffindbar`;
 		$('[data-setup]').hidden = !r.findings.some((f) => f.status === 'bad');
 
-		const list = $('[data-checks]');
-		list.innerHTML = '';
-		let openedFirstProblem = false;
-		r.findings.forEach((f, i) => {
-			const li = document.createElement('li');
-			li.className = `check is-${f.status}`;
-			const bodyId = `check-${i}`;
-			const open = !openedFirstProblem && f.status === 'bad';
-			if (open) openedFirstProblem = true;
-			const ded = f.deductions.length
-				? `<p class="check-ded">${f.deductions.map((d) => `<strong>−${fmt(d.points)} Punkte</strong> · ${esc(d.reason)}`).join('<br>')}</p>`
-				: '';
-			const sug = f.suggestion
-				? `<div class="copybox"><p class="copybox-host">Neuer ${esc(f.suggestion.type)}-Eintrag, Name/Host: <code>${esc(f.suggestion.host)}</code></p><pre class="code">${esc(f.suggestion.value)}</pre><button type="button" class="chip" data-copy="${esc(f.suggestion.value)}">Wert kopieren</button></div>`
-				: '';
-			const fix = f.guide ? `<button type="button" class="btn btn-ink btn-sm" data-fix="${f.guide}" style="align-self:flex-start">So behebst du das</button>` : '';
-			const rawRows = Object.entries(f.raw ?? {})
+		// Technical details
+		const block = (title: string, rows: [string, unknown][]) =>
+			`<div class="tech-block"><h3>${esc(title)}</h3><dl>${rows
 				.filter(([, v]) => v !== null && v !== undefined && v !== '')
 				.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(typeof v === 'string' ? v : JSON.stringify(v))}</dd>`)
+				.join('')}</dl></div>`;
+		$('[data-tech]').innerHTML =
+			block('Mail', [
+				['from', m?.from],
+				['subject', m?.subject],
+				['received', m?.receivedAt],
+				['tls', m?.tls?.used ? (m.tls.version ?? 'ja') : 'nein'],
+				['score', `${r.score} (${r.band})`],
+			]) +
+			r.findings
+				.filter((f) => f.status !== 'skip' || Object.keys(f.raw ?? {}).length)
+				.map((f) => block(`${f.tech} · ${f.status}${f.deductions.length ? ` · −${fmt(f.deductions.reduce((s, d) => s + d.points, 0))}` : ''}`, Object.entries(f.raw ?? {})))
 				.join('');
-			li.innerHTML = `
-				<button type="button" class="check-row" aria-expanded="${open}" aria-controls="${bodyId}">
-					<span class="dot" aria-hidden="true"></span>
-					<span class="check-name"><span class="check-title">${esc(f.title)}</span><span class="check-tech">${esc(f.tech)}</span></span>
-					<span class="tag">${BADGE[f.status]}</span>
-				</button>
-				<div class="check-body" id="${bodyId}" ${open ? '' : 'hidden'}>
-					<p class="check-text">${esc(f.text)}</p>
-					${ded}${sug}${fix}
-					${rawRows ? `<details class="raw"><summary>Technische Details</summary><dl>${rawRows}</dl></details>` : ''}
-				</div>`;
-			list.appendChild(li);
-		});
+
 		show('result');
-		announce(`Ergebnis: ${fmt(r.score)} von 10. ${r.headline}.`);
-		$('[data-headline]').focus();
+		window.scrollTo({ top: 0 });
+		announce(`Ergebnis: ${fmt(r.score)} von 10, ${BAND_LABEL[r.band]}. ${r.headline}`);
+		$('[data-headline]').focus({ preventScroll: true });
+		if (!reduced && 'vibrate' in navigator && matchMedia('(pointer: coarse)').matches) navigator.vibrate?.([12, 40, 18]);
 	}
 
 	// ---- guide ----
@@ -353,7 +458,7 @@ export function initTool(): void {
 		$('[data-guide-lead]').textContent = TOPIC_TITLES[topic].lead;
 		$('#provider-label').textContent = topic === 'dkim' ? 'Wer verschickt deine Mails?' : 'Wo liegt deine Domain?';
 		show('guide');
-		$('[data-guide-title]').focus();
+		$('[data-guide-title]').focus({ preventScroll: true });
 		window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
 		if (!guides) guides = await fetch('/anleitungen.json').then((r) => r.json() as Promise<GuideData>).catch(() => ({}));
 		let provider: string | null = null;
@@ -378,10 +483,11 @@ export function initTool(): void {
 		const domain = result?.fromDomain ?? 'deine-domain.de';
 		$('[data-guide-steps]').innerHTML = steps
 			.map((s, i) => {
+				const fill = (v: string) => v.replaceAll('{domain}', domain);
 				const box = s.eintrag
-					? `<div class="copybox"><p class="copybox-host">Typ <code>${esc(s.eintrag.typ)}</code> · Name/Host <code>${esc(s.eintrag.host.replaceAll('{domain}', domain))}</code></p><pre class="code">${esc(s.eintrag.wert.replaceAll('{domain}', domain))}</pre><button type="button" class="chip" data-copy="${esc(s.eintrag.wert.replaceAll('{domain}', domain))}">Wert kopieren</button></div>`
+					? `<div class="copybox"><p class="copybox-host">Typ <code>${esc(s.eintrag.typ)}</code> · Name/Host <code>${esc(fill(s.eintrag.host))}</code></p>${copyRow(fill(s.eintrag.wert))}</div>`
 					: '';
-				return `<li class="gstep"><span class="gnum" aria-hidden="true">${i + 1}</span><div class="gtext"><p>${inline(s.text)}</p>${box}</div></li>`;
+				return `<li class="gstep"><span class="gnum" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span><div class="gtext"><p>${inline(s.text)}</p>${box}</div></li>`;
 			})
 			.join('');
 		const link = $<HTMLAnchorElement>('[data-guide-link]');
@@ -406,14 +512,14 @@ export function initTool(): void {
 			history.pushState({}, '', '/');
 			await newTest();
 			window.scrollTo({ top: 0 });
-			$<HTMLButtonElement>('[data-action="copy"]').focus();
+			$<HTMLButtonElement>('.copy-address').focus({ preventScroll: true });
 		} else if (action === 'share' && result) {
 			const url = `${location.origin}/ergebnis/${result.id}`;
 			if (navigator.share && matchMedia('(pointer: coarse)').matches) {
 				navigator.share({ title: `E-Mail-Check: ${fmt(result.score)} von 10`, url }).catch(() => undefined);
 			} else {
 				await copyText(url);
-				flash(btn, 'Link kopiert');
+				flash(btn, 'Kopiert');
 			}
 		} else if (action === 'back') {
 			show('result');
@@ -425,6 +531,11 @@ export function initTool(): void {
 		} else if (btn.dataset.copy !== undefined) {
 			await copyText(btn.dataset.copy);
 			flash(btn, 'Kopiert');
+		} else if (btn.classList.contains('action-toggle')) {
+			const body = document.getElementById(btn.getAttribute('aria-controls')!)!;
+			const open = btn.getAttribute('aria-expanded') !== 'true';
+			btn.setAttribute('aria-expanded', String(open));
+			body.hidden = !open;
 		} else if (btn.classList.contains('check-row')) {
 			const body = document.getElementById(btn.getAttribute('aria-controls')!)!;
 			const open = btn.getAttribute('aria-expanded') !== 'true';

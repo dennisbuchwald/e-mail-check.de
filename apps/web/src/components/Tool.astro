@@ -1,6 +1,6 @@
 ---
-// The mail test: start → wait/check animation → result → guide. Logic in src/scripts/tool.ts.
-// mode "result" renders a shared result from /ergebnis/<id> without starting a new test.
+// The mail test: hero/start → check animation → result → guide. Logic in src/scripts/tool.ts.
+// Designs: design/redesign/start-final-hero-aura-hell, ergebnis-final. mode "result" renders /ergebnis/<id>.
 import { STEP_LABELS, STEPS } from '@emc/shared';
 import { PROVIDERS, SITE } from '../data/site';
 
@@ -18,38 +18,46 @@ const details: Record<string, string> = {
 	reputation: 'Frage Sperrlisten und rDNS ab …',
 	content: 'Analysiere Betreff, Links und Inhalt …',
 };
+const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
 ---
 
-<section class="wrap tool" id="tool" data-mode={mode} data-setup-url={SITE.setupUrl} aria-live="polite">
+<section class="tool" id="tool" data-mode={mode} data-setup-url={SITE.setupUrl} aria-live="polite">
+	<div class="aura" aria-hidden="true"><i class="a2"></i><i class="a1"></i><i class="a3"></i></div>
+
 	<!-- START -->
-	<div class="screen screen-start" data-screen="start" hidden={mode === 'result'}>
-		<div class="start-copy">
-			<span class="pill">Unbegrenzt kostenlos · ohne Konto<span class="pill-extra">&nbsp;· DSGVO-konform</span></span>
+	<div class="screen hero" data-screen="start" hidden={mode === 'result'}>
+		<div class="hero-copy">
+			<span class="pill"><span class="live"></span>Mail-Test · unbegrenzt kostenlos · ohne Konto</span>
 			<h1>{title}</h1>
 			{intro && <p class="lead">{intro}</p>}
 		</div>
-		<div class="card start-card">
-			<div class="label">Deine Testadresse</div>
-			<div class="address" data-address aria-live="off">
-				<span class="address-loading">Adresse wird erstellt …</span>
+		<div class="panel">
+			<div class="panel-address">
+				<div class="panel-address-text">
+					<span class="eyebrow">Deine Testadresse</span>
+					<span class="address" data-address aria-live="off"><span class="address-loading">Adresse wird erstellt …</span></span>
+				</div>
+				<button type="button" class="btn btn-line btn-sm copy-address" data-action="copy" disabled><Fragment set:html={copyIcon} /><span>Kopieren</span></button>
 			</div>
-			<div class="start-actions">
-				<button type="button" class="btn btn-line" data-action="copy" disabled>Adresse kopieren</button>
-				<button type="button" class="btn btn-ink" data-action="sent" disabled>Mail ist raus</button>
+			<div class="panel-status">
+				<span class="status-line"><span class="live"></span><span data-start-hint>Bereit. Wir warten auf deine Mail.</span></span>
+				<button type="button" class="btn btn-ink" data-action="sent" disabled
+					>Mail ist raus<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button
+				>
 			</div>
-			<p class="hint" data-start-hint>
-				Schick eine ganz normale Mail an diese Adresse, am besten aus dem Postfach oder Tool, das du testen willst.
-			</p>
-			<ul class="trust" aria-label="Datenschutz">
-				<li>Server in Deutschland</li>
-				<li>Testmail sofort gelöscht</li>
-				<li>Kein Tageslimit</li>
-			</ul>
 		</div>
+		<ul class="trust" aria-label="Datenschutz">
+			<li>Server in Deutschland</li>
+			<li>Testmail sofort gelöscht</li>
+			<li>Keine Cookies, kein Konto</li>
+		</ul>
+		<a class="scroll-hint" href="#so-funktionierts"
+			>So funktioniert's<svg class="nudge" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></a
+		>
 	</div>
 
 	<!-- WAIT / CHECK -->
-	<div class="screen screen-wait" data-screen="wait" hidden>
+	<div class="screen wait" data-screen="wait" hidden>
 		<div class="wait-visual">
 			<div class="orb" data-orb>
 				<div class="prog" data-prog></div>
@@ -59,27 +67,28 @@ const details: Record<string, string> = {
 				<div class="burst" data-burst hidden>{Array.from({ length: 12 }, (_, i) => <i style={`--a: ${i * 30}deg`} />)}</div>
 				<div class="core">
 					<div class="scan" data-scan hidden></div>
-					<svg class="env env-wait" data-env-wait width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+					<svg class="env" data-env-wait width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#111113" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
 						><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 7l9 6 9-6"></path></svg
 					>
-					<svg class="env pop" data-env-got hidden width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+					<svg class="env pop" data-env-got hidden width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#111113" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
 						><path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8"></path><path d="M3 7l9 6 9-6"></path><path d="M16 19l2 2 4-4"></path></svg
 					>
 				</div>
 			</div>
 			<div class="wait-text">
-				<h2 class="wait-title" data-wait-title>Wir warten auf deine Mail</h2>
+				<h2 class="wait-title" data-wait-title tabindex="-1">Wir warten auf deine Mail</h2>
 				<p class="wait-sub"><span class="typing" aria-hidden="true"><span></span><span></span><span></span></span><span data-wait-sub>Die Seite aktualisiert sich von selbst</span></p>
-				<p class="wait-addr">An: <span class="mono" data-address-small></span> <button type="button" class="linkbtn" data-action="copy">kopieren</button></p>
+				<p class="wait-addr">An <span class="mono" data-address-small></span> <button type="button" class="linkbtn" data-action="copy">kopieren</button></p>
 			</div>
 		</div>
 		<div class="card steps-card">
+			<span class="eyebrow">Prüfung</span>
 			<ol class="steps" data-steps>
 				{
 					STEPS.map((id) => (
 						<li class="step" data-step={id} data-state="pending">
 							<span class="st" aria-hidden="true">
-								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+								<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
 									<path d="M5 12l4 4 10-10" />
 								</svg>
 							</span>
@@ -95,37 +104,72 @@ const details: Record<string, string> = {
 	</div>
 
 	<!-- RESULT -->
-	<div class="screen screen-result" data-screen="result" hidden>
-		<div class="result-summary">
-			<div class="ring" data-ring>
-				<div class="h ring-score" data-score>–</div>
-				<div class="ring-of">von 10</div>
-			</div>
-			<div class="result-head">
-				<h1 class="result-title" data-headline tabindex="-1">Dein Ergebnis</h1>
-				<p class="result-sub" data-sub></p>
-				<p class="result-meta" data-meta></p>
-			</div>
-			<div class="result-actions">
-				<button type="button" class="btn btn-line" data-action="share">Bericht für Kunden teilen</button>
-				<button type="button" class="btn btn-ink" data-action="reset" data-new-test>Neuen Test starten</button>
-				<p class="setup" data-setup hidden>Keine Zeit? <a href={SITE.setupUrl} rel="noopener">Lass es einrichten</a></p>
-			</div>
+	<div class="screen result wrap" data-screen="result" hidden>
+		<div class="card mailhead">
+			<span class="mh-item"><span class="eyebrow">Absender</span><span class="mono" data-mh-from>–</span></span>
+			<span class="mh-item" data-mh-row><span class="eyebrow">Betreff</span><span data-mh-subject>–</span></span>
+			<span class="mh-item"><span class="eyebrow">Empfangen</span><span class="mono" data-mh-time>–</span></span>
+			<span class="mh-spacer"></span>
+			<button type="button" class="linkbtn mh-new" data-action="reset" data-new-test>‹ Neuer Test</button>
 		</div>
-		<div class="card checks-card">
-			<ul class="checks" data-checks></ul>
+		<div class="result-grid">
+			<div class="result-main">
+				<h1 class="verdict" data-headline tabindex="-1">Dein Ergebnis</h1>
+				<div class="card scorecard">
+					<div class="score-block">
+						<span class="eyebrow">Score</span>
+						<span class="score-line"><span class="h score-num" data-score>–</span><span class="score-of"> / 10</span></span>
+						<span class="tag with-dot" data-band>–</span>
+					</div>
+					<div class="subs" data-subs></div>
+				</div>
+				<div class="auth-warning card" data-auth-warning hidden>
+					<span class="tag is-warn">Ausnahme</span>
+					<span>SPF, DKIM oder DMARC schlägt fehl. Darum warnen wir, egal wie hoch die Zahl ist: Das allein kann Mails in den Spam schicken.</span>
+				</div>
+				<div class="plan-head" data-plan-head>
+					<span class="eyebrow">Aktionsplan</span>
+					<h2 class="plan-title">Der Reihe nach beheben. Größte Wirkung zuerst.</h2>
+				</div>
+				<ol class="plan" data-plan></ol>
+				<div class="card passed" data-passed-wrap>
+					<div class="passed-head" data-passed-head></div>
+					<ul class="passed-list" data-passed></ul>
+				</div>
+			</div>
+			<aside class="result-side">
+				<div class="card side-card">
+					<span class="eyebrow">Was das für dich bedeutet</span>
+					<p class="side-text" data-sub></p>
+				</div>
+				<div class="card side-card">
+					<span class="eyebrow">Für deinen Kunden</span>
+					<div class="copyrow">
+						<span class="mono" data-share-url>–</span>
+						<button type="button" class="copybtn" data-action="share" aria-label="Ergebnis-Link kopieren"><Fragment set:html={copyIcon} /><span>Kopieren</span></button>
+					</div>
+					<span class="side-note" data-share-note>7 Tage gültig · nicht in Google auffindbar</span>
+				</div>
+				<button type="button" class="btn btn-ink retest" data-action="reset">Nach dem Beheben erneut testen</button>
+				<details class="card side-card tech">
+					<summary><span>Technische Details</span><span class="mono tech-hint">Header · DNS · Rohdaten ›</span></summary>
+					<div class="tech-body" data-tech></div>
+				</details>
+				<p class="setup" data-setup hidden>Keine Zeit? <a href={SITE.setupUrl} rel="noopener">Lass es einrichten</a></p>
+			</aside>
 		</div>
 	</div>
 
 	<!-- GUIDE -->
-	<div class="screen screen-guide" data-screen="guide" hidden>
-		<button type="button" class="back" data-action="back">← Zurück zum Ergebnis</button>
+	<div class="screen guide wrap" data-screen="guide" hidden>
+		<button type="button" class="linkbtn back" data-action="back">‹ Zurück zum Ergebnis</button>
 		<div class="guide-grid">
 			<div class="guide-intro">
+				<span class="eyebrow">Anleitung</span>
 				<h2 class="guide-title" data-guide-title tabindex="-1">Schutzregel einrichten</h2>
-				<p class="lead guide-lead" data-guide-lead></p>
+				<p class="lead" data-guide-lead></p>
 				<div class="guide-pick">
-					<div class="label" id="provider-label">Wo liegt deine Domain?</div>
+					<div class="eyebrow" id="provider-label">Wo liegt deine Domain?</div>
 					<div class="chips" role="group" aria-labelledby="provider-label" data-providers>
 						{PROVIDERS.map((p) => <button type="button" class="chip" data-provider={p.slug} aria-pressed="false">{p.name}</button>)}
 						<button type="button" class="chip" data-provider="andere" aria-pressed="false">Anderer Anbieter</button>
@@ -144,7 +188,7 @@ const details: Record<string, string> = {
 	</div>
 
 	<!-- MESSAGE (expired, error, not found) -->
-	<div class="screen screen-msg" data-screen="msg" hidden>
+	<div class="screen msg wrap" data-screen="msg" hidden>
 		<div class="card msg-card">
 			<h1 class="msg-title" data-msg-title tabindex="-1">Diese Adresse ist abgelaufen</h1>
 			<p class="lead" data-msg-text>Testadressen gelten 60 Minuten. Hol dir einfach eine neue.</p>
@@ -161,113 +205,248 @@ const details: Record<string, string> = {
 
 <style>
 	.tool {
-		padding-top: 56px;
-		padding-bottom: 32px;
+		position: relative;
+		background: #fbfbfc;
+		overflow: hidden;
+	}
+	:global(body[data-tool-state='result']) .tool,
+	:global(body[data-tool-state='guide']) .tool,
+	:global(body[data-tool-state='msg']) .tool {
+		background: var(--bg-soft);
+		padding: 112px 0 72px;
+	}
+	:global(body[data-tool-state='result']) .aura,
+	:global(body[data-tool-state='guide']) .aura,
+	:global(body[data-tool-state='msg']) .aura {
+		display: none;
 	}
 	.screen[hidden] {
 		display: none !important;
 	}
-	.label {
-		font-size: 14px;
-		font-weight: 700;
-		color: var(--muted);
-	}
 
-	/* START */
-	@media (max-width: 420px) {
-		.pill-extra {
-			display: none;
+	/* Aura: soft, slowly drifting light. Only transform/opacity animate. */
+	.aura {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		overflow: hidden;
+	}
+	.aura i {
+		position: absolute;
+		border-radius: 999px;
+		filter: blur(90px);
+		will-change: transform;
+	}
+	.a1 {
+		top: 62%;
+		left: 56%;
+		width: 820px;
+		height: 420px;
+		background: radial-gradient(closest-side, rgba(2, 202, 80, 0.3), rgba(2, 202, 80, 0));
+		animation: drift 12s ease-in-out infinite alternate;
+	}
+	.a2 {
+		top: 60%;
+		left: 44%;
+		width: 640px;
+		height: 520px;
+		background: radial-gradient(closest-side, rgba(150, 170, 190, 0.45), rgba(150, 170, 190, 0));
+		animation: drift2 15s ease-in-out infinite alternate;
+	}
+	.a3 {
+		top: 30%;
+		left: 50%;
+		width: 1100px;
+		height: 560px;
+		background: radial-gradient(closest-side, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0));
+		animation: drift2 18s ease-in-out infinite alternate;
+	}
+	@keyframes drift {
+		0% {
+			transform: translate(-50%, -50%) scale(1);
+		}
+		100% {
+			transform: translate(-46%, -54%) scale(1.12);
 		}
 	}
-	.screen-start {
+	@keyframes drift2 {
+		0% {
+			transform: translate(-50%, -50%) scale(1.05);
+		}
+		100% {
+			transform: translate(-55%, -46%) scale(0.95);
+		}
+	}
+	/* While checking the aura breathes a little more. */
+	@keyframes breathe-aura {
+		0%,
+		100% {
+			opacity: 0.8;
+		}
+		50% {
+			opacity: 1;
+		}
+	}
+	:global(body[data-tool-state='wait']) .a1 {
+		background: radial-gradient(closest-side, rgba(2, 202, 80, 0.42), rgba(2, 202, 80, 0));
+		animation:
+			drift 6s ease-in-out infinite alternate,
+			breathe-aura 2.4s ease-in-out infinite;
+	}
+	:global(body[data-tool-state='wait']) .a2 {
+		animation: drift2 8s ease-in-out infinite alternate;
+	}
+
+	/* HERO */
+	.hero {
+		position: relative;
+		z-index: 1;
+		min-height: 100svh;
 		display: flex;
-		flex-wrap: wrap;
-		gap: 64px;
+		flex-direction: column;
 		align-items: center;
-		padding-top: 24px;
+		justify-content: center;
+		gap: 32px;
+		padding: 104px var(--gutter) 96px;
+		text-align: center;
 	}
-	.start-copy {
-		flex: 1 1 440px;
-		min-width: 0;
+	.hero-copy {
 		display: flex;
 		flex-direction: column;
-		gap: 20px;
-	}
-	.start-card {
-		flex: 1 1 420px;
-		min-width: 0;
-		display: flex;
-		flex-direction: column;
+		align-items: center;
 		gap: 18px;
-		padding: 36px;
+		max-width: 780px;
+	}
+	.hero-copy .pill {
+		align-self: center;
+	}
+	.hero h1 {
+		font-size: clamp(42px, 6.2vw, 70px);
+	}
+	.panel {
+		width: 100%;
+		max-width: 760px;
+		padding: 10px;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		background: rgba(255, 255, 255, 0.78);
+		border: 1px solid rgba(17, 17, 19, 0.08);
+		border-radius: 22px;
+		box-shadow: var(--shadow-lg);
+		backdrop-filter: blur(14px);
+		-webkit-backdrop-filter: blur(14px);
+		text-align: left;
+	}
+	.panel-address {
+		border-radius: var(--radius-sm);
+		padding: 16px 18px;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		background: rgba(17, 17, 19, 0.04);
+	}
+	.panel-address-text {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		min-width: 0;
+	}
+	.panel-address-text .eyebrow {
+		font-size: 11px;
 	}
 	.address {
 		font-family: var(--font-mono);
-		font-weight: 600;
 		font-size: 22px;
-		letter-spacing: -0.01em;
+		font-weight: 500;
 		overflow-wrap: anywhere;
+		line-height: 1.3;
 		min-height: 1.3em;
-		line-height: 1.25;
 	}
 	.address :global(.nw) {
 		white-space: nowrap;
 	}
 	.address-loading {
-		color: var(--inactive);
+		color: var(--muted-2);
 		font-family: var(--font-body);
-		font-size: 18px;
-		font-weight: 500;
-		letter-spacing: 0;
+		font-size: 16px;
 	}
-	.start-actions {
+	.copy-address {
+		background: rgba(255, 255, 255, 0.85);
+		flex: none;
+	}
+	.panel-status {
 		display: flex;
-		gap: 12px;
-		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		padding: 4px 4px 4px 10px;
 	}
-	.start-actions .btn {
-		flex: 1 1 170px;
-	}
-	.hint {
-		margin: 0;
-		font-size: 15px;
-		line-height: 1.5;
+	.status-line {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		font-size: 14px;
 		color: var(--muted);
 	}
 	.trust {
 		list-style: none;
 		margin: 0;
-		padding: 4px 0 0;
+		padding: 0;
 		display: flex;
-		gap: 6px 16px;
+		justify-content: center;
+		gap: 6px 24px;
 		flex-wrap: wrap;
 		font-size: 13px;
-		font-weight: 600;
-		color: var(--muted);
+		color: var(--muted-2);
 	}
-	.trust li::before {
-		content: '';
-		display: inline-block;
-		width: 8px;
-		height: 8px;
-		border-radius: 999px;
-		background: var(--ok);
-		margin-right: 7px;
-		vertical-align: 1px;
+	.trust li + li::before {
+		content: '·';
+		margin-right: 24px;
+		margin-left: -12px;
+	}
+	.scroll-hint {
+		position: absolute;
+		bottom: 26px;
+		left: 50%;
+		transform: translateX(-50%);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 4px;
+		font-size: 13px;
+		font-weight: 600;
+		color: #4a4b50;
+		text-decoration: none;
+	}
+	@keyframes nudge {
+		0%,
+		100% {
+			transform: translateY(0);
+		}
+		50% {
+			transform: translateY(4px);
+		}
+	}
+	.nudge {
+		animation: nudge 1.6s ease-in-out infinite;
 	}
 
 	/* WAIT */
-	.screen-wait {
+	.wait {
+		position: relative;
+		z-index: 1;
+		min-height: 100svh;
 		display: flex;
 		flex-wrap: wrap;
-		gap: 64px;
+		gap: 56px;
 		align-items: center;
 		justify-content: center;
-		padding-top: 24px;
+		padding: 104px var(--gutter) 64px;
 	}
 	.wait-visual {
-		flex: 1 1 340px;
-		min-width: 0;
+		flex: 0 1 380px;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
@@ -278,23 +457,24 @@ const details: Record<string, string> = {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 12px;
+		gap: 10px;
 	}
 	.wait-title {
-		font-size: clamp(24px, 3vw, 36px);
+		font-size: clamp(26px, 3vw, 36px);
+		outline: none;
 	}
 	.wait-sub {
 		display: flex;
 		align-items: center;
 		gap: 10px;
-		font-size: 17px;
+		font-size: 15px;
 		color: var(--muted);
 		margin: 0;
 	}
 	.wait-addr {
 		margin: 0;
-		font-size: 14px;
-		color: var(--muted);
+		font-size: 13px;
+		color: var(--muted-2);
 		overflow-wrap: anywhere;
 	}
 	.linkbtn {
@@ -302,38 +482,37 @@ const details: Record<string, string> = {
 		background: none;
 		padding: 8px 4px;
 		font-size: 14px;
-		font-weight: 700;
+		font-weight: 600;
 		text-decoration: underline;
+		text-decoration-color: rgba(17, 17, 19, 0.3);
 		text-underline-offset: 3px;
 		cursor: pointer;
+		color: var(--ink);
 	}
 	.orb {
 		position: relative;
-		width: 180px;
-		height: 180px;
+		width: 200px;
+		height: 200px;
 		flex: none;
-		margin: 24px 0;
-		transform: scale(1.35);
 	}
 	.prog {
 		position: absolute;
 		inset: 0;
 		border-radius: 999px;
-		background: conic-gradient(var(--ink) var(--p, 0%), var(--track) 0);
+		background: conic-gradient(var(--ink) var(--p, 0%), rgba(17, 17, 19, 0.08) 0);
 		transition: --p 0.5s ease;
 	}
 	.prog-mask {
 		position: absolute;
-		inset: 9px;
+		inset: 5px;
 		border-radius: 999px;
-		background: var(--bg);
+		background: rgba(251, 251, 252, 0.92);
 	}
 	.ring2 {
 		position: absolute;
-		inset: 22px;
+		inset: 26px;
 		border-radius: 999px;
-		border: 3px dashed var(--ink);
-		opacity: 0.3;
+		border: 1.5px dashed rgba(17, 17, 19, 0.35);
 		animation: spinr 7s linear infinite;
 	}
 	.sat {
@@ -343,21 +522,22 @@ const details: Record<string, string> = {
 	}
 	.sat span {
 		position: absolute;
-		top: -6px;
+		top: -5px;
 		left: 50%;
-		margin-left: -9px;
-		width: 18px;
-		height: 18px;
+		margin-left: -7px;
+		width: 14px;
+		height: 14px;
 		border-radius: 999px;
 		background: var(--ink);
-		box-shadow: 0 0 0 4px var(--bg);
+		box-shadow: 0 0 0 4px #fbfbfc;
 	}
 	.core {
 		position: absolute;
-		inset: 46px;
+		inset: 50px;
 		border-radius: 999px;
-		background: var(--bg);
-		border: 4px solid var(--ink);
+		background: #fff;
+		border: 1px solid var(--border);
+		box-shadow: var(--shadow);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -365,12 +545,12 @@ const details: Record<string, string> = {
 	}
 	.scan {
 		position: absolute;
-		left: 14%;
-		right: 14%;
-		height: 3px;
+		left: 16%;
+		right: 16%;
+		height: 2px;
 		border-radius: 999px;
-		background: var(--ink);
-		box-shadow: 0 0 14px 3px rgba(29, 29, 31, 0.25);
+		background: var(--ok);
+		box-shadow: 0 0 14px 3px rgba(2, 202, 80, 0.35);
 		animation: scan 0.9s ease-in-out infinite alternate;
 	}
 	.pop {
@@ -391,9 +571,9 @@ const details: Record<string, string> = {
 		position: absolute;
 		top: 50%;
 		left: 50%;
-		width: 12px;
-		height: 12px;
-		margin: -6px 0 0 -6px;
+		width: 10px;
+		height: 10px;
+		margin: -5px 0 0 -5px;
 		border-radius: 999px;
 		background: var(--ink);
 		animation: burst 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
@@ -402,17 +582,18 @@ const details: Record<string, string> = {
 		background: var(--ok);
 	}
 	.burst i:nth-child(3n) {
-		width: 8px;
-		height: 8px;
-		margin: -4px 0 0 -4px;
+		width: 7px;
+		height: 7px;
+		margin: -3.5px 0 0 -3.5px;
+		background: #9aa6b4;
 	}
 	.typing {
 		display: inline-flex;
 		gap: 5px;
 	}
 	.typing span {
-		width: 8px;
-		height: 8px;
+		width: 6px;
+		height: 6px;
 		border-radius: 999px;
 		background: var(--ink);
 		animation: blink 1.2s infinite;
@@ -424,10 +605,14 @@ const details: Record<string, string> = {
 		animation-delay: 0.3s;
 	}
 	.steps-card {
-		flex: 1 1 420px;
-		max-width: 520px;
-		min-width: 0;
-		padding: 32px 36px;
+		flex: 0 1 460px;
+		padding: 26px 28px;
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		background: rgba(255, 255, 255, 0.82);
+		backdrop-filter: blur(14px);
+		-webkit-backdrop-filter: blur(14px);
 	}
 	.steps {
 		list-style: none;
@@ -435,28 +620,31 @@ const details: Record<string, string> = {
 		padding: 0;
 		display: flex;
 		flex-direction: column;
-		gap: 18px;
 	}
 	.step {
 		display: flex;
 		align-items: center;
-		gap: 16px;
+		gap: 14px;
+		padding: 11px 0;
+	}
+	.step + .step {
+		border-top: 1px solid var(--line);
 	}
 	.st {
-		width: 26px;
-		height: 26px;
+		width: 20px;
+		height: 20px;
 		border-radius: 999px;
 		flex: none;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		border: 2px solid var(--inactive-border);
+		border: 1.5px dashed #b9b9c0;
 	}
 	.st svg {
 		opacity: 0;
 	}
 	.step[data-state='active'] .st {
-		border: 3px solid var(--track);
+		border: 2px solid rgba(17, 17, 19, 0.12);
 		border-top-color: var(--ink);
 		animation: spin 0.8s linear infinite;
 	}
@@ -471,22 +659,22 @@ const details: Record<string, string> = {
 	.step-text {
 		display: flex;
 		flex-direction: column;
-		gap: 3px;
+		gap: 2px;
 		min-width: 0;
 	}
 	.step-label {
 		font-size: 15px;
 		font-weight: 500;
-		color: var(--inactive);
+		color: var(--muted-2);
 	}
 	.step[data-state='active'] .step-label,
 	.step[data-state='done'] .step-label {
-		font-weight: 700;
+		font-weight: 600;
 		color: var(--ink);
 	}
 	.step-detail {
 		display: none;
-		font-size: 13px;
+		font-size: 12px;
 		line-height: 18px;
 		color: var(--muted);
 	}
@@ -528,7 +716,7 @@ const details: Record<string, string> = {
 	}
 	@keyframes scan {
 		from {
-			top: 20%;
+			top: 22%;
 		}
 		to {
 			top: 76%;
@@ -540,25 +728,25 @@ const details: Record<string, string> = {
 			opacity: 1;
 		}
 		to {
-			transform: rotate(var(--a)) translateY(-122px) scale(0.3);
+			transform: rotate(var(--a)) translateY(-128px) scale(0.3);
 			opacity: 0;
 		}
 	}
 	@keyframes bump {
 		0% {
-			transform: scale(1.35);
+			transform: scale(1);
 		}
 		40% {
-			transform: scale(1.46);
+			transform: scale(1.07);
 		}
 		100% {
-			transform: scale(1.35);
+			transform: scale(1);
 		}
 	}
 	@keyframes breathe {
 		0%,
 		100% {
-			transform: scale(0.94);
+			transform: scale(0.95);
 		}
 		50% {
 			transform: scale(1);
@@ -571,116 +759,221 @@ const details: Record<string, string> = {
 	}
 
 	/* RESULT */
-	.screen-result {
+	.result {
 		display: flex;
-		flex-wrap: wrap;
-		gap: 64px;
-		align-items: flex-start;
+		flex-direction: column;
+		gap: 28px;
 	}
-	.result-summary {
-		flex: 1 1 340px;
+	.mailhead {
+		padding: 14px 22px;
+		display: flex;
+		align-items: center;
+		gap: 12px 36px;
+		flex-wrap: wrap;
+	}
+	.mh-item {
+		display: flex;
+		gap: 10px;
+		align-items: baseline;
 		min-width: 0;
+		font-size: 14px;
+	}
+	.mh-item .eyebrow {
+		font-size: 11px;
+	}
+	.mh-item > :last-child {
+		overflow-wrap: anywhere;
+	}
+	.mh-spacer {
+		flex: 1;
+	}
+	.mh-new {
+		text-decoration: none;
+	}
+	.result-grid {
+		display: grid;
+		grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+		gap: 40px;
+		align-items: start;
+	}
+	.result-main {
 		display: flex;
 		flex-direction: column;
 		gap: 24px;
 	}
-	.ring {
-		width: 208px;
-		height: 208px;
-		border-radius: 999px;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		border: 16px solid var(--status, var(--track));
-		animation: pop 0.55s var(--bounce) both;
-	}
-	.ring-score {
-		font-size: 58px;
-		letter-spacing: -0.03em;
-		line-height: 62px;
-	}
-	.ring-of {
-		font-size: 14px;
-		font-weight: 600;
-		color: var(--muted);
-	}
-	.result-head {
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-	}
-	.result-title {
-		font-size: clamp(30px, 3.4vw, 40px);
+	.verdict {
+		font-size: clamp(32px, 3.6vw, 44px);
+		line-height: 1.08;
 		outline: none;
 	}
-	.result-sub {
-		margin: 0;
-		font-size: 17px;
-		line-height: 26px;
-		color: var(--muted);
-		text-wrap: pretty;
+	.scorecard {
+		padding: 28px;
+		display: flex;
+		gap: 36px;
+		align-items: center;
 	}
-	.result-meta {
-		margin: 0;
-		font-size: 13px;
-		color: var(--muted);
-	}
-	.result-actions {
+	.score-block {
 		display: flex;
 		flex-direction: column;
-		gap: 12px;
-		align-items: flex-start;
+		gap: 8px;
+		flex: none;
 	}
-	.setup {
-		margin: 0;
-		font-size: 15px;
-		color: var(--muted);
+	.score-block .eyebrow {
+		font-size: 11px;
 	}
-	.setup a {
-		font-weight: 700;
+	.score-num {
+		font-size: 92px;
+		line-height: 0.9;
+		font-variant-numeric: tabular-nums;
 	}
-	.checks-card {
-		flex: 999 1 520px;
+	.score-of {
+		font-size: 20px;
+		color: var(--faint);
+		font-weight: 500;
+	}
+	.score-block .tag {
+		align-self: flex-start;
+	}
+	.subs {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		gap: 18px;
+		border-left: 1px solid var(--line);
+		padding-left: 36px;
 		min-width: 0;
-		overflow: hidden;
 	}
-	.checks {
+	.auth-warning {
+		padding: 16px 20px;
+		display: flex;
+		gap: 14px;
+		align-items: center;
+		font-size: 14px;
+		color: #4a4b50;
+	}
+	.auth-warning .tag {
+		font-family: var(--font-mono);
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		font-size: 11px;
+		flex: none;
+	}
+	.plan-head {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		margin-top: 4px;
+	}
+	.plan-title {
+		font-size: 28px;
+	}
+	.plan {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+	}
+	.passed {
+		padding: 8px 20px 6px;
+	}
+	.passed-head {
+		padding: 12px 4px;
+		font-size: 14px;
+		font-weight: 600;
+	}
+	.passed-list {
 		list-style: none;
 		margin: 0;
 		padding: 0;
 	}
+	.result-side {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		padding-top: 6px;
+		position: sticky;
+		top: 92px;
+	}
+	.side-card {
+		padding: 22px 24px;
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+	.side-text {
+		margin: 0;
+		font-size: 16px;
+		line-height: 25px;
+		color: var(--text);
+	}
+	.side-note {
+		font-size: 13px;
+		color: var(--muted-2);
+	}
+	.retest {
+		width: 100%;
+	}
+	.tech summary {
+		list-style: none;
+		cursor: pointer;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 12px;
+		font-size: 14px;
+		font-weight: 600;
+		min-height: 24px;
+	}
+	.tech summary::-webkit-details-marker {
+		display: none;
+	}
+	.tech-hint {
+		font-size: 12px;
+		color: var(--muted-2);
+		font-weight: 500;
+	}
+	.tech-body {
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+		padding-top: 6px;
+	}
+	.setup {
+		margin: 0;
+		font-size: 13px;
+		color: var(--muted-2);
+		text-align: center;
+	}
+	.setup a {
+		font-weight: 600;
+	}
 
 	/* GUIDE */
 	.back {
-		border: none;
-		background: none;
-		padding: 12px 12px 12px 0;
-		font-size: 15px;
-		font-weight: 600;
-		color: var(--muted);
-		cursor: pointer;
-		margin-bottom: 16px;
+		align-self: flex-start;
+		text-decoration: none;
+		margin-bottom: 8px;
 	}
-	.guide-grid {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 64px;
-		align-items: flex-start;
-	}
-	.guide-intro {
-		flex: 1 1 340px;
-		min-width: 0;
+	.guide {
 		display: flex;
 		flex-direction: column;
-		gap: 24px;
+	}
+	.guide-grid {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+		gap: 48px;
+		align-items: start;
+	}
+	.guide-intro {
+		display: flex;
+		flex-direction: column;
+		gap: 18px;
 	}
 	.guide-title {
-		font-size: clamp(30px, 3.6vw, 44px);
+		font-size: clamp(30px, 3.4vw, 42px);
 		outline: none;
-	}
-	.guide-lead {
-		font-size: 17px;
 	}
 	.guide-pick {
 		display: flex;
@@ -693,12 +986,10 @@ const details: Record<string, string> = {
 		gap: 8px;
 	}
 	.guide-card {
-		flex: 999 1 520px;
-		min-width: 0;
+		padding: 30px;
 		display: flex;
 		flex-direction: column;
 		gap: 22px;
-		padding: 36px;
 	}
 	.guide-steps {
 		list-style: none;
@@ -706,19 +997,17 @@ const details: Record<string, string> = {
 		padding: 0;
 		display: flex;
 		flex-direction: column;
-		gap: 22px;
-		counter-reset: g;
+		gap: 20px;
 	}
 	.guide-note {
 		margin: 0;
-		font-size: 15px;
-		line-height: 22px;
+		font-size: 14px;
 		color: var(--muted);
 	}
 	.guide-actions {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 12px;
+		gap: 10px;
 	}
 
 	/* MESSAGE */
@@ -736,71 +1025,303 @@ const details: Record<string, string> = {
 		outline: none;
 	}
 
-	@media (max-width: 820px) {
-		.tool {
-			padding-top: 28px;
-		}
-		.screen-start,
-		.screen-wait,
-		.screen-result,
+	@media (max-width: 960px) {
+		.result-grid,
 		.guide-grid {
+			grid-template-columns: minmax(0, 1fr);
 			gap: 28px;
 		}
-		.screen-start {
-			padding-top: 0;
+		.result-side {
+			position: static;
 		}
-		.start-card,
-		.guide-card {
-			padding: 20px;
+	}
+	@media (max-width: 820px) {
+		.aura i {
+			filter: blur(60px);
+		}
+		.a1 {
+			width: 460px;
+			height: 300px;
+		}
+		.a2 {
+			width: 360px;
+			height: 320px;
+		}
+		.a3 {
+			width: 520px;
+			height: 360px;
+		}
+		.hero {
+			padding: 88px var(--gutter) 88px;
+			gap: 24px;
+		}
+		.panel-address {
+			flex-direction: column;
+			align-items: stretch;
 		}
 		.address {
 			font-size: 17px;
 		}
-		.orb {
-			transform: none;
-			margin: 0;
+		.panel-status {
+			flex-direction: column;
+			align-items: stretch;
+			gap: 12px;
+			padding: 4px;
 		}
-		@keyframes bump {
-			0% {
-				transform: scale(1);
-			}
-			40% {
-				transform: scale(1.08);
-			}
-			100% {
-				transform: scale(1);
-			}
+		.status-line {
+			justify-content: center;
+		}
+		.trust li + li::before {
+			content: none;
+		}
+		.wait {
+			padding: 88px var(--gutter) 48px;
+			gap: 32px;
+		}
+		.orb {
+			width: 168px;
+			height: 168px;
+		}
+		.core {
+			inset: 42px;
 		}
 		.steps-card {
-			padding: 18px 20px;
-			max-width: none;
-			width: 100%;
+			flex-basis: 100%;
+			padding: 20px;
 		}
-		.steps {
-			gap: 14px;
+		:global(body[data-tool-state='result']) .tool,
+		:global(body[data-tool-state='guide']) .tool,
+		:global(body[data-tool-state='msg']) .tool {
+			padding: 84px 0 48px;
 		}
-		.result-summary {
-			align-items: center;
-			text-align: center;
+		.mailhead {
+			padding: 14px 16px;
+			gap: 8px 20px;
 		}
-		.result-actions {
+		.mh-spacer {
+			display: none;
+		}
+		.scorecard {
+			flex-direction: column;
 			align-items: stretch;
-			width: 100%;
+			gap: 22px;
+			padding: 22px;
 		}
-		.setup {
-			text-align: center;
+		.subs {
+			border-left: none;
+			border-top: 1px solid var(--line);
+			padding-left: 0;
+			padding-top: 20px;
 		}
-		.ring {
-			width: 176px;
-			height: 176px;
-			border-width: 14px;
+		.score-num {
+			font-size: 76px;
 		}
-		.ring-score {
-			font-size: 46px;
-			line-height: 50px;
+		.guide-card {
+			padding: 20px;
 		}
 		.msg-card {
 			padding: 24px;
+		}
+	}
+</style>
+
+<style is:global>
+	/* Elements created by tool.ts */
+	.mh-item[hidden] {
+		display: none;
+	}
+	.sub-row {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+	.sub-row-head {
+		display: flex;
+		justify-content: space-between;
+		font-size: 13px;
+	}
+	.sub-row-head strong {
+		font-weight: 600;
+	}
+	.sub-row-head .mono {
+		color: #4a4b50;
+		font-variant-numeric: tabular-nums;
+	}
+	.bar {
+		height: 6px;
+		border-radius: 999px;
+		background: var(--track);
+		overflow: hidden;
+	}
+	.bar i {
+		display: block;
+		height: 100%;
+		width: 100%;
+		border-radius: 999px;
+		background: var(--status);
+		transform-origin: left;
+		transform: scaleX(0);
+		transition: transform 1.1s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	.action {
+		padding: 22px 24px;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		animation: card-in 0.6s var(--bounce) both;
+		animation-delay: var(--d, 0s);
+	}
+	@keyframes card-in {
+		from {
+			opacity: 0;
+			transform: translateY(14px) scale(0.98);
+		}
+		to {
+			opacity: 1;
+			transform: none;
+		}
+	}
+	.action-meta {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		flex-wrap: wrap;
+	}
+	.action-num {
+		font-family: var(--font-mono);
+		font-size: 12px;
+		font-weight: 600;
+		padding: 4px 8px;
+		border-radius: 8px;
+		background: var(--chip);
+	}
+	.action-gain {
+		margin-left: auto;
+		font-family: var(--font-mono);
+		font-size: 12px;
+		font-weight: 600;
+		padding: 4px 10px;
+		border-radius: 999px;
+		background: var(--ok-tint);
+	}
+	.action-title {
+		display: flex;
+		align-items: baseline;
+		gap: 10px;
+		flex-wrap: wrap;
+		margin: 0;
+		font-family: var(--font-body);
+		font-size: 18px;
+		font-weight: 600;
+		letter-spacing: 0;
+	}
+	.action-title .mono {
+		font-size: 12px;
+		color: var(--muted-2);
+		font-weight: 500;
+	}
+	.action-text {
+		margin: 0;
+		font-size: 15px;
+		line-height: 23px;
+		color: #4a4b50;
+		text-wrap: pretty;
+	}
+	.action-toggle {
+		align-self: flex-start;
+		border: none;
+		background: none;
+		padding: 6px 0;
+		font-size: 14px;
+		font-weight: 600;
+		cursor: pointer;
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		min-height: 36px;
+	}
+	.action-toggle svg {
+		width: 16px;
+		height: 16px;
+		transition: transform 0.3s var(--bounce);
+	}
+	.action-toggle[aria-expanded='true'] svg {
+		transform: rotate(180deg);
+	}
+	.action-fix {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		padding-top: 2px;
+	}
+	.action-guide {
+		align-self: flex-start;
+		font-size: 14px;
+		font-weight: 600;
+		text-decoration: none;
+		border: none;
+		background: none;
+		padding: 6px 0;
+		cursor: pointer;
+		min-height: 36px;
+	}
+	.passed-item {
+		display: flex;
+		align-items: center;
+		gap: 14px;
+		padding: 13px 4px;
+		border-top: 1px solid var(--line);
+		font-size: 15px;
+	}
+	.passed-item .grow {
+		flex: 1;
+	}
+	.passed-item .mono {
+		font-size: 12px;
+		color: var(--muted-2);
+		text-align: right;
+	}
+	.tech-block {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+	.tech-block h3 {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		font-weight: 600;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--muted-2);
+		margin: 0;
+	}
+	.tech-block dl {
+		margin: 0;
+		display: grid;
+		grid-template-columns: max-content 1fr;
+		gap: 4px 12px;
+		font-family: var(--font-mono);
+		font-size: 12px;
+	}
+	.tech-block dt {
+		color: var(--muted-2);
+	}
+	.tech-block dd {
+		margin: 0;
+		overflow-wrap: anywhere;
+	}
+	@media (max-width: 820px) {
+		.action {
+			padding: 18px;
+		}
+		.passed-item {
+			flex-wrap: wrap;
+			gap: 4px 12px;
+		}
+		.passed-item .mono {
+			flex-basis: 100%;
+			text-align: left;
+			padding-left: 22px;
 		}
 	}
 </style>

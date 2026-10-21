@@ -36,7 +36,7 @@ const { items, title = 'Häufige Fragen' } = Astro.props;
 		overflow: hidden;
 	}
 	.faq-item + .faq-item {
-		border-top: 2px solid var(--divider);
+		border-top: 1px solid var(--line);
 	}
 	summary {
 		list-style: none;
@@ -47,8 +47,8 @@ const { items, title = 'Häufige Fragen' } = Astro.props;
 		gap: 16px;
 		padding: 22px 28px;
 		min-height: 72px;
-		font-size: 17px;
-		font-weight: 700;
+		font-size: 16px;
+		font-weight: 600;
 		line-height: 1.35;
 	}
 	summary::-webkit-details-marker {
@@ -62,7 +62,7 @@ const { items, title = 'Häufige Fragen' } = Astro.props;
 		position: relative;
 		width: 28px;
 		height: 28px;
-		border: 2px solid var(--ink);
+		border: 1px solid var(--border-strong);
 		border-radius: 999px;
 		flex: none;
 		transition: transform 0.35s var(--bounce);

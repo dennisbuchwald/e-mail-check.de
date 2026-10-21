@@ -16,7 +16,7 @@ faq:
   - frage: "Was passiert mit meiner Testmail?"
     antwort: "Der Inhalt deiner Mail wird nur im Arbeitsspeicher ausgewertet und direkt danach gelöscht. Gespeichert wird nur die Zusammenfassung mit Score und Prüfpunkten, und auch die löschen wir nach 7 Tagen automatisch. Unsere Server stehen in Deutschland."
   - frage: "Was ist ein guter Score?"
-    antwort: "Ab 8 von 10 ohne rotes Problem bist du im grünen Bereich. 9 oder 10 heißt: Spamfilter haben keinen technischen Grund, deine Mail auszusortieren. Ein einzelnes echtes Problem macht die Ampel rot, auch wenn der Score noch hoch ist."
+    antwort: "Ab 9 von 10 bist du im grünen Bereich: Spamfilter haben keinen technischen Grund, deine Mail auszusortieren. 7 bis 8,9 ist solide, 5 bis 6,9 gefährdet, darunter landet viel im Spam. Ausnahme: Schlägt SPF, DKIM oder DMARC fehl, warnen wir immer, auch wenn die Zahl hoch ist."
   - frage: "Wie kann ich prüfen, ob ich auf einer Blacklist stehe?"
     antwort: "Schick eine Testmail. Wir prüfen die IP-Adresse deines sendenden Servers automatisch gegen Spamhaus, SpamCop, Barracuda, NiX Spam und PSBL. Steht dein Server auf einer Liste, siehst du das im Prüfpunkt Server-Ruf."
 stand: "2026-10-21"
@@ -28,7 +28,7 @@ Ein Mail-Tester empfängt deine Mail wie ein ganz normales Postfach und schaut i
 
 1. **Adresse kopieren.** Oben steht deine persönliche Testadresse, zum Beispiel `k7m2x9qa@test.e-mail-check.de`. Sie gilt nur für deinen Test.
 2. **Normale Mail schicken.** Schreib aus deinem üblichen Postfach, mit deiner Signatur und einem echten Betreff. Je echter die Mail, desto aussagekräftiger das Ergebnis. Du kannst die Adresse auch in dein Kontaktformular oder Newsletter-Tool eintragen.
-3. **Ergebnis lesen.** Die Seite aktualisiert sich von selbst. Nach rund 30 Sekunden siehst du deinen Score, eine Ampel und bis zu fünf Prüfpunkte, die wichtigsten zuerst.
+3. **Ergebnis lesen.** Die Seite aktualisiert sich von selbst. Nach rund 30 Sekunden siehst du deinen Score, Teil-Scores für Technik, Server-Ruf und Inhalt und einen Aktionsplan: was zu tun ist und wie viele Punkte jede Behebung bringt, die größte Wirkung zuerst.
 
 Bei jedem Problem steht direkt dabei, wie du es behebst. Du wählst deinen Anbieter und bekommst die Schritte mit dem DNS-Wert zum Kopieren. Danach testest du einfach noch einmal.
 
@@ -72,7 +72,7 @@ Kein Geheimrezept: Jede Mail startet bei 10 Punkten. Für jeden Befund ziehen wi
 
 Ein Beispiel: Fehlt nur der SPF-Eintrag, landest du bei 8,5. Fehlt die DKIM-Unterschrift und steht DMARC auf `p=none`, sind es 7,8.
 
-Die Ampel richtet sich nicht nur nach der Zahl. Sobald ein echtes Problem dabei ist, wird sie rot, auch bei 8,5 Punkten. So übersiehst du keinen fehlenden Eintrag, nur weil der Rest gut aussieht. Ohne Problem ist sie ab 8 Punkten grün, darunter orange.
+Die Zahl ordnen wir in vier Bereiche ein: Hohes Risiko (unter 5), Gefährdet (5 bis 6,9), Solide (7 bis 8,9) und Sehr gut (ab 9). Eine Ausnahme gibt es: Schlägt SPF, DKIM oder DMARC fehl, warnen wir immer, auch bei 8,5 Punkten. So übersiehst du keinen fehlenden Eintrag, nur weil der Rest gut aussieht.
 
 Den Inhalt bewerten wir getrennt von der Technik. So zählt ein fehlender SPF-Eintrag nicht doppelt, einmal bei „Absender bestätigt“ und noch einmal im Spam-Score.
 

@@ -9,15 +9,44 @@ Quelle der Werte: `packages/shared/src/scoring.ts` (`POINTS`). Diese Datei und d
 - Score = max(0, 10 − Summe der Abzüge), auf eine Nachkommastelle gerundet.
 - Prüfpunkte werden nach Schwere sortiert: Problem → Hinweis → OK → nicht geprüft.
 
+## Bereiche (Bänder)
+
+Die Zahl wird im Ergebnis und auf der Startseite in vier Bänder übersetzt (`BANDS`):
+
+| Band | Score | Bedeutung |
+|---|---|---|
+| Hohes Risiko | 0 bis 4,9 | Viele Mails landen im Spam. Erst beheben, dann versenden. |
+| Gefährdet | 5 bis 6,9 | Echtes Spam-Risiko. Die markierten Punkte zuerst angehen. |
+| Solide | 7 bis 8,9 | Kommt meist an. Ein paar Details bringen Sicherheit. |
+| Sehr gut | 9 bis 10 | Alles im grünen Bereich. |
+
+## Ausnahme-Regel
+
+Schlägt SPF, DKIM oder DMARC fehl (Status Problem), warnen wir **immer**, egal wie hoch die Zahl ist (`hasAuthFailure`). Das Ergebnis zeigt dafür eine eigene Ausnahme-Karte. Grund: Ein einzelner Fehler bei der Authentifizierung reicht, damit Gmail oder Outlook ablehnen.
+
 ## Ampel
 
 | Ampel | Bedingung |
 |---|---|
 | Rot | mindestens ein Problem **oder** Score < 5 |
-| Orange | Score < 8 |
+| Orange | Score < 9 oder mindestens ein Hinweis |
 | Grün | sonst |
 
-Ein einzelnes echtes Problem macht die Ampel rot, auch wenn der Score noch hoch ist. So übersieht niemand einen fehlenden DMARC-Eintrag bei 8,5 Punkten.
+## Teil-Scores
+
+Pro Bereich zeigt das Ergebnis einen Balken in Prozent (`subScores`): 100 % minus Abzüge im Bereich geteilt durch den größtmöglichen Abzug (`AREA_MAX`).
+
+| Bereich | Prüfpunkte | größter Abzug |
+|---|---|---|
+| Authentifizierung | SPF, DKIM, DMARC | 7 |
+| Server-Ruf | Sperrlisten, rDNS | 5 |
+| Inhalt | Spam-Score, Links, Abmelde-Link | 6 |
+
+Wurde ein Bereich nicht geprüft, fehlt der Balken (statt 0 %).
+
+## Punkte pro Behebung
+
+Jeder Befund mit Abzug bekommt `gain` = Summe seiner Abzüge, also genau die Punkte, die das Beheben zurückbringt. Daraus folgt die Wirkung (`impactFor`): **hoch** ab 1,5 Punkten, **mittel** ab 0,5, sonst **gering**. Der Aktionsplan sortiert Probleme vor Hinweisen und innerhalb davon nach Punkten, größte Wirkung zuerst.
 
 ## Abzüge
 
@@ -98,6 +127,6 @@ rspamd bewertet nur den Inhalt. SPF/DKIM/DMARC/ARC, IP-Sperrlisten, Received-Hea
 | Mail | Score | Ampel |
 |---|---|---|
 | alles sauber | 10,0 | grün |
-| kein SPF, Rest ok | 8,5 | rot |
+| kein SPF, Rest ok | 8,5 | rot (Ausnahme-Regel) |
 | keine DKIM-Signatur, DMARC `p=none` | 7,8 | rot |
 | Spam-Testmuster | 6,0 bzw. weniger | rot |

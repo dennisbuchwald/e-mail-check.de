@@ -160,38 +160,38 @@ Backlinks: zuerst eigene Seiten (dennisbuchwald.de, flinkform.de), dann Tool-Ver
 
 ## 9. Design
 
-> **Hinweis (21.10.2026):** Redesign beschlossen, weg von dicken Outlines zu cleanem SaaS-Stil. Maßgeblich sind `REDESIGN-PROMPT.md` und `design/redesign/`. Die Angaben zu Rahmen und Formen unten sind dadurch überholt.
+> **Stand 21.10.2026:** Redesign umgesetzt (weg von dicken Outlines, hin zu cleanem SaaS-Stil). Entwürfe: `REDESIGN-PROMPT.md` und `design/redesign/`. Tokens im Code: `apps/web/src/styles/global.css`. Vorher/Nachher-Screenshots: `docs/redesign/`.
 
-**Grundhaltung:** UX radikal einfach (Vorbild Trade Republic: Komplexes simpel darstellen), Look wie ein hochwertiges SaaS-Produkt. Formensprache vom dbw-media-Styleguide (Outline statt Fläche), aber eigene Identität.
-
-**Prototyp (klickbar):** https://claude.ai/artifact/MS321wZJK4B77Q1jJnYmJW → Reihe „Final“ (Mobile + Desktop). Ältere Varianten dort dienen nur dem Vergleich.
+**Grundhaltung:** UX radikal einfach (Vorbild Trade Republic: Komplexes simpel darstellen), Look wie ein hochwertiges SaaS-Produkt mit eigener Identität.
 
 **Farben: Schwarz-Weiß, keine Akzentfarbe.** Farbe ausschließlich für den Status.
 
 | Rolle | Wert |
 |---|---|
-| Tinte (Text, Rahmen, gefüllte Buttons) | `#1D1D1F` |
-| Tinte Hover | `#3A3A3D` |
-| Fließtext gedeckt | `#4D4F4E` |
-| Inaktiv/Pending | `#6B6D6C` (Text), `#D4D4D8` (Ränder) |
-| Trennlinien | `#F5F5F7` |
-| Hintergrund/Karten | `#FFFFFF` |
-| Status OK | `#02CA50` |
-| Status Hinweis | `#FF8A00` |
-| Status Problem | `#FF4034` (Rot bedeutet immer „Problem“) |
+| Tinte (Text, gefüllte Buttons) | `#111113` |
+| Fließtext gedeckt | `#4A4B50` / `#6B6C72` |
+| Kartenrand | `#E7E7EB` |
+| Trennlinien | `#EEEEF1` |
+| Felder (Testadresse, Mini-Tabellen) | `#F6F6F7` |
+| Sektion-Hintergrund (soft) | `#FAFAFB` |
+| Karten | `#FFFFFF` |
+| Status OK / Hinweis / Problem | `#02CA50` / `#FF8A00` / `#FF4034` (Rot bedeutet immer „Problem“) |
+| Status-Tönungen (Pill-Grund) | `#E3F8EC` / `#FFF1E0` / `#FFE9E7` |
 
-**Regel für Statusfarben:** Nur als **Fläche** einsetzen (Score-Ring, Punkte, Pills, Logo-Haken). Text darauf immer Tinte `#1D1D1F` (Kontrast ≥ 4,5:1). Nie als Schriftfarbe auf Weiß, dafür sind die Töne zu hell (Grün ca. 2,2:1, Rot ca. 3,5:1). Status-Labels = Pill mit Statusfarbe als Hintergrund, 2 px Tinte-Rahmen, schwarze Schrift.
+**Regel für Statusfarben:** Volle Statusfarbe nur als **Fläche** (Punkte, Balken, Skala). Status-Labels = Pill mit Tönung als Grund und Tinte-Schrift. Nie als Schriftfarbe auf Weiß.
 
-**Logo:** Moderner, massiver Brief (abgerundet, Lasche ausgespart) mit grünem Prüf-Kreis `#02CA50` oben rechts, freigestellt durch einen Spalt. Haken im Kreis Tinte (schwarz). Fertige Dateien (SVG, Favicons, App-Icons) liegen in `brand/`, Nutzungsregeln in `brand/README.md`.
+**Logo:** Massiver Brief mit grünem Prüf-Kreis `#02CA50` oben rechts. Dateien in `brand/`, Regeln in `brand/README.md`.
 
-**Typografie:** Überschriften und Logo-Schriftzug **Fraunces**, Gewicht 680, Achsen `'SOFT' 0, 'WONK' 0` (spitze Serifen, halbfett; Referenz-Gefühl: Logo „nüchtern“), eng (`-0.025em`), `text-wrap: balance`. Fließtext **Inter**. Technische Werte (Testadresse, DNS-Einträge) in **IBM Plex Mono** (Schreibmaschinen-/Brief-Anmutung). Alle lokal einbinden.
+**Typografie:** Überschriften und Logo-Schriftzug **Fraunces** (680, `'SOFT' 0, 'WONK' 0`, eng `-0.025em`, `text-wrap: balance`). Fließtext **Inter**. Technische Werte und Eyebrows in **IBM Plex Mono** (Eyebrow: 12 px, Versalien, Laufweite `.12em`). Alles lokal.
 
 **Formen:**
-- Große Karten: 6 px Rahmen (ab 820 px abwärts 4 px), Radius 32 px (mobil 24 px).
-- Mittel: 2 px (Inputs, Chips, Code-Boxen). Nie zwei gleich starke Rahmen ineinander.
-- Buttons: Pill (999 px), 56 px hoch, gefüllt Tinte oder 2-px-Outline.
-- Bewegung: Hover mit `cubic-bezier(0.34, 1.56, 0.64, 1)` und leichtem Anheben.
-- Touch-Ziele ≥ 44 px, Kontrast ≥ 4,5:1, echte Buttons/Links (barrierefrei).
+- Karten: 1 px Rand `#E7E7EB`, Radius 20 px, weicher Schatten.
+- Buttons: Radius 14 px, 52 px hoch, gefüllt Tinte oder 1-px-Outline.
+- Navigation 72 px ohne Box, auf der Startseite transparent über dem Hero.
+- Hero: volle Bildschirmhöhe mit „Aura“ (drei weichgezeichnete Flächen, nur `transform` animiert, atmet im Warte-Modus).
+- Touch-Ziele ≥ 44 px, Kontrast ≥ 4,5:1, echte Buttons/Links, `prefers-reduced-motion` respektieren.
+
+**Ergebnis-Seite:** Mail-Kopf (Absender, Betreff, Zeit) → Urteil als Headline → Score mit Band (Hohes Risiko / Gefährdet / Solide / Sehr gut) und Teil-Scores (Authentifizierung, Server-Ruf, Inhalt) → Ausnahme-Karte bei SPF/DKIM/DMARC-Fehler → Aktionsplan (Wirkung + „+X Pkt.“ pro Behebung, größte zuerst) → bestandene Prüfungen → Teilen, erneut testen, technische Details. Regeln dazu: `docs/scoring.md`.
 
 **Prüf-Animation (wichtig, soll richtig befriedigend sein):**
 1. Warten: Ring mit kreisendem Punkt, gestrichelter Innenring dreht gegenläufig, Briefumschlag in der Mitte.
