@@ -27,9 +27,11 @@ export async function copyText(text: string): Promise<void> {
 
 /** Temporarily replaces a button label, e.g. "Kopiert". */
 export function flash(btn: HTMLElement, label: string, ms = 1800): void {
-	const original = btn.dataset.label ?? btn.textContent ?? '';
-	btn.dataset.label = original;
-	btn.textContent = label;
-	clearTimeout(Number(btn.dataset.timer));
-	btn.dataset.timer = String(window.setTimeout(() => (btn.textContent = original), ms));
+	// Buttons with an icon keep it: only the label <span> changes.
+	const target = btn.querySelector<HTMLElement>('span:last-child') ?? btn;
+	const original = target.dataset.label ?? target.textContent ?? '';
+	target.dataset.label = original;
+	target.textContent = label;
+	clearTimeout(Number(target.dataset.timer));
+	target.dataset.timer = String(window.setTimeout(() => (target.textContent = original), ms));
 }

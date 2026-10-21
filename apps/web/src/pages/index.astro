@@ -2,6 +2,7 @@
 import { getEntry, render } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import Tool from '../components/Tool.astro';
+import HomeSections from '../components/HomeSections.astro';
 import Faq from '../components/Faq.astro';
 import Prose from '../components/Prose.astro';
 import { appSchema, faqSchema, websiteSchema } from '../data/schema';
@@ -11,27 +12,31 @@ if (!page) throw new Error('content/seiten/index.md missing');
 const { Content } = await render(page);
 ---
 
-<Base title={page.data.seoTitel} description={page.data.beschreibung} path="/" tool jsonLd={[websiteSchema, appSchema, ...faqSchema(page.data.faq)]}>
+<Base title={page.data.seoTitel} description={page.data.beschreibung} path="/" tool overlay jsonLd={[websiteSchema, appSchema, ...faqSchema(page.data.faq)]}>
 	<Tool title={page.data.titel} intro={page.data.intro} />
-	<div class="wrap below">
-		<Prose class="narrow"><Content /></Prose>
-		<div class="narrow"><Faq items={page.data.faq} /></div>
+	<div class="home-below">
+		<HomeSections />
+		<section class="section section-soft">
+			<div class="wrap content-grid">
+				<Prose class="narrow"><Content /></Prose>
+			</div>
+		</section>
+		<section class="section">
+			<div class="wrap narrow-wrap"><Faq items={page.data.faq} /></div>
+		</section>
 	</div>
 </Base>
 
 <style>
-	.below {
+	.content-grid {
 		display: flex;
-		flex-direction: column;
-		gap: 64px;
-		padding-top: 96px;
+		justify-content: center;
 	}
-	.narrow {
-		max-width: 780px;
+	.narrow-wrap {
+		max-width: 828px;
 	}
-	@media (max-width: 820px) {
-		.below {
-			padding-top: 56px;
-		}
+	/* The SEO content stays crawlable; while a result is shown it simply follows below. */
+	:global(body[data-tool-state='wait']) .home-below {
+		display: none;
 	}
 </style>

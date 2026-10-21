@@ -1,0 +1,297 @@
+---
+// "Was wir prüfen" + "Was bedeutet die Zahl?" (design/redesign/start-final-sektionen). Plain, crawlable HTML.
+// The blocklist names must match what we really query: engine checks/reputation.ts + infra/rspamd/local.d/rbl.conf.
+import { BANDS } from '@emc/shared';
+
+const authRows = [
+	{ tech: 'SPF', label: 'Absender bestätigt', value: 'include:_spf-eu.ionos.com', status: 'ok', badge: 'ok' },
+	{ tech: 'DKIM', label: 'Mail unterschrieben', value: 'Selektor s1 · 2048 Bit', status: 'ok', badge: 'ok' },
+	{ tech: 'DMARC', label: 'Schutzregel', value: 'kein Eintrag gefunden', status: 'bad', badge: 'fehlt' },
+	{ tech: 'rDNS', label: 'Server-Name', value: 'mout.kundenserver.de', status: 'ok', badge: 'ok' },
+	{ tech: 'TLS', label: 'Verschlüsselt', value: 'TLS 1.3', status: 'ok', badge: 'ok' },
+];
+const lists = ['Spamhaus ZEN', 'SpamCop', 'Barracuda', 'NiX Spam', 'PSBL', 'Spamhaus DBL', 'SURBL', 'URIBL'];
+const bands = [
+	{ key: 'risk', color: 'var(--bad)', flex: 50 },
+	{ key: 'endangered', color: 'var(--warn)', flex: 20 },
+	{ key: 'solid', color: 'var(--faint)', flex: 20 },
+	{ key: 'good', color: 'var(--ok)', flex: 10 },
+] as const;
+const fmt = (n: number) => n.toLocaleString('de-DE');
+---
+
+<section class="section section-soft" aria-labelledby="pruefen-title">
+	<div class="wrap">
+		<div class="section-head">
+			<span class="eyebrow">Was wir prüfen</span>
+			<h2 id="pruefen-title">Alles, worauf Gmail und Outlook schauen.</h2>
+		</div>
+		<div class="grid2">
+			<article class="card feature">
+				<h3 class="feature-title">Absender &amp; Unterschrift</h3>
+				<p class="feature-text">SPF, DKIM und DMARC entscheiden, ob deine Mail als echt gilt. Wir prüfen alle drei und zeigen dir in Klartext, was fehlt.</p>
+				<div class="field mini" aria-label="Beispiel-Ergebnis">
+					<div class="mini-head"><span class="eyebrow">Prüfung · beispiel.de</span><span class="mono mini-count">4/5 OK</span></div>
+					{
+						authRows.map((r) => (
+							<div class="mini-row">
+								<span class="mono mini-tech">{r.tech}</span>
+								<span class="mini-label">{r.label}</span>
+								<span class="mono mini-value">{r.value}</span>
+								<span class={`tag is-${r.status}`}>{r.badge}</span>
+							</div>
+						))
+					}
+				</div>
+			</article>
+			<article class="card feature">
+				<h3 class="feature-title">Server-Ruf &amp; Sperrlisten</h3>
+				<p class="feature-text">Steht dein Server auf einer Sperrliste, kommt fast nichts mehr an. Wir fragen die wichtigsten Listen live ab, für die Server-IP und für die Links in deiner Mail.</p>
+				<div class="field mini" aria-label="Beispiel-Ergebnis">
+					<div class="mini-head"><span class="eyebrow">Sperrlisten · 203.0.113.8</span><span class="mono mini-count ok">{lists.length}/{lists.length} sauber</span></div>
+					<div class="mini-grid">
+						{
+							lists.map((l) => (
+								<div class="mini-list">
+									<span>{l}</span>
+									<span class="tag is-ok">sauber</span>
+								</div>
+							))
+						}
+					</div>
+				</div>
+			</article>
+		</div>
+		<p class="also">Außerdem: Spamfilter-Bewertung von Betreff und Text, tote Links, Kurz-Links und der Abmelde-Link bei Newslettern.</p>
+	</div>
+</section>
+
+<section class="section" aria-labelledby="zahl-title">
+	<div class="wrap">
+		<div class="section-head">
+			<span class="eyebrow">Dein Score</span>
+			<h2 id="zahl-title">Was bedeutet die Zahl?</h2>
+		</div>
+		<div class="card scale">
+			<div class="scale-bar" aria-hidden="true">
+				{bands.map((b) => <span style={`flex:${b.flex};background:${b.color}`} />)}
+			</div>
+			<div class="mono scale-ticks" aria-hidden="true"><span>0</span><span>5</span><span>7</span><span>9</span><span>10</span></div>
+			<dl class="scale-bands">
+				{
+					bands.map((b) => (
+						<div class="scale-band">
+							<dt>
+								<span class="sdot" style={`background:${b.color}`} />
+								{BANDS[b.key].label}
+							</dt>
+							<dd class="mono">
+								{fmt(BANDS[b.key].from)} bis {fmt(BANDS[b.key].to)}
+							</dd>
+							<dd class="scale-text">{BANDS[b.key].text}</dd>
+						</div>
+					))
+				}
+			</dl>
+			<div class="exception">
+				<span class="tag is-warn">Ausnahme</span>
+				<span>Schlägt SPF, DKIM oder DMARC fehl, warnen wir immer, egal wie hoch die Zahl ist. Das allein kann Mails in den Spam schicken.</span>
+			</div>
+		</div>
+	</div>
+</section>
+
+<style>
+	.grid2 {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 24px;
+	}
+	.feature {
+		padding: 28px;
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+	}
+	.feature-title {
+		font-family: var(--font-body);
+		font-size: 20px;
+		font-weight: 600;
+		letter-spacing: 0;
+	}
+	.feature-text {
+		margin: 0;
+		font-size: 15px;
+		line-height: 23px;
+		color: var(--muted);
+	}
+	.mini {
+		padding: 12px;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		margin-top: 4px;
+	}
+	.mini-head {
+		display: flex;
+		justify-content: space-between;
+		gap: 10px;
+		padding: 0 4px 4px;
+	}
+	.mini-head .eyebrow {
+		font-size: 11px;
+	}
+	.mini-count {
+		font-size: 12px;
+		font-weight: 600;
+		color: #b3261e;
+	}
+	.mini-count.ok {
+		color: #0b7a35;
+	}
+	.mini-row {
+		display: grid;
+		grid-template-columns: 52px 150px minmax(0, 1fr) auto;
+		align-items: center;
+		gap: 12px;
+		padding: 10px 12px;
+		background: #fff;
+		border: 1px solid var(--line);
+		border-radius: 10px;
+		font-size: 13px;
+	}
+	.mini-tech {
+		font-size: 12px;
+		font-weight: 600;
+	}
+	.mini-value {
+		font-size: 12px;
+		color: var(--muted-2);
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.mini-grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 8px;
+	}
+	.mini-list {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		padding: 9px 12px;
+		background: #fff;
+		border: 1px solid var(--line);
+		border-radius: 10px;
+		font-size: 13px;
+	}
+	.also {
+		margin: 20px 0 0;
+		font-size: 14px;
+		color: var(--muted);
+	}
+	.scale {
+		padding: 36px;
+		display: flex;
+		flex-direction: column;
+		gap: 24px;
+	}
+	.scale-bar {
+		display: flex;
+		gap: 6px;
+	}
+	.scale-bar span {
+		height: 10px;
+		border-radius: 999px;
+	}
+	.scale-ticks {
+		display: grid;
+		grid-template-columns: 50fr 20fr 20fr 10fr 0fr;
+		font-size: 12px;
+		color: var(--muted-2);
+		margin-top: -14px;
+	}
+	.scale-bands {
+		margin: 0;
+		display: grid;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 28px;
+	}
+	.scale-band {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+	.scale-band dt {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		font-size: 16px;
+		font-weight: 600;
+	}
+	.sdot {
+		width: 9px;
+		height: 9px;
+		border-radius: 999px;
+	}
+	.scale-band dd {
+		margin: 0;
+	}
+	.scale-band .mono {
+		font-size: 12px;
+		color: var(--muted-2);
+	}
+	.scale-text {
+		font-size: 14px;
+		line-height: 21px;
+		color: #4a4b50;
+	}
+	.exception {
+		border-top: 1px solid var(--line);
+		padding-top: 20px;
+		display: flex;
+		align-items: center;
+		gap: 14px;
+		font-size: 14px;
+		color: #4a4b50;
+	}
+	.exception .tag {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		flex: none;
+	}
+	@media (max-width: 900px) {
+		.grid2 {
+			grid-template-columns: minmax(0, 1fr);
+		}
+		.scale-bands {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+	@media (max-width: 560px) {
+		.mini-row {
+			grid-template-columns: 46px minmax(0, 1fr) auto;
+		}
+		.mini-value {
+			display: none;
+		}
+		.mini-grid {
+			grid-template-columns: minmax(0, 1fr);
+		}
+		.scale {
+			padding: 22px;
+		}
+		.scale-bands {
+			grid-template-columns: minmax(0, 1fr);
+			gap: 18px;
+		}
+		.exception {
+			flex-direction: column;
+			align-items: flex-start;
+		}
+	}
+</style>

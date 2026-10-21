@@ -15,13 +15,13 @@ const { topic, title, intro } = Astro.props;
 	</div>
 	<form class="card dns-form" data-dns-form novalidate>
 		<div class="fields">
-			<div class="field grow">
+			<div class="dns-field grow">
 				<label for="dns-domain">Deine Domain</label>
 				<input id="dns-domain" name="domain" type="text" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="deine-firma.de" required />
 			</div>
 			{
 				topic === 'dkim' && (
-					<div class="field">
+					<div class="dns-field">
 						<label for="dns-selector">
 							Selektor <span class="opt">(optional)</span>
 						</label>
@@ -169,27 +169,30 @@ const { topic, title, intro } = Astro.props;
 		flex-wrap: wrap;
 		gap: 16px;
 	}
-	.field {
+	.dns-field {
 		display: flex;
 		flex-direction: column;
 		gap: 8px;
 		flex: 1 1 180px;
 	}
-	.field.grow {
+	.dns-field.grow {
 		flex: 3 1 260px;
 	}
 	label {
-		font-size: 14px;
-		font-weight: 700;
-		color: var(--muted);
+		font-family: var(--font-mono);
+		font-size: 11px;
+		font-weight: 500;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--muted-2);
 	}
 	.opt {
 		font-weight: 500;
 	}
 	input {
-		height: 56px;
-		border: 2px solid var(--ink);
-		border-radius: 16px;
+		height: 52px;
+		border: 1px solid var(--border-strong);
+		border-radius: var(--radius-sm);
 		padding: 0 18px;
 		font-family: var(--font-mono);
 		font-size: 17px;
@@ -199,10 +202,10 @@ const { topic, title, intro } = Astro.props;
 		width: 100%;
 	}
 	input::placeholder {
-		color: var(--inactive);
+		color: var(--faint);
 	}
 	input:focus-visible {
-		outline: 3px solid var(--ink);
+		outline: 2px solid var(--ink);
 		outline-offset: 2px;
 	}
 	.dns-form .btn {

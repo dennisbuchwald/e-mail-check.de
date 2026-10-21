@@ -8,10 +8,10 @@ test('start → mail → animation → result → guide → share', async ({ pag
 	await expect(addressEl).toContainText('@test.e-mail-check.de');
 	const address = (await addressEl.innerText()).replace(/\s/g, '');
 
-	await page.getByRole('button', { name: 'Adresse kopieren' }).click();
-	await expect(page.getByRole('button', { name: 'Kopiert' })).toBeVisible();
+	await page.getByRole('button', { name: 'Kopieren' }).first().click();
+	await expect(page.getByRole('button', { name: 'Kopiert' }).first()).toBeVisible();
 	await page.getByRole('button', { name: 'Mail ist raus' }).click();
-	await expect(page.getByText('Wir warten auf deine Mail')).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Wir warten auf deine Mail' })).toBeVisible();
 
 	// example.com publishes "v=spf1 -all" and DMARC p=reject: a deterministic failing sender.
 	const codes = await sendMail(address, { from: 'max@example.com', ip: '203.0.113.10', helo: 'mail.example.com', subject: 'Angebot', body: 'Hallo, hier das Angebot.' });
@@ -21,16 +21,20 @@ test('start → mail → animation → result → guide → share', async ({ pag
 	await expect(page.locator('[data-step="received"]')).toHaveAttribute('data-state', 'done', { timeout: 20_000 });
 	await expect(page).toHaveURL(/\/ergebnis\/[\w-]{22}$/, { timeout: 30_000 });
 	await expect(page.locator('[data-score]')).toHaveText(/^\d+,\d$/);
-	await expect(page.locator('.check')).toHaveCount(5);
-	await expect(page.locator('.check.is-bad').first()).toBeVisible();
+	await expect(page.locator('[data-band]')).toHaveText('Hohes Risiko');
+	await expect(page.locator('[data-auth-warning]')).toBeVisible();
+	await expect(page.locator('[data-subs] .sub-row')).toHaveCount(3);
+	await expect(page.locator('.action.is-bad').first()).toBeVisible();
+	await expect(page.locator('.action-gain').first()).toHaveText(/^\+\d+,\d Pkt\.$/);
+	await expect(page.locator('[data-mh-from]')).toHaveText('max@example.com');
 
-	// Problems come first and the first one is open with a fix button.
-	await page.getByRole('button', { name: 'So behebst du das' }).first().click();
+	// The biggest fix comes first and is open with a guide button.
+	await page.getByRole('button', { name: 'Anleitung für deinen Anbieter' }).first().click();
 	await expect(page.locator('[data-guide-title]')).toBeVisible();
 	await page.getByRole('button', { name: 'STRATO' }).click();
 	await expect(page.getByRole('button', { name: 'STRATO' })).toHaveAttribute('aria-pressed', 'true');
 	await expect(page.locator('.gstep').first()).toBeVisible();
-	await page.getByRole('button', { name: '← Zurück zum Ergebnis' }).click();
+	await page.getByRole('button', { name: '‹ Zurück zum Ergebnis' }).click();
 
 	// Share link: open it in a new page, it renders the same result and is noindex.
 	const url = page.url();

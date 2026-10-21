@@ -10,5 +10,5 @@ Moderner, massiver Brief (Lasche ausgespart) mit grünem Prüf-Kreis (#02CA50) o
 | `app-icon.svg`, `apple-touch-icon.png` (180), `icon-192.png`, `icon-512.png` | Homescreen / Web-App-Manifest |
 | `logo-mark-512.png`, `logo-mark-weiss-512.png` | Social, Presse, OG-Bilder |
 
-**Schriftzug:** Bildmarke + „e-mail-check“ in Fraunces 680 (`'SOFT' 0, 'WONK' 0`, -0.025em) + „.de“ in #8A8C8B. Abstand Marke–Text ca. 0,25× Markenhöhe.
+**Schriftzug:** Bildmarke + „e-mail-check“ in Fraunces 680 (`'SOFT' 0, 'WONK' 0`, -0.025em) + „.de“ in #737479 (Website, Kontrast ≥ 4,5:1; Grafikdateien #8A8C8B). Abstand Marke–Text ca. 0,25× Markenhöhe.
 Freiraum um die Marke: mindestens die Breite des Prüf-Kreises.
