@@ -125,6 +125,15 @@ describe('contentFinding with links and newsletter checks', () => {
 		expect(good.text).toContain('Klick');
 	});
 
+	it('tips on what the sender can change, not on mail program quirks', () => {
+		// Real Apple Mail result: subject "TEST" plus Apple's own "Mime-Version" spelling.
+		const apple = { score: 0.7, symbols: [{ name: 'MV_CASE', score: 0.5 }, { name: 'SUBJ_ALL_CAPS', score: 0.3 }, { name: 'MIME_GOOD', score: -0.1 }] };
+		const f = contentFinding(apple, { links: noLinks });
+		expect(f.status).toBe('ok');
+		expect(f.text).toContain('Großbuchstaben');
+		expect(f.text).not.toContain('Kopfeintrag');
+	});
+
 	it('still reports link problems when the spam filter is down', () => {
 		const f = contentFinding(null, { error: 'ECONNREFUSED', links: { ...noLinks, shorteners: ['bit.ly'] } });
 		expect(f.status).toBe('warn');

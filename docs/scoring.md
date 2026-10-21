@@ -90,7 +90,7 @@ Auswertung nach RFC 9989 inkl. Alignment (über `mailauth`).
 | Befund | Abzug |
 |---|---|
 | Spamhaus ZEN gelistet | 3 |
-| jede weitere Liste (SpamCop, Barracuda, NiX Spam, PSBL) | 1 |
+| jede weitere Liste (SpamCop, Barracuda, PSBL) | 1 |
 | Sperrlisten gesamt höchstens | 4 |
 | kein PTR-Eintrag | 1 (Problem) |
 | PTR zeigt nicht zurück auf die IP | 0,5 (Hinweis) |

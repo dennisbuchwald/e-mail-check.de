@@ -25,7 +25,6 @@ export const BLOCKLISTS: Blocklist[] = [
 	},
 	{ name: 'SpamCop', zone: 'bl.spamcop.net', major: false, ipv6: false, delistUrl: 'https://www.spamcop.net/bl.shtml' },
 	{ name: 'Barracuda', zone: 'b.barracudacentral.org', major: false, ipv6: false, delistUrl: 'https://www.barracudacentral.org/lookups' },
-	{ name: 'NiX Spam', zone: 'ix.dnsbl.manitu.net', major: false, ipv6: false, delistUrl: 'https://www.nixspam.net/' },
 	{ name: 'PSBL', zone: 'psbl.surriel.com', major: false, ipv6: false, delistUrl: 'https://psbl.org/' },
 ];
 

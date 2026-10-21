@@ -54,7 +54,7 @@ import Article from '../layouts/Article.astro';
 	<h2>Abfragen bei Dritten (Sperrlisten)</h2>
 	<p>Ob eine Mail im Spam landet, hängt stark davon ab, ob der sendende Server oder die verlinkten Seiten auf öffentlichen Sperrlisten stehen. Um das zu prüfen, stellen wir über unseren eigenen DNS-Server Anfragen an die Betreiber dieser Listen. Den Text deiner Mail erfahren sie dabei nie. Je nach Liste erfahren sie:</p>
 	<ul>
-		<li><strong>IP-Adresse des sendenden Servers</strong>: an Spamhaus (ZEN), SpamCop, Barracuda, NiX Spam und PSBL. Weitere IP-Adressen aus der Mail fragen wir nicht ab.</li>
+		<li><strong>IP-Adresse des sendenden Servers</strong>: an Spamhaus (ZEN), SpamCop, Barracuda und PSBL. Weitere IP-Adressen aus der Mail fragen wir nicht ab.</li>
 		<li><strong>Domains aus Links in der Mail</strong>: an Spamhaus (DBL), SURBL und URIBL. Nur der Domainname, nicht der vollständige Link.</li>
 		<li><strong>DNS-Server</strong> der beteiligten Domains erhalten die üblichen Anfragen nach SPF-, DKIM- und DMARC-Einträgen und nach dem Servernamen (rDNS).</li>
 	</ul>
