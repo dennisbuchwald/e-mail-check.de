@@ -18,6 +18,17 @@ const IGNORED = [
 
 /** Plain-language explanations for common content symbols. */
 const TEXTS: Record<string, string> = {
+	URL_NUMERIC_IP: 'Ein Link zeigt auf eine nackte IP-Adresse statt auf einen Domainnamen. Das ist typisch für Spam.',
+	URL_NUMERIC_IP_USER: 'Ein Link zeigt auf eine nackte IP-Adresse statt auf einen Domainnamen. Das ist typisch für Spam.',
+	R_SUSPICIOUS_URL: 'Ein Link sieht verdächtig aus, z. B. eine nackte IP-Adresse statt eines Namens.',
+	HAS_IPFS_GATEWAY_URL: 'Ein Link führt auf einen IPFS-Speicher, den Betrüger oft für Phishing nutzen.',
+	OMOGRAPH_URL: 'Ein Link nutzt Buchstaben, die bekannten Namen nur ähneln (z. B. kyrillisches „а“).',
+	REDIRECTOR_URL: 'Die Mail enthält einen Weiterleitungs-Link. Spamfilter mögen keine versteckten Ziele.',
+	FROM_DN_EQ_ADDR: 'Der Absendername ist identisch mit der Mailadresse. Setz lieber einen echten Namen.',
+	SUBJECT_ENDS_EXCLAIM: 'Der Betreff endet mit einem Ausrufezeichen. Das ist ein leichtes Spam-Signal.',
+	SUBJECT_HAS_EXCLAIM: 'Der Betreff enthält Ausrufezeichen. Das ist ein leichtes Spam-Signal.',
+	SUBJECT_HAS_CURRENCY: 'Der Betreff enthält ein Währungszeichen. Das ist ein leichtes Spam-Signal.',
+	HTML_SHORT_LINK_IMG_1: 'Die Mail enthält ein verlinktes Bild bei sehr wenig Text.',
 	SUBJ_ALL_CAPS: 'Der Betreff steht komplett in Großbuchstaben. Das wirkt auf Spamfilter verdächtig.',
 	MISSING_SUBJECT: 'Die Mail hat keinen Betreff.',
 	EMPTY_SUBJECT: 'Der Betreff ist leer.',
@@ -26,9 +37,7 @@ const TEXTS: Record<string, string> = {
 	MID_RHS_NOT_FQDN: 'Die Nachrichten-ID enthält keinen richtigen Servernamen.',
 	MISSING_TO: 'Die Mail hat keinen Empfänger im „An“-Feld.',
 	MIME_HTML_ONLY: 'Die Mail besteht nur aus HTML, ohne reine Textfassung. Spamfilter mögen das nicht.',
-	R_SUSPICIOUS_URL: 'Ein Link sieht verdächtig aus, z. B. eine nackte IP-Adresse statt eines Namens.',
 	R_SUSPICIOUS_IMAGES: 'Die Mail besteht fast nur aus Bildern und hat kaum Text.',
-	HTML_SHORT_LINK_IMG_1: 'Die Mail enthält ein verlinktes Bild bei sehr wenig Text.',
 	HTML_SHORT_LINK_IMG_2: 'Die Mail enthält verlinkte Bilder bei sehr wenig Text.',
 	HTML_SHORT_LINK_IMG_3: 'Die Mail enthält verlinkte Bilder bei sehr wenig Text.',
 	MANY_INVISIBLE_PARTS: 'Die Mail enthält viele unsichtbare Textteile. Das ist ein typischer Spam-Trick.',
@@ -69,11 +78,16 @@ export async function scanWithRspamd(url: string, message: Buffer, env: SmtpEnve
 	if (env.sender) headers.From = env.sender;
 	const res = await fetch(`${url}/checkv2`, { method: 'POST', headers, body: new Uint8Array(message), signal: AbortSignal.timeout(15000) });
 	if (!res.ok) throw new Error(`rspamd HTTP ${res.status}`);
-	const json = (await res.json()) as { symbols?: Record<string, RspamdSymbol> };
+	const json = (await res.json()) as { action?: string; required_score?: number; symbols?: Record<string, RspamdSymbol> };
 	const symbols = Object.values(json.symbols ?? {})
 		.filter((s) => !IGNORED.some((re) => re.test(s.name)))
 		.map((s) => ({ name: s.name, score: round1(s.score), description: s.description, options: s.options?.slice(0, 3) }));
-	const score = round1(symbols.reduce((sum, s) => sum + s.score, 0));
+	let score = round1(symbols.reduce((sum, s) => sum + s.score, 0));
+	// Pre-filters like GTUBE reject outright with 0 points: treat that as clear spam.
+	if (json.action === 'reject' && symbols.some((s) => s.name === 'GTUBE')) {
+		score = Math.max(score, json.required_score ?? 15);
+		symbols.find((s) => s.name === 'GTUBE')!.score = score;
+	}
 	return { score, symbols };
 }
 

@@ -217,7 +217,7 @@ export function dkimFinding(signatures: DkimSignature[], fromDomain: string | nu
 			status: 'warn',
 			title: 'Unterschrift gerade nicht prüfbar',
 			text: 'Der Schlüssel zur Unterschrift ließ sich gerade nicht abrufen. Teste in ein paar Minuten noch einmal.',
-			deductions: [{ reason: 'DKIM temperror', points: POINTS.spf.temperror }],
+			deductions: [{ reason: 'DKIM temperror', points: POINTS.dkim.temperror }],
 			raw,
 		};
 	}

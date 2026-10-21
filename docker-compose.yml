@@ -1,0 +1,59 @@
+# Local stack: `docker compose up --build`
+# Website: http://localhost:8080 · SMTP for test mails: localhost:2525
+name: e-mail-check
+
+networks:
+  mail:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
+
+volumes:
+  data:
+
+services:
+  unbound:
+    build: infra/unbound
+    restart: unless-stopped
+    networks:
+      mail:
+        ipv4_address: 172.28.0.53
+
+  rspamd:
+    image: rspamd/rspamd:4.2
+    restart: unless-stopped
+    volumes:
+      - ./infra/rspamd/local.d:/etc/rspamd/local.d:ro
+    depends_on: [unbound]
+    networks: [mail]
+
+  engine:
+    build:
+      context: .
+      dockerfile: apps/engine/Dockerfile
+    restart: unless-stopped
+    environment:
+      TEST_DOMAIN: test.e-mail-check.de
+      MX_HOSTNAME: mx.e-mail-check.de
+      SMTP_PORT: "2525"
+      HTTP_PORT: "8787"
+      RSPAMD_URL: http://rspamd:11333
+      DNS_SERVERS: 172.28.0.53
+      # Local only: lets swaks simulate a real sender IP. Never in production.
+      ALLOW_XCLIENT: "1"
+    volumes:
+      - data:/data
+    ports:
+      - "2525:2525"
+    depends_on: [unbound, rspamd]
+    networks: [mail]
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on: [engine]
+    networks: [mail]

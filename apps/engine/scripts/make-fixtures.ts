@@ -78,7 +78,7 @@ const fixtures: Record<string, string> = {
 	'ohne-dmarc.eml': await sign(mail('max@ohne-dmarc.example.test', 'Angebot Website', body), 'ohne-dmarc.example.test'),
 	'softfail.eml': await sign(mail('max@softfail.example.test', 'Angebot Website', body), 'softfail.example.test'),
 	// Body changed after signing → body hash mismatch.
-	'dkim-kaputt.eml': (await sign(mail('max@dkim-kaputt.example.test', 'Angebot Website', body), 'gut.example.test')).replace('Angebot für', 'Angebot über').replace(/d=gut\.example\.test/, 'd=gut.example.test'),
+	'dkim-kaputt.eml': (await sign(mail('max@dkim-kaputt.example.test', 'Angebot Website', body), 'gut.example.test')).replace('Angebot für', 'Angebot über'),
 	'spam.eml': await sign(
 		mail('max@gut.example.test', 'JETZT GEWINNEN GRATIS', 'XJS*C4JDBQADN1.NSBN3*2IDNEN*GTUBE-STANDARD-ANTI-UBE-TEST-EMAIL*C.34X'),
 		'gut.example.test',
