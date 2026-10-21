@@ -7,6 +7,7 @@ Stand: 21.10.2026
 - **Website** (`apps/web`): Startseite mit Tool und Prüf-Animation an echten Events, Ergebnis mit Prüfpunkten, Anleitung im Ergebnis (Anbieter wird erkannt), Teilen-Link `/ergebnis/<id>` (noindex), DNS-Checks `/spf-check`, `/dkim-check`, `/dmarc-check`.
 - **Redesign 21.10.2026** (`REDESIGN-PROMPT.md`): cleaner SaaS-Stil, Hero mit Aura, Sektionen „Was wir prüfen“ und „Was bedeutet die Zahl?“, neue Ergebnis-Seite mit Mail-Kopf, Bändern, Teil-Scores, Ausnahme-Karte und Aktionsplan (+X Pkt. pro Behebung). Betreff und Absender bleiben nur 60 Min im RAM. Vorher/Nachher: `docs/redesign/`. E2E 8/8 grün.
 - **Warte-Erlebnis (21.10.2026):** „Mail-Programm öffnen“ (mailto), Radar-Sweep mit Uhr „Postfach offen seit“, wechselnde Tipps, Hilfe nach 45 s, Brief fliegt in den Ring, Absender/Betreff erscheinen, fünf Lämpchen am Ring in Ergebnisfarbe, Live-Zeilen mit echten Werten (SSE `step` trägt `status`, `detail`, bei `received` `mail`).
+- **Redesign V2 abgeschlossen (21.10.2026, nicht deployt):** Statusleiste mit Wortmarke „mail / check“, Pille mit echtem Zähler (`GET /api/stats`, ab 50 sichtbar) und Tastatur-Menü „Ratgeber“; Hero mit Mail-Fenster auf Punktraster, Aura entfernt; Animation A (Prüf-Punkt springt beim Laden ins Logo) und B (Wortmarke wird beim Scrollen zum Logo, Fallback `.is-compact` für Firefox und Reduced Motion), alles ohne Animationsbibliothek; Footer-Wortmarke, neues OG-Bild. Lighthouse mobil Startseite 98/100/100/100, CLS 0. Screenshots `docs/redesign/v2/`. Damit ist das Design fertig, neue Ideen nur als Vorschlag hier.
 - **Inhalte**: 27 Seiten (4 Tools, 5 Wissen, 16 Anleitungen, Übersicht, Vergleich `/mail-tester-alternative`), alle mit Quelle und Stand, Anleitungen mit `geprueft: false`.
 - **Technik-SEO**: Titles/Descriptions, Canonicals, strukturierte Daten, Sitemap, robots.txt, OG-Bild, 404. Lighthouse mobil ≥ 95 in allen Kategorien.
 - **Recht**: Impressum (Platzhalter), Datenschutz + AVV als Entwurf (noindex).
@@ -39,3 +40,16 @@ Suchvolumen: Seobility, Google.de, Monat, Stand 21.10.2026.
 | DMARC-Generator (Regel zusammenklicken, Wert kopieren) | dmarc generator 720 | klein: reines Frontend | passt gut zu `/dmarc-check`, guter interner Link |
 | BIMI-Check | bimi check 90 | klein bis mittel (SVG-Tiny-PS + VMC prüfen) | kaum Volumen, später |
 | Wiederkehrender Test / Monitoring | kaum Suchvolumen, eher Bindung und späteres Geld | groß: Konten, Mails, Zeitplan | erst nach Traffic (siehe CLAUDE.md §10) |
+
+## Redesign V2: Abweichungen vom Auftrag (mit Grund)
+
+| Abweichung | Grund |
+|---|---|
+| Mobil zusätzlich „Mail-Programm öffnen“ im Mail-Fenster | Kommt aus dem Warte-Paket A (von dir gewünscht). Auf dem Handy ist Kopieren umständlich, auf dem Desktop bleibt das Fenster 1:1 wie im Prototyp. |
+| Kein „Neuer Test“-Knopf mehr in der Leiste | Auftrag sagt rechts nur „Ratgeber“. Neuer Test geht weiter über „‹ Neuer Test“ im Ergebnis und über die Hinweisseiten; im Warte-Modus nur per Neuladen. |
+| Pill-Text „Mail-Test · unbegrenzt kostenlos · ohne Konto“ über der H1 entfernt | Steht so nicht im Prototyp. „Unbegrenzt kostenlos“ bleibt in FAQ und Inhalten. |
+| Ratgeber-Menü in drei Gruppen (Anleitungen, Wissen, Schnell-Checks) | Der Auftrag nennt nur „Ratgeber- und Anleitungsseiten“; die DNS-Checks sind die meistgesuchten Unterseiten. |
+| Zähler zusätzlich 60 s im Browser gecacht, Endpoint 600 Abrufe/h je IP | Sonst fragt jeder Seitenaufruf die API ab. Der Server cacht ebenfalls 60 s. |
+| OG-Bild mit Unterzeile „Kostenloser Mail-Tester · Server in Deutschland“ | Ohne sie ist in Vorschauen nicht erkennbar, was das Tool tut. |
+
+Nebenbei behoben: `apps/web/src/data/` war wegen der Regel `data/` nie im öffentlichen Repo (frischer Klon hätte nicht gebaut); der CSS-Minifier hat `animation-timeline` ungültig zusammengefasst; kleine Skripte wurden inline gebaut und von der CSP blockiert.

@@ -160,7 +160,7 @@ Backlinks: zuerst eigene Seiten (dennisbuchwald.de, flinkform.de), dann Tool-Ver
 
 ## 9. Design
 
-> **Stand 21.10.2026:** Redesign umgesetzt (weg von dicken Outlines, hin zu cleanem SaaS-Stil). Entwürfe: `design/redesign/`. Aktueller Auftrag: `REDESIGN-V2-PROMPT.md` (V1 archiviert in `docs/prompts-archiv/`). Tokens im Code: `apps/web/src/styles/global.css`. Vorher/Nachher-Screenshots: `docs/redesign/`.
+> **Stand 21.10.2026: Design abgeschlossen (V2).** Grundlage: `REDESIGN-V2-PROMPT.md`, Prototyp `design/redesign/hero-animation-prototyp.html`, ältere Aufträge in `docs/prompts-archiv/`. Tokens: `apps/web/src/styles/global.css`. Screenshots: `docs/redesign/` (V1) und `docs/redesign/v2/` (vorher/nachher). Neue Design-Ideen nur noch als Vorschlag in `docs/STATUS.md`, nicht als Umbau.
 
 **Grundhaltung:** UX radikal einfach (Vorbild Trade Republic: Komplexes simpel darstellen), Look wie ein hochwertiges SaaS-Produkt mit eigener Identität.
 
@@ -180,16 +180,23 @@ Backlinks: zuerst eigene Seiten (dennisbuchwald.de, flinkform.de), dann Tool-Ver
 
 **Regel für Statusfarben:** Volle Statusfarbe nur als **Fläche** (Punkte, Balken, Skala). Status-Labels = Pill mit Tönung als Grund und Tinte-Schrift. Nie als Schriftfarbe auf Weiß.
 
-**Logo:** Massiver Brief mit grünem Prüf-Kreis `#02CA50` oben rechts. Dateien in `brand/`, Regeln in `brand/README.md`.
+**Logo:** Wortmarke „mail / check“ (zweizeilig, Fraunces 700 als Pfade, Bildmarke rechtsbündig auf der „mail“-Zeile, `brand/wortmarke.svg` und `wortmarke-weiss.svg`). Im Code als `components/Wordmark.astro` inline, aufgeteilt in `.wm-text`, `.mark-grow`, `.badge-load`, `.ko-load`, `.check-load`, Masken-ID pro Einsatz eindeutig. Unter 32 px Höhe nur die Bildmarke (massiver Brief mit grünem Prüf-Kreis `#02CA50`). Favicons und App-Icons in `brand/`. Der Domainname bleibt Text (Title, Impressum), es gibt keinen Schriftzug „e-mail-check.de“ mehr.
 
-**Typografie:** Überschriften und Logo-Schriftzug **Fraunces** (680, `'SOFT' 0, 'WONK' 0`, eng `-0.025em`, `text-wrap: balance`). Fließtext **Inter**. Technische Werte und Eyebrows in **IBM Plex Mono** (Eyebrow: 12 px, Versalien, Laufweite `.12em`). Alles lokal.
+**Typografie:** Überschriften **Fraunces** (680, `'SOFT' 0, 'WONK' 0`, eng `-0.025em`, `text-wrap: balance`). Fließtext **Inter**. Technische Werte und Eyebrows in **IBM Plex Mono** (Eyebrow: 12 px, Versalien, Laufweite `.12em`). Alles lokal.
 
 **Formen:**
 - Karten: 1 px Rand `#E7E7EB`, Radius 20 px, weicher Schatten.
 - Buttons: Radius 14 px, 52 px hoch, gefüllt Tinte oder 1-px-Outline.
-- Navigation 72 px ohne Box, auf der Startseite transparent über dem Hero.
-- Hero: volle Bildschirmhöhe mit „Aura“ (drei weichgezeichnete Flächen, nur `transform` animiert, atmet im Warte-Modus).
-- Touch-Ziele ≥ 44 px, Kontrast ≥ 4,5:1, echte Buttons/Links, `prefers-reduced-motion` respektieren.
+- Touch-Ziele ≥ 44 px, Kontrast ≥ 4,5:1, echte Buttons/Links.
+
+**Statusleiste (alle Seiten, `layouts/Base.astro`):** `sticky`, 76 px hoch, 40 px Innenabstand, kein Kasten. Oben transparent, beim Scrollen Weiß 86 % mit 1-px-Linie `#EDEDF0`. Links die Wortmarke (52 px, mobil 40 px, Link auf `/`, `aria-label` „mail check, Startseite“). Mitte die Mono-Pille „System bereit · Server DE · X Tests heute“ (mobil nur „Bereit“). Rechts nur „Ratgeber ▾“, ein Tastatur-Menü (Enter, Pfeiltasten, Esc) mit Anleitungen, Wissen und Schnell-Checks. **X ist immer echt:** fertige Tests seit 0 Uhr Europe/Berlin aus der Datenbank (`GET /api/stats`, 60 s Cache, rate-limitiert, keine personenbezogenen Daten). Unter 50 entfällt das Segment, nie eine erfundene Zahl.
+
+**Hero der Startseite (`components/Tool.astro`):** `min-height` volle Höhe abzüglich Leiste, Inhalt 56 px unter der Leiste. Hintergrund Punktraster (`radial-gradient(#CFCFD6 1px, transparent 1.2px)`, 22 px, radiale Maske `ellipse 60% 55% at 50% 42%`). H1 68 px (mobil 40 px) plus ein Satz. Darunter das **Mail-Fenster** (Card, Radius 18 px): Kopf „Neue Nachricht“ / „Testmail“, Zeile „An“ mit Testadresse (Mono 21 px, mobil zwei Zeilen fest am @ umbrochen) und „Kopieren“ („Kopiert ✓“), Zeile „Betreff: Egal. Am besten so, wie du sonst schreibst.“, Fuß mit pulsierendem Punkt „Wir warten auf deine Mail.“ und „Mail ist raus →“ (mobil zusätzlich „Mail-Programm öffnen“). Vertrauenszeile mit grünen 18-px-Kreisen und Ink-Häkchen. Unten „So funktioniert's ⌄“.
+
+**Animationen: keine Bibliothek.** Kein GSAP, kein Framer Motion, kein Lottie. CSS-Keyframes und Transitions, scroll-gebunden per `animation-timeline: scroll()` mit kleinem JS-Fallback (passiver Scroll-Listener plus rAF), Count-up als eigener rAF-Loop. Nur `transform`/`opacity`, keine Layout-Animationen, CLS 0, `prefers-reduced-motion` immer beachten. GSAP erst prüfen, wenn eine Timeline-Choreografie kommt, die CSS nicht sauber schafft, und dann vorher mit Dennis abstimmen.
+- **A, Laden:** Prüf-Punkt und Knockout-Ring fehlen anfangs, ab 450 ms skalieren sie 0 → 1,15 → 1 (550 ms, `cubic-bezier(.34,1.56,.64,1)`), ab 850 ms zeichnet sich das Häkchen (350 ms). Jeder Seitenaufruf, nicht bei Reduced Motion.
+- **B, Scrollen (nur in der Fläche der Wortmarke):** 0–90 px Text blendet aus und gleitet 60 px nach links, 20–160 px wächst die Bildmarke auf das 3-Fache, 60–160 px bekommt die Leiste Hintergrund und Linie, rückwärts beim Hochscrollen. Ohne Scroll-Timelines (Firefox) oder mit Reduced Motion setzt JS ab 80 px `.is-compact` (300-ms-Transition bzw. harter Wechsel).
+- **Falle:** Der CSS-Minifier (lightningcss) faltet `animation-timeline` in die `animation`-Kurzschreibweise, dort ist sie ungültig. Deshalb stehen Timeline und Range in einem eigenen Selektor (`g.wm-text` neben `.wm-text`). Skripte werden nie inline gebaut (`assetsInlineLimit: 0`), weil die CSP nur `script-src 'self'` erlaubt.
 
 **Ergebnis-Seite:** Mail-Kopf (Absender, Betreff, Zeit) → Urteil als Headline → Score mit Band (Hohes Risiko / Gefährdet / Solide / Sehr gut) und Teil-Scores (Authentifizierung, Server-Ruf, Inhalt) → Ausnahme-Karte bei SPF/DKIM/DMARC-Fehler → Aktionsplan (Wirkung + „+X Pkt.“ pro Behebung, größte zuerst) → bestandene Prüfungen → Teilen, erneut testen, technische Details. Regeln dazu: `docs/scoring.md`.
 
@@ -232,14 +239,3 @@ PDF-Kundenbericht · Konto mit Verlauf · Test-Pakete/Agentur-Tarif · DMARC-Mon
 - Vorbild SEO-Aufbau: https://flinkform.de
 - Design-Grundlage: dbw-media-Styleguide (`05_Second-Brain/design-system.md`)
 
-
-## Update 21.10.2026: Hero final, Wortmarke, Animationen
-Hierfür gilt `REDESIGN-V2-PROMPT.md`. Kurz zusammengefasst:
-- Statusleiste: Wortmarke, Pille „SYSTEM BEREIT · SERVER DE · X TESTS HEUTE“ (nur mit echter Zahl), „Ratgeber ▾“.
-- Hintergrund: Punktraster statt Aura.
-- Hero: Mail-Fenster mit An/Betreff, Vertrauenszeile mit grünen Häkchen.
-- Wortmarke „mail / check“: `brand/wortmarke.svg`.
-- Laden: grüner Prüf-Punkt springt ins Logo.
-- Scrollen: In der Statusleiste (sticky) verschwindet „mail / check“, und die Bildmarke wächst in der Fläche der Wortmarke zum reinen Logo. Der Hero bleibt unverändert.
-- Prototyp: `design/redesign/hero-animation-prototyp.html`.
-- Animationen: keine Bibliothek (kein GSAP o. Ä.). CSS-Keyframes und Scroll-driven Animations mit kleinem JS-Fallback, nur transform/opacity, prefers-reduced-motion beachten.
