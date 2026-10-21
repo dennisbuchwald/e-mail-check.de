@@ -66,7 +66,7 @@ Was jedes K체rzel genau bedeutet und wie du von `none` zu `reject` kommst, erkl�
 
 **Regel da, aber SPF und DKIM passen nicht.** DMARC verlangt, dass SPF oder DKIM zu der Domain in deiner Absenderadresse passen. Unterschreibt zum Beispiel nur dein Versanddienst mit seiner eigenen Domain, f채llt die Mail bei DMARC durch, obwohl die Unterschrift g체ltig ist. Das sieht nur eine echte Mail.
 
-**Eine Regel, die du nie angelegt hast.** Manche Hoster setzen DMARC automatisch, STRATO zum Beispiel eine eigene Standardregel. Das ist kein Fehler. In der [Anleitung f체r STRATO](/anleitung/strato/dmarc) steht, wann du sie durch eine eigene ersetzen solltest.
+**Eine Regel, die du nie angelegt hast.** Manche Hoster setzen DMARC automatisch: IONOS eine Regel mit `p=none`, STRATO eine strenge Standardregel mit `p=reject`. Das ist kein Fehler. In der [Anleitung f체r STRATO](/anleitung/strato/dmarc) steht, wann du sie durch eine eigene ersetzen solltest.
 
 ## Was bringen DMARC-Berichte?
 

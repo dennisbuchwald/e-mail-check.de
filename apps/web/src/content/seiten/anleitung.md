@@ -24,7 +24,7 @@ Bei IONOS, STRATO, ALL-INKL und Hetzner sind SPF und DKIM für Mails über deren
 
 Bei Google Workspace und Microsoft 365 ist es umgekehrt: Für deine eigene Domain musst du DKIM selbst einschalten. Wer das vergisst, verschickt Mails ohne passende Unterschrift, und die Schutzregel greift ins Leere.
 
-DMARC setzt kaum ein Anbieter automatisch. Eine Ausnahme ist STRATO mit einer eigenen Standardregel.
+DMARC setzen manche Anbieter automatisch: IONOS legt bei Domains mit IONOS-Postfach eine Regel im Beobachtungsmodus (`p=none`) an, STRATO eine strenge Standardregel (`p=reject`). Bei den anderen musst du den Eintrag selbst anlegen.
 
 ## In welcher Reihenfolge?
 

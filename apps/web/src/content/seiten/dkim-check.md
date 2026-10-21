@@ -48,12 +48,12 @@ Findet der Check nichts, heißt das nicht automatisch, dass deine Mails unsignie
 
 | Anbieter | Selektor | Hinweis |
 |---|---|---|
-| IONOS | `s1-ionos`, `s2-ionos` | Dazu kommt ein kundenspezifischer Selektor nach dem Muster `s` plus Zahl. Bei IONOS-Nameservern automatisch aktiv. |
+| IONOS | `s1-ionos`, `s2-ionos`, `s42582890` | Alle drei als CNAME auf `dkim.ionos.com`. Bei IONOS-Nameservern automatisch aktiv. |
 | Google Workspace | `google` | Standard-Präfix beim Erzeugen des Schlüssels in der Admin-Konsole. |
 | Microsoft 365 | `selector1`, `selector2` | Erst nach dem Einschalten im Defender-Portal für deine eigene Domain aktiv. |
 | Hetzner (konsoleH) | z. B. `default_1707` | Wird beim Aktivieren erzeugt und angezeigt. Die Zahl unterscheidet sich je Schlüssel. |
-| STRATO | wechselnd | STRATO setzt DKIM automatisch und wechselt die Selektoren gelegentlich. Am sichersten per Testmail. |
-| ALL-INKL | keine öffentliche Angabe | Für den ALL-INKL-Mailserver automatisch aktiv. Am sichersten per Testmail. |
+| STRATO | `strato-dkim-0002`, `strato-dkim-0003` | Automatisch aktiv. STRATO kann die Selektoren wechseln, im Zweifel per Testmail prüfen. |
+| ALL-INKL | `kas` plus Zeitstempel (z. B. `kas202504012217`) | Für jede Domain anders, deshalb nicht automatisch auffindbar. Am sichersten per Testmail. |
 
 Nutzt du ein Newsletter-Tool oder einen anderen Versanddienst, nennt dir der Dienst den Selektor bei der Domain-Einrichtung.
 

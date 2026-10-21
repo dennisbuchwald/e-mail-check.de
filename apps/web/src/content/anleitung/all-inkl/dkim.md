@@ -10,14 +10,15 @@ dauer: "10 Minuten"
 kurzantwort: "Bei ALL-INKL ist DKIM für Mails über den eigenen ALL-INKL-Mailserver standardmäßig eingerichtet. Du musst nur etwas tun, wenn ein externer Mailserver oder Dienst in deinem Namen verschickt, etwa ein Newsletter-Tool oder Microsoft 365. Dann legst du dessen DKIM-Eintrag im KAS an."
 schritte:
   dkim:
-    - text: "Prüfen, ob die Mail über den ALL-INKL-Mailserver geht. Dann ist DKIM schon aktiv und du musst nichts tun."
+    - text: "Testmail aus dem ALL-INKL-Postfach schicken. Ist sie unterschrieben, musst du für ALL-INKL nichts tun."
+    - text: "Fehlt die Signatur: im KAS unter **Domain** die Domain bearbeiten und prüfen, ob **DKIM-Signierung** aktiviert ist."
     - text: "Für externe Dienste im KAS unter **Tools** die **DNS-Einstellungen** öffnen, die Domain bearbeiten und **neuen DNS-Eintrag erstellen** wählen."
     - text: "Bei **Name** den Selektor des Dienstes mit **._domainkey** eintragen, z. B. **mail._domainkey**. Typ **TXT**, Prio leer lassen."
     - text: "Bei **Data** den öffentlichen Schlüssel des Dienstes eintragen (beginnt mit **v=DKIM1;**) und speichern."
     - text: "Verlangt dein Dienst einen CNAME statt TXT, den Eintrag genau so anlegen, wie der Dienst ihn anzeigt. Danach mit einer Testmail prüfen."
 faq:
   - frage: "Ist DKIM bei ALL-INKL automatisch aktiv?"
-    antwort: "Ja, für den Versand über den ALL-INKL-Mailserver sind SPF und DKIM laut ALL-INKL standardmäßig angelegt. Eine eigene Anleitung zum Aktivieren gibt es nicht, weil es nicht nötig ist."
+    antwort: "Laut ALL-INKL sind SPF und DKIM für den eigenen Mailserver standardmäßig angelegt. Erfahrungsberichte zeigen aber Domains, bei denen DKIM erst eingeschaltet werden musste. Prüf es deshalb mit einer Testmail."
   - frage: "Wann brauche ich bei ALL-INKL einen eigenen DKIM-Eintrag?"
     antwort: "Nur wenn ein externer Mailserver Mails mit deiner Domain verschickt, zum Beispiel ein Newsletter-Tool oder Microsoft 365. Dieser Dienst erzeugt den Schlüssel, du trägst nur den öffentlichen Teil im KAS ein."
   - frage: "Wie lang darf ein DKIM-Schlüssel im KAS sein?"
@@ -31,20 +32,25 @@ quelle:
     url: "https://all-inkl.com/wichtig/anleitungen/kas/tools/dns-werkzeuge/dmarc_562.html"
   - titel: "Microsoft Learn: DKIM für eigene Domains konfigurieren"
     url: "https://learn.microsoft.com/de-de/defender-office-365/email-authentication-dkim-configure"
+  - titel: "andysblog.de: SPF, DKIM und DMARC für Absender einrichten (Abschnitt ALL-INKL)"
+    url: "https://www.andysblog.de/e-mail-spf-dkim-und-dmarc-fuer-absender-einrichten"
 stand: "2026-10-21"
 geprueft: false
 offenePunkte:
-  - "Oberfläche prüfen: Heißt der Typ im KAS TXT oder TXT (DKIM)? Die Recherche-Notiz nennt TXT (DKIM), die aktuelle Anleitung nur TXT."
-  - "Welchen Selektor nutzt ALL-INKL für den eigenen Mailserver? Nicht dokumentiert, für den DKIM-Check (automatische Selektor-Suche) relevant."
+  - "Widerspruch: Offizielle ALL-INKL-Anleitung (DMARC) sagt, DKIM sei standardmäßig angelegt. andysblog.de (2021) beschreibt einen Schalter DKIM-Signierung unter Domain > bearbeiten, patrickhilker.de (06/2026) schreibt, DKIM werde erst auf Anfrage aktiviert. Schalter und Menüpfad in der Oberfläche prüfen."
+  - "Typ: Die offizielle DKIM-Anleitung nennt TXT, andysblog.de nennt TXT (DKIM). Wir folgen der offiziellen Angabe, Bezeichnung in der Oberfläche prüfen."
+  - "Selektor des ALL-INKL-Mailservers: laut Forum (administrator.de, 04/2025) kas plus Zeitstempel, z. B. kas202504012217. Nicht erratbar, per DNS bei 3 KAS-Domains mit gängigen Namen nichts gefunden. DKIM-Check findet ihn nur per Testmail."
   - "Oberfläche prüfen: Lassen sich im KAS CNAME-Einträge auf ._domainkey-Namen anlegen (für Microsoft 365 und viele Newsletter-Tools)?"
-  - "Wartezeit: Die ALL-INKL-Anleitung nennt keine."
+  - "Wartezeit: Anleitung nennt keine. Gemessene TTL im KAS 7200 Sekunden, daher etwa zwei Stunden (eigene Ableitung)."
 ---
 
 ## Vorher prüfen: Sind deine Mails schon unterschrieben?
 
 Verschickst du nur aus deinem ALL-INKL-Postfach, musst du meist gar nichts tun. Prüf das zuerst mit einer echten Mail: Schick über den [Mail-Test](/) eine Testmail und schau unter **Mail unterschrieben** nach. Dort siehst du, ob die Signatur gültig ist und zu deiner Domain passt.
 
-Der [DKIM-Check](/dkim-check) prüft ohne Testmail, ob ein DKIM-Eintrag im DNS steht. Kennst du deinen Selektor nicht, sucht er automatisch nach verbreiteten Namen. Was DKIM genau ist, liest du in [DKIM einfach erklärt](/wissen/dkim).
+Fehlt die Signatur, obwohl die Mail über ALL-INKL lief, ist DKIM für deine Domain vermutlich nicht eingeschaltet. Öffne dann im KAS den Bereich **Domain**, bearbeite deine Domain und aktiviere die **DKIM-Signierung**. Den passenden DNS-Eintrag legt ALL-INKL danach selbst an.
+
+Der [DKIM-Check](/dkim-check) prüft ohne Testmail, ob ein DKIM-Eintrag im DNS steht. Bei ALL-INKL hilft er allerdings wenig: Der Selektor enthält einen Zeitstempel (etwa `kas202504012217`) und lässt sich nicht erraten. Die Testmail zeigt ihn dir. Was DKIM genau ist, liest du in [DKIM einfach erklärt](/wissen/dkim).
 
 ## Schritt für Schritt: DKIM-Eintrag für einen externen Mailserver anlegen
 
@@ -86,7 +92,7 @@ Wichtig: Der Dienst muss zusätzlich im SPF-Eintrag stehen. Wie das geht, steht 
 
 ## Danach testen
 
-Warte ein paar Stunden und schick dann aus jedem Dienst eine Testmail über den [Mail-Test](/). So siehst du, ob jede Mail eine gültige Unterschrift mit deiner Domain trägt. Mit dem [DKIM-Check](/dkim-check) und dem Selektor deines Dienstes prüfst du zusätzlich, ob der Eintrag im DNS sichtbar ist.
+Warte etwa zwei Stunden und schick dann aus jedem Dienst eine Testmail über den [Mail-Test](/). So siehst du, ob jede Mail eine gültige Unterschrift mit deiner Domain trägt. Mit dem [DKIM-Check](/dkim-check) und dem Selektor deines Dienstes prüfst du zusätzlich, ob der Eintrag im DNS sichtbar ist.
 
 Danach folgt die Schutzregel: [DMARC bei ALL-INKL einrichten](/anleitung/all-inkl/dmarc). Andere Anbieter findest du in der [Übersicht der Anleitungen](/anleitung).
 

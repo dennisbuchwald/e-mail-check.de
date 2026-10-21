@@ -107,7 +107,7 @@ Die Oberfläche sieht bei jedem Anbieter anders aus, die Schritte sind aber imme
 
 1. **Herausfinden, wo dein DNS liegt.** Das ist der Anbieter, bei dem die Nameserver deiner Domain eingetragen sind. Oft ist es der Hoster der Domain, nicht der Postfach-Anbieter.
 2. **Die DNS-Einstellungen der Domain öffnen.** Der Menüpunkt heißt meist „DNS“, „DNS-Einstellungen“ oder „DNS-Records“.
-3. **Prüfen, ob es schon einen Eintrag gibt.** Such nach einem TXT-Eintrag mit dem Namen `_dmarc`. Manche Anbieter, etwa STRATO, setzen eine eigene Standardregel. Gibt es schon einen, bearbeitest du ihn, statt einen zweiten anzulegen.
+3. **Prüfen, ob es schon einen Eintrag gibt.** Such nach einem TXT-Eintrag mit dem Namen `_dmarc`. Manche Anbieter setzen eine eigene Standardregel, etwa IONOS (`p=none`) und STRATO (`p=reject`). Gibt es schon einen, bearbeitest du ihn, statt einen zweiten anzulegen.
 4. **Neuen TXT-Eintrag anlegen.** Name: `_dmarc`. Wert: einer der Beispiel-Einträge von oben. Die Lebensdauer (TTL) kannst du auf dem Standardwert lassen.
 5. **Speichern und warten.** Je nach Anbieter ist der Eintrag nach wenigen Minuten bis einigen Stunden weltweit sichtbar.
 6. **Prüfen.** Mit dem [DMARC-Check](/dmarc-check) siehst du, ob der Eintrag gefunden wird und was er bedeutet.

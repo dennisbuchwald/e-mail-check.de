@@ -21,13 +21,17 @@ schritte:
         typ: "CNAME"
         host: "s2-ionos._domainkey"
         wert: "s2.dkim.ionos.com"
-    - text: "Den dritten, kundenspezifischen Eintrag (z. B. **s12345678._domainkey**) aus der IONOS-Hilfe bzw. deinem Konto ebenso anlegen."
+    - text: "Den dritten CNAME aus der IONOS-Hilfe ebenso anlegen."
+      eintrag:
+        typ: "CNAME"
+        host: "s42582890._domainkey"
+        wert: "s42582890.dkim.ionos.com"
     - text: "Etwa eine Stunde warten, dann mit einer Testmail prüfen, ob deine Mail unterschrieben ist."
 faq:
   - frage: "Ist DKIM bei IONOS automatisch aktiv?"
     antwort: "Ja, wenn deine Domain die IONOS-Nameserver nutzt, legt IONOS die DKIM-Einträge selbst an. Manuell eingreifen musst du nur, wenn die Einträge fehlen oder deine DNS-Zone bei einem anderen Anbieter liegt."
   - frage: "Warum findet ein DKIM-Check bei meiner IONOS-Domain nichts?"
-    antwort: "Viele Prüftools brauchen den Selektor, also den Namen vor ._domainkey. Bei IONOS heißen die Selektoren s1-ionos und s2-ionos. Unser DKIM-Check sucht danach automatisch, am sichersten ist aber eine echte Testmail."
+    antwort: "Viele Prüftools brauchen den Selektor, also den Namen vor ._domainkey. Bei IONOS heißen die Selektoren s1-ionos, s2-ionos und s42582890. Unser DKIM-Check sucht danach automatisch, am sichersten ist aber eine echte Testmail."
   - frage: "Wie lange dauert es, bis DKIM bei IONOS wirkt?"
     antwort: "IONOS setzt die TTL der Einträge auf eine Stunde. Rechne also mit etwa einer Stunde, bis die Einträge überall sichtbar sind. Liegt deine Zone bei einem anderen Anbieter, kann es länger dauern."
   - frage: "Brauche ich DKIM bei IONOS, wenn ich Microsoft 365 nutze?"
@@ -42,16 +46,16 @@ quelle:
 stand: "2026-10-21"
 geprueft: false
 offenePunkte:
-  - "Der dritte, kundenspezifische CNAME (Beispiel der Hilfeseite: s42582890._domainkey → s42582890.dkim.ionos.com): Wo findet der Kunde seine eigene Nummer im IONOS Konto? Die Hilfeseite sagt es nicht."
+  - "Dritter CNAME: Per DNS (21.10.2026) steht s42582890._domainkey → s42582890.dkim.ionos.com bei 4 unabhängigen IONOS-Domains identisch (kein Wildcard), ist also nicht kundenspezifisch. Die IONOS-Hilfe erklärt die Nummer nicht. Falls IONOS sie wechselt, Anleitung anpassen."
   - "Menüname prüfen: Die IONOS-Hilfe schreibt teils Domain & SSL, teils Domains & SSL."
-  - "Kann man DKIM bei IONOS per Schalter reaktivieren, oder nur über die manuellen CNAME-Einträge?"
+  - "Schalter zum Reaktivieren: Die IONOS-Hilfe nennt keinen, nur das Anlegen der drei CNAMEs. In der Oberfläche prüfen, ob es zusätzlich einen Schalter gibt."
 ---
 
 ## Vorher prüfen: Sind deine Mails schon unterschrieben?
 
 Meist ist bei IONOS schon alles richtig, und du musst gar nichts tun. Prüf das zuerst. Am zuverlässigsten ist eine echte Mail: Schick über den [Mail-Test](/) eine Nachricht aus deinem IONOS-Postfach. Unter **Mail unterschrieben** siehst du, ob die DKIM-Signatur gültig ist und zu deiner Domain passt.
 
-Ohne Testmail geht es mit dem [DKIM-Check](/dkim-check). Er sucht automatisch nach den IONOS-Selektoren `s1-ionos` und `s2-ionos`. Was DKIM genau ist, liest du in [DKIM einfach erklärt](/wissen/dkim).
+Ohne Testmail geht es mit dem [DKIM-Check](/dkim-check). Er sucht automatisch nach den IONOS-Selektoren `s1-ionos`, `s2-ionos` und `s42582890`. Was DKIM genau ist, liest du in [DKIM einfach erklärt](/wissen/dkim).
 
 ## Schritt für Schritt: DKIM-Einträge bei IONOS wiederherstellen
 
@@ -68,9 +72,9 @@ Nutzt deine Domain die IONOS-Nameserver (das ist der Standard), legt IONOS die D
 |---|---|
 | `s1-ionos._domainkey` | `s1.dkim.ionos.com` |
 | `s2-ionos._domainkey` | `s2.dkim.ionos.com` |
-| kundenspezifisch, z. B. `s42582890._domainkey` | z. B. `s42582890.dkim.ionos.com` |
+| `s42582890._domainkey` | `s42582890.dkim.ionos.com` |
 
-Der dritte Eintrag hat bei jedem Kunden eine eigene Nummer. Die Zahl oben ist nur das Beispiel aus der IONOS-Hilfe, übernimm sie nicht. Für eine Subdomain hängst du deren Namen an, zum Beispiel `s1-ionos._domainkey.blog` für `blog.deine-domain.de`.
+Der dritte Eintrag sieht aus wie eine Kundennummer, ist aber für alle IONOS-Kunden gleich: Wir haben ihn bei mehreren IONOS-Domains identisch gefunden. Für eine Subdomain hängst du deren Namen an, zum Beispiel `s1-ionos._domainkey.blog` für `blog.deine-domain.de`.
 
 ### Deine DNS-Zone liegt bei einem anderen Anbieter
 

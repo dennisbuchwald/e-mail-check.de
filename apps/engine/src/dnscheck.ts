@@ -18,7 +18,7 @@ export function normalizeDomain(input: string): string | null {
 }
 
 /** Common DKIM selectors, probed when the user does not know theirs. */
-export const COMMON_SELECTORS = ['default', 'dkim', 'mail', 'selector1', 'selector2', 'google', 's1-ionos', 's2-ionos', 's1', 's2', 'k1', 'k2', 'key1', 'dkim1', 'smtp', 'sig1', 'mx'];
+export const COMMON_SELECTORS = ['default', 'dkim', 'mail', 'selector1', 'selector2', 'google', 's1-ionos', 's2-ionos', 's42582890', 'strato-dkim-0002', 'strato-dkim-0003', 's1', 's2', 'k1', 'k2', 'key1', 'dkim1', 'smtp', 'sig1', 'mx'];
 
 /** Known SPF includes → service name, so users see who may send for them. */
 const KNOWN_SENDERS: [RegExp, string][] = [
