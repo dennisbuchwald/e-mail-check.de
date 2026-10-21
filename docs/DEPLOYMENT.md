@@ -1,6 +1,6 @@
 # Deployment
 
-Stand 21.10.2026: **Läuft im Vorschau-Modus** auf https://e-mail-check.de (Passwortschutz, Zugang lokal in `.deploy-zugang.txt`, nicht im Repo).
+Stand 21.10.2026: **Öffentlich live** auf https://e-mail-check.de (Passwortschutz am 21.10.2026 auf Dennis' Wunsch entfernt).
 
 ## Ist-Stand
 
@@ -15,11 +15,10 @@ Stand 21.10.2026: **Läuft im Vorschau-Modus** auf https://e-mail-check.de (Pass
 | Geprüft | Außen-Testmail per swaks: echte Client-IP kommt an, Spamhaus antwortet über unbound, Ergebnis korrekt |
 | Deploy | `DEPLOY_HOST=167.235.225.13 scripts/deploy.sh` |
 
-## Go-live (wenn Impressum + Recht fertig)
-1. In `infra/caddy/Caddyfile.prod` den Block `@preview` / `basic_auth` / `header @preview` löschen.
-2. In `docker-compose.prod.yml` die Zeilen `PREVIEW_USER`/`PREVIEW_HASH` löschen.
-3. `noindex` aus `datenschutz.astro` und `avv.astro` entfernen, deployen.
-4. Search Console verifizieren, Sitemap einreichen.
+## Noch offen nach dem Go-live
+1. Impressum: E-Mail (Pflicht nach § 5 DDG) und ggf. Telefon eintragen.
+2. Datenschutz + Infoseite fachlich prüfen lassen, dann `noindex` aus `datenschutz.astro` und `avv.astro` entfernen.
+3. Search Console verifizieren, Sitemap einreichen.
 
 ---
 

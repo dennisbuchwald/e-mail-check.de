@@ -12,14 +12,14 @@ Stand: 21.10.2026
 - **E2E**: 8 Playwright-Tests grün (Desktop + Mobil).
 - **Doku**: README, `docs/scoring.md`, `docs/DEPLOYMENT.md`, `docs/offene-punkte.md`, `research/abschluss-audit.md`.
 
-## Live (Vorschau)
-- https://e-mail-check.de läuft auf Hetzner CAX11 hinter Passwortschutz, Mail-Empfang auf `*@test.e-mail-check.de` mit STARTTLS, PTR gesetzt. Details: `docs/DEPLOYMENT.md`.
+## Live
+- https://e-mail-check.de ist öffentlich live (Hetzner CAX11), Mail-Empfang auf `*@test.e-mail-check.de` mit STARTTLS, PTR gesetzt. Details: `docs/DEPLOYMENT.md`.
 
 ## Fehlt bis zum Launch
 1. Impressum-Daten eintragen (Dennis).
 2. Datenschutz + AVV rechtlich prüfen lassen.
 3. 56 offene Punkte der Anleitungen gegen die echten Oberflächen prüfen (`docs/offene-punkte.md`).
-4. Go-live-Schritte in `docs/DEPLOYMENT.md` (Passwortschutz raus).
+4. Search Console einrichten, Sitemap einreichen.
 
 ## Offene Fragen an Dennis
 - Wer prüft die Anleitungen fachlich gegen die Anbieter-Oberflächen?
