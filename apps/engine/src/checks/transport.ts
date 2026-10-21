@@ -22,7 +22,10 @@ export function parseHops(received: string[], ourHost: string, receivedAt: Date)
 	const timed = raw.filter((h) => h.at !== null);
 	const first = timed[0]?.at ?? null;
 	const hops = raw.slice(-8).map((h) => ({ host: h.host, sec: first !== null && h.at !== null ? Math.max(0, Math.round((h.at - first) / 1000)) : 0 }));
-	const durationSec = first !== null && timed.length > 1 ? Math.max(0, Math.round((timed[timed.length - 1].at! - first) / 1000)) : null;
+	// Received dates carry their own zone offset (Date.parse honours it) but come from different clocks:
+	// a little skew is rounded to 0 (shown as "< 1 s"), clearly wrong values (negative, over an hour) are dropped.
+	const span = first !== null && timed.length > 1 ? (timed[timed.length - 1].at! - first) / 1000 : null;
+	const durationSec = span === null || span < -5 || span > 3600 ? null : Math.max(0, Math.round(span));
 	return { hops, durationSec };
 }
 

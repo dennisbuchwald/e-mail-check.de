@@ -7,7 +7,8 @@ export const POINTS = {
 	dmarc: { none: 1.5, fail: 2.5, monitorOnly: 0.2, temperror: 0.5 },
 	/** Freemail sender (gmail, icloud, gmx …): a hint, not a problem. */
 	sender: { freemail: 0.2 },
-	reputation: { majorList: 3, otherList: 1, listCap: 4, noPtr: 1, ptrMismatch: 0.5 },
+	/** Major lists (Spamhaus, SpamCop, PSBL): a problem. Small, aggressive lists: only a hint, at most 0.3 together. */
+	reputation: { majorList: 3, listCap: 4, smallList: 0.2, smallListCap: 0.3, noPtr: 1, ptrMismatch: 0.5 },
 	/** Transport to us: no TLS or outdated TLS. */
 	transport: { noTls: 0.5, oldTls: 0.2 },
 	/** Own content hints only count if rspamd did not already flag the same thing. */

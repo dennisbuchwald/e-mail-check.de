@@ -2,6 +2,7 @@
 import { isIP } from 'node:net';
 import { POINTS, round1, type Finding } from '@emc/shared';
 import { isNotFound, type DnsResolver } from '../dns.ts';
+import { bigSenderOf } from './senders.ts';
 
 export interface Blocklist {
 	name: string;
@@ -32,8 +33,8 @@ export const BLOCKLISTS: Blocklist[] = [
 		pblAnswers: ['127.0.0.10', '127.0.0.11'],
 		delistUrl: 'https://check.spamhaus.org/',
 	},
-	{ name: 'SpamCop', zone: 'bl.spamcop.net', major: false, ipv6: false, delistUrl: 'https://www.spamcop.net/bl.shtml' },
-	{ name: 'PSBL', zone: 'psbl.surriel.com', major: false, ipv6: false, delistUrl: 'https://psbl.org/' },
+	{ name: 'SpamCop', zone: 'bl.spamcop.net', major: true, ipv6: false, delistUrl: 'https://www.spamcop.net/bl.shtml' },
+	{ name: 'PSBL', zone: 'psbl.surriel.com', major: true, ipv6: false, delistUrl: 'https://psbl.org/' },
 	// Mailspike grades reputation; only "part of a spam wave" (.2) and the two worst levels L5/L4 (.10/.11) count.
 	{ name: 'Mailspike', zone: 'bl.mailspike.net', major: false, ipv6: false, match: /^127\.0\.0\.(2|10|11)$/, delistUrl: 'https://mailspike.io/ip_verify' },
 	{ name: 'Truncate (GBUdb)', zone: 'truncate.gbudb.net', major: false, ipv6: false, delistUrl: 'http://www.gbudb.com/truncate/' },
@@ -155,19 +156,34 @@ export async function checkReputation(ip: string, resolve: DnsResolver, lists: B
 			raw: { ip, error: 'dns_unavailable', lists: results, allowLists },
 		};
 	}
+	// Major lists decide; small, aggressive ones are a hint. A big sender (Google, Microsoft …) is not the tester's to fix.
+	const major = listed.filter((r) => r.major);
+	const small = listed.filter((r) => !r.major);
+	const bigSender = bigSenderOf(ptr.matches ? ptr.ptr : null, helo_.matches ? helo_.name : null);
 	const deductions = [];
-	let listPoints = 0;
-	for (const r of listed) listPoints += r.major ? POINTS.reputation.majorList : POINTS.reputation.otherList;
-	if (listed.length > 0) {
-		deductions.push({ reason: `Auf Sperrliste: ${listed.map((r) => r.list).join(', ')}`, points: round1(Math.min(POINTS.reputation.listCap, listPoints)) });
+	if (!bigSender && major.length > 0) {
+		deductions.push({ reason: `Auf Sperrliste: ${major.map((r) => r.list).join(', ')}`, points: round1(Math.min(POINTS.reputation.listCap, major.length * POINTS.reputation.majorList)) });
+	}
+	if (!bigSender && small.length > 0) {
+		deductions.push({ reason: `Auf kleiner Sperrliste: ${small.map((r) => r.list).join(', ')}`, points: round1(Math.min(POINTS.reputation.smallListCap, small.length * POINTS.reputation.smallList)) });
 	}
 	if (!ptr.ptr && !ptr.unknown) deductions.push({ reason: 'Kein rDNS-Eintrag (PTR)', points: POINTS.reputation.noPtr });
 	else if (ptr.ptr && !ptr.matches) deductions.push({ reason: 'rDNS passt nicht zur IP', points: POINTS.reputation.ptrMismatch });
 
-	const raw = { ip, ptr: ptr.ptr, ptrMatches: ptr.matches, ...(ptr.unknown ? { ptrUnknown: true } : {}), helo: helo_.name, heloMatches: helo_.matches, lists: results, allowLists };
+	const raw = { ip, ptr: ptr.ptr, ptrMatches: ptr.matches, ...(ptr.unknown ? { ptrUnknown: true } : {}), helo: helo_.name, heloMatches: helo_.matches, lists: results, allowLists, ...(bigSender ? { bigSender } : {}) };
+	if (bigSender && listed.length > 0) {
+		return {
+			...base,
+			status: 'ok',
+			title: `Server von ${bigSender}`,
+			text: `Liegt nicht in deiner Hand: Der Server gehört ${bigSender} (${ptr.ptr ?? helo_.name}). ${listed.map((r) => r.list).join(' und ')} ${listed.length === 1 ? 'führt' : 'führen'} ihn, aber kleine Listen führen solche Server manchmal fälschlich. Das kostet keine Punkte.`,
+			deductions,
+			raw,
+		};
+	}
 	// Only Spamhaus PBL: an ordinary internet connection sends straight to the recipient.
 	// Not an accusation of spam, but big providers refuse it, so the points stay.
-	if (listed.length > 0 && listed.every((r) => r.pbl)) {
+	if (major.length > 0 && major.every((r) => r.pbl) && small.length === 0) {
 		return {
 			...base,
 			status: 'bad',
@@ -177,7 +193,7 @@ export async function checkReputation(ip: string, resolve: DnsResolver, lists: B
 			raw,
 		};
 	}
-	if (listed.length > 0) {
+	if (major.length > 0) {
 		return {
 			...base,
 			status: 'bad',
@@ -193,6 +209,16 @@ export async function checkReputation(ip: string, resolve: DnsResolver, lists: B
 			status: 'bad',
 			title: 'Server ohne Namen',
 			text: `Der Server ${ip} hat keinen Rückwärts-Eintrag (rDNS). Große Anbieter lehnen Mails von solchen Servern oft ab. Den Eintrag setzt der Betreiber des Servers.`,
+			deductions,
+			raw,
+		};
+	}
+	if (small.length > 0) {
+		return {
+			...base,
+			status: 'warn',
+			title: 'Auf einer kleinen Sperrliste',
+			text: `Der Server ${ip} steht auf ${small.length === 1 ? 'der kleinen Liste' : 'den kleinen Listen'} ${small.map((r) => r.list).join(', ')}. Große Anbieter wie Gmail oder Outlook richten sich kaum danach, deshalb ist das nur ein Hinweis. Bei eigenem Server: über die Website der Liste austragen lassen.`,
 			deductions,
 			raw,
 		};
