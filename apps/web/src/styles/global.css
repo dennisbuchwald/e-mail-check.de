@@ -644,3 +644,8 @@ h3 {
 		transition-duration: 0.01ms !important;
 	}
 }
+
+/* Anchor targets stay clear of the sticky status bar. */
+[id] {
+	scroll-margin-top: 92px;
+}
