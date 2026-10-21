@@ -3,7 +3,8 @@ dist/
 .astro/
 .env
 *.sqlite*
-data/
+/data/
+apps/engine/data/
 .DS_Store
 Claude outputs/
 test-results/

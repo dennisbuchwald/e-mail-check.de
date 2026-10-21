@@ -6,8 +6,8 @@ import '@fontsource/ibm-plex-mono/600.css';
 import '../styles/global.css';
 import frauncesUrl from '@fontsource-variable/fraunces/files/fraunces-latin-opsz-normal.woff2?url';
 import interUrl from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
-import Logo from '../components/Logo.astro';
-import { FOOTER, NAV, SITE } from '../data/site';
+import Wordmark from '../components/Wordmark.astro';
+import { FOOTER, RATGEBER, SITE } from '../data/site';
 
 interface Props {
 	title: string;
@@ -16,19 +16,16 @@ interface Props {
 	path?: string;
 	noindex?: boolean;
 	jsonLd?: Record<string, unknown>[];
-	/** Tool pages hide the header CTA while the test is at its start screen. */
+	/** Tool pages: body carries the tool state (start, wait, result …). */
 	tool?: boolean;
-	/** Transparent header over the hero aura (start page). */
-	overlay?: boolean;
 	/** Soft grey page background (result, sub pages). */
 	soft?: boolean;
 }
-const { title, description, path = Astro.url.pathname.replace(/\/$/, '') || '/', noindex = false, jsonLd = [], tool = false, overlay = false, soft = false } = Astro.props;
+const { title, description, path = Astro.url.pathname.replace(/\/$/, '') || '/', noindex = false, jsonLd = [], tool = false, soft = false } = Astro.props;
 // Umami is only loaded when PUBLIC_UMAMI_ID is set at build time (off locally).
 const umamiId = import.meta.env.PUBLIC_UMAMI_ID;
 const canonical = new URL(path, SITE.url).href.replace(/\/$/, path === '/' ? '/' : '');
 const ogImage = new URL('/og.png', SITE.url).href;
-const isActive = (href: string) => path === href || (href !== '/' && path.startsWith(href.split('/').slice(0, 2).join('/') + '/'));
 ---
 
 <!doctype html>
@@ -61,27 +58,31 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
 	</head>
 	<body data-tool-state={tool ? 'start' : undefined} class:list={[{ soft }]}>
 		<a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
-		<header class:list={['site-header', { overlay }]}>
-			<div class="wrap head-inner">
-				<a href="/" class="home" aria-label="e-mail-check.de, zur Startseite"><Logo /></a>
-				<nav aria-label="Hauptnavigation" class="nav">
+		<header class="statusbar" data-statusbar>
+			<a href="/" class="sb-home" aria-label="mail check, Startseite"><Wordmark id="sb" class="sb-wm" /></a>
+			<span class="sb-pill mono"
+				><span class="live" aria-hidden="true"></span><span class="sb-long">System bereit · Server DE<span data-tests-today></span></span><span class="sb-short">Bereit</span></span
+			>
+			<div class="sb-menu" data-menu>
+				<button type="button" class="sb-guide" aria-expanded="false" aria-controls="ratgeber-menu" data-menu-button
+					>Ratgeber<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button
+				>
+				<nav id="ratgeber-menu" class="sb-drop" aria-label="Ratgeber" hidden data-menu-panel>
 					{
-						NAV.map((item) => (
-							<a href={item.href} class="nav-link" aria-current={isActive(item.href) ? 'page' : undefined}>
-								{item.label}
-							</a>
+						RATGEBER.map((group) => (
+							<div class="sb-group">
+								<span class="sb-group-title">{group.title}</span>
+								<ul>
+									{group.links.map((l) => (
+										<li>
+											<a href={l.href} aria-current={path === l.href ? 'page' : undefined}>
+												{l.label}
+											</a>
+										</li>
+									))}
+								</ul>
+							</div>
 						))
-					}
-					{
-						tool ? (
-							<button type="button" class="btn btn-ink btn-sm head-cta" data-action="reset">
-								Neuer Test
-							</button>
-						) : (
-							<a href="/" class="btn btn-ink btn-sm head-cta">
-								Mail testen
-							</a>
-						)
 					}
 				</nav>
 			</div>
@@ -95,7 +96,7 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
 			<div class="wrap">
 				<div class="foot-grid">
 					<div class="foot-brand">
-						<Logo size={26} />
+						<Wordmark id="foot" class="foot-wm" />
 						<p>Der deutsche Mail-Tester für alle, die keine Mail-Techniker sind. Kostenlos, ohne Konto, Server in Deutschland.</p>
 					</div>
 					{
@@ -119,59 +120,233 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
 				</div>
 			</div>
 		</footer>
+		<script>
+			import '../scripts/statusbar';
+		</script>
 	</body>
 </html>
 
 <style>
-	.site-header {
+	/* ---- status bar (design/redesign/hero-animation-prototyp.html) ---- */
+	.statusbar {
 		position: sticky;
 		top: 0;
 		z-index: 20;
-		background-color: rgba(255, 255, 255, 0.8);
-		backdrop-filter: blur(12px);
-		-webkit-backdrop-filter: blur(12px);
-		border-bottom: 1px solid var(--line);
-	}
-	/* Home: glass bar over the full-height hero, stays on top while scrolling. */
-	.site-header.overlay {
-		position: fixed;
-		left: 0;
-		right: 0;
-		border-bottom-color: rgba(17, 17, 19, 0.06);
-	}
-	.head-inner {
-		height: 72px;
+		height: 76px;
+		padding: 0 40px;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		gap: 16px;
 	}
-	.home {
-		text-decoration: none;
+	.sb-home {
 		display: inline-flex;
-		min-height: 44px;
 		align-items: center;
+		min-height: 44px;
+		line-height: 0;
+		border-radius: 8px;
 	}
-	.nav {
+	.sb-home :global(.wordmark) {
+		height: 52px;
+		width: auto;
+		overflow: visible;
+	}
+	.sb-pill {
 		display: flex;
 		align-items: center;
-		gap: 28px;
-	}
-	.nav-link {
-		font-size: 14px;
-		font-weight: 500;
+		gap: 10px;
+		height: 32px;
+		padding: 0 14px;
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.8);
+		font-size: 11px;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
 		color: #4a4b50;
-		text-decoration: none;
-		padding: 10px 0;
+		white-space: nowrap;
 	}
-	.nav-link:hover,
-	.nav-link[aria-current='page'] {
-		color: var(--ink);
-		text-decoration: underline;
-		text-underline-offset: 6px;
-	}
-	:global(body[data-tool-state='start']) .head-cta {
+	.sb-short {
 		display: none;
+	}
+	.sb-menu {
+		position: relative;
+	}
+	.sb-guide {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		min-height: 44px;
+		padding: 0 4px;
+		border: 0;
+		background: none;
+		font: 600 14px var(--font-body);
+		color: var(--ink);
+		cursor: pointer;
+	}
+	.sb-guide svg {
+		transition: transform 0.2s ease;
+	}
+	.sb-guide[aria-expanded='true'] svg {
+		transform: rotate(180deg);
+	}
+	.sb-drop {
+		position: absolute;
+		right: 0;
+		top: calc(100% + 8px);
+		width: min(560px, calc(100vw - 32px));
+		padding: 20px;
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 20px;
+		background: #fff;
+		border: 1px solid var(--border);
+		border-radius: 16px;
+		box-shadow: var(--shadow-lg);
+	}
+	.sb-drop[hidden] {
+		display: none;
+	}
+	.sb-group-title {
+		display: block;
+		margin-bottom: 6px;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--muted-2);
+	}
+	.sb-drop ul {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	.sb-drop a {
+		display: block;
+		padding: 6px 0;
+		font-size: 14px;
+		color: var(--ink);
+		text-decoration: none;
+	}
+	.sb-drop a:hover,
+	.sb-drop a[aria-current='page'] {
+		text-decoration: underline;
+		text-underline-offset: 4px;
+	}
+
+	/* Animation A: the check badge pops into the logo on every page load. */
+	.statusbar :global(.badge-load),
+	.statusbar :global(.ko-load) {
+		transform-box: fill-box;
+		transform-origin: center;
+		animation: wm-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) 0.45s both;
+	}
+	.statusbar :global(.check-load) {
+		stroke-dasharray: 1;
+		animation: wm-draw 0.35s ease-out 0.85s both;
+	}
+	@keyframes wm-pop {
+		0% {
+			transform: scale(0);
+		}
+		70% {
+			transform: scale(1.15);
+		}
+		100% {
+			transform: scale(1);
+		}
+	}
+	@keyframes wm-draw {
+		from {
+			stroke-dashoffset: 1;
+		}
+		to {
+			stroke-dashoffset: 0;
+		}
+	}
+
+	/* Animation B: on scroll the text leaves and the mark grows inside the wordmark area. */
+	.statusbar :global(.mark-grow) {
+		transform-origin: 1750.8px -482px;
+	}
+	@keyframes wm-text-out {
+		to {
+			opacity: 0;
+			transform: translateX(-60px);
+		}
+	}
+	@keyframes wm-grow {
+		to {
+			transform: translate(-1750.8px, -76px) scale(3);
+		}
+	}
+	@keyframes sb-bg {
+		to {
+			background-color: rgba(255, 255, 255, 0.86);
+			box-shadow: 0 1px 0 #ededf0;
+		}
+	}
+	/* The timeline sits in a second selector on purpose: the CSS minifier would otherwise fold
+	   animation-timeline into the animation shorthand, where browsers reject it. */
+	@supports (animation-timeline: scroll()) {
+		@media (prefers-reduced-motion: no-preference) {
+			.statusbar :global(.wm-text) {
+				animation: wm-text-out linear both;
+			}
+			.statusbar :global(g.wm-text) {
+				animation-timeline: scroll();
+				animation-range: 0px 90px;
+			}
+			.statusbar :global(.mark-grow) {
+				animation: wm-grow cubic-bezier(0.55, 0, 0.25, 1) both;
+			}
+			.statusbar :global(g.mark-grow) {
+				animation-timeline: scroll();
+				animation-range: 20px 160px;
+			}
+			.statusbar {
+				animation: sb-bg linear both;
+			}
+			:is(.statusbar) {
+				animation-timeline: scroll();
+				animation-range: 60px 160px;
+			}
+		}
+	}
+	/* Fallback (no scroll timelines): same end state via class + transition. */
+	.statusbar :global(.wm-text),
+	.statusbar :global(.mark-grow) {
+		transition:
+			opacity 0.3s ease,
+			transform 0.3s cubic-bezier(0.55, 0, 0.25, 1);
+	}
+	.statusbar {
+		transition:
+			background-color 0.3s ease,
+			box-shadow 0.3s ease;
+	}
+	.statusbar.is-compact {
+		background-color: rgba(255, 255, 255, 0.86);
+		box-shadow: 0 1px 0 #ededf0;
+	}
+	.statusbar.is-compact :global(.wm-text) {
+		opacity: 0;
+		transform: translateX(-60px);
+	}
+	.statusbar.is-compact :global(.mark-grow) {
+		transform: translate(-1750.8px, -76px) scale(3);
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.statusbar :global(.badge-load),
+		.statusbar :global(.ko-load),
+		.statusbar :global(.check-load) {
+			animation: none;
+		}
+		.statusbar,
+		.statusbar :global(.wm-text),
+		.statusbar :global(.mark-grow) {
+			transition: none;
+		}
 	}
 	:global(body.soft) {
 		background: var(--bg-soft);
@@ -244,15 +419,33 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
 			grid-column: 1 / -1;
 		}
 	}
+	.foot-wm {
+		height: 44px;
+		width: auto;
+	}
 	@media (max-width: 820px) {
-		.nav {
-			gap: 0;
+		.statusbar {
+			padding: 0 var(--gutter);
 		}
-		.nav-link {
+		.sb-home :global(.wordmark) {
+			height: 40px;
+		}
+		.sb-long {
 			display: none;
 		}
-		.head-inner {
-			height: 64px;
+		.sb-short {
+			display: inline;
+		}
+		.sb-drop {
+			position: fixed;
+			left: 16px;
+			right: 16px;
+			top: 76px;
+			width: auto;
+			grid-template-columns: minmax(0, 1fr);
+			gap: 14px;
+			max-height: calc(100svh - 96px);
+			overflow: auto;
 		}
 	}
 </style>
