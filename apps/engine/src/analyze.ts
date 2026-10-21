@@ -5,6 +5,9 @@ import { computeScore, sortFindings, summarize, trafficLight, type Finding, type
 import { checkAuth, type SmtpEnvelope } from './checks/auth.ts';
 import { checkReputation } from './checks/reputation.ts';
 import { contentFinding, scanWithRspamd, type ContentAnalysis } from './checks/content.ts';
+import { simpleParser } from 'mailparser';
+import { checkLinks, extractLinks, type LinkReport } from './checks/links.ts';
+import { analyzeUnsubscribe } from './checks/unsubscribe.ts';
 import type { DnsResolver } from './dns.ts';
 
 export interface AnalyzeDeps {
@@ -13,6 +16,8 @@ export interface AnalyzeDeps {
 	resultTtlDays: number;
 	/** Content scanner; null skips the content check. */
 	scanContent: ((message: Buffer, env: SmtpEnvelope, rcpt: string) => Promise<ContentAnalysis>) | null;
+	/** Link probe override for tests; false disables the link check. Default: real, SSRF-guarded requests. */
+	linkProbe?: ((url: string) => Promise<{ status: number } | { error: 'nxdomain' | 'refused' | 'blocked' | 'timeout' | 'other' }>) | false;
 	now?: () => Date;
 }
 
@@ -31,9 +36,7 @@ export async function analyzeMessage(message: Buffer, env: SmtpEnvelope, rcpt: s
 
 	// Reputation and content do not depend on the auth results: start them right away.
 	const reputation = checkReputation(env.ip, deps.resolver);
-	const content = deps.scanContent
-		? deps.scanContent(message, env, rcpt).then((a) => contentFinding(a), (err: Error) => contentFinding(null, err.message))
-		: Promise.resolve(contentFinding(null, 'disabled'));
+	const content = runContentChecks(message, env, rcpt, deps);
 
 	const auth = await checkAuth(message, env, deps.resolver, deps.mta);
 	onStep('spf');
@@ -66,4 +69,27 @@ export async function analyzeMessage(message: Buffer, env: SmtpEnvelope, rcpt: s
 		fromDomain: auth.fromDomain,
 		findings,
 	};
+}
+
+/** Spam filter, link check and newsletter headers run in parallel; the parsed mail only lives in this call. */
+async function runContentChecks(message: Buffer, env: SmtpEnvelope, rcpt: string, deps: AnalyzeDeps): Promise<Finding> {
+	const spam = deps.scanContent
+		? deps.scanContent(message, env, rcpt).then((a) => ({ a, error: undefined }), (err: Error) => ({ a: null, error: err.message }))
+		: Promise.resolve({ a: null, error: 'disabled' });
+	let headerLines: [string, string][] = [];
+	let links: string[] = [];
+	try {
+		const parsed = await simpleParser(message, { skipImageLinks: true, skipTextToHtml: true, skipTextLinks: true });
+		headerLines = parsed.headerLines.map((h) => [h.key.toLowerCase(), h.line.slice(h.line.indexOf(':') + 1).trim()]);
+		links = extractLinks(typeof parsed.html === 'string' ? parsed.html : undefined, parsed.text);
+	} catch {
+		// Unparseable mail: the spam filter result still counts.
+	}
+	const linkReport: Promise<LinkReport | null> =
+		deps.linkProbe === false
+			? Promise.resolve(null)
+			: checkLinks(links, { resolve: deps.resolver, probe: deps.linkProbe }).catch(() => null);
+	const [{ a, error }, report] = await Promise.all([spam, linkReport]);
+	const unsubscribe = analyzeUnsubscribe(headerLines, report?.hasUnsubscribeLink ?? links.some((u) => /unsubscribe|abmeld/i.test(u)));
+	return contentFinding(a, { error, links: report, unsubscribe });
 }
