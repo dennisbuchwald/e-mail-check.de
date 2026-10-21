@@ -119,3 +119,18 @@ test('status bar: Ratgeber menu works with the keyboard and the counter never sh
 	else expect(text).toBe(` · ${stats.mailsChecked.toLocaleString('de-DE')} Mails geprüft`);
 	await expect(page.locator('.statusbar a[aria-label="mail check, Startseite"]')).toHaveAttribute('href', '/');
 });
+
+test('mail route: the scene follows the scroll, every station turns green at the last step', async ({ page }) => {
+	await page.goto('/');
+	const steps = page.locator('.route-step');
+	await expect(steps).toHaveCount(6);
+	await steps.first().scrollIntoViewIfNeeded();
+	const scene = page.locator('[data-mailroute] svg');
+	await expect(scene).toBeVisible();
+	await expect(page.locator('[data-mailroute]')).toHaveAttribute('aria-label', /Weg einer Mail/);
+	await page.evaluate(() => {
+		const last = document.querySelectorAll<HTMLElement>('.route-step')[5].getBoundingClientRect();
+		window.scrollBy({ top: last.top + last.height / 2 - innerHeight * 0.3, behavior: 'instant' });
+	});
+	await expect(page.locator('[data-mailroute] .dot.ok')).toHaveCount(6, { timeout: 5000 });
+});
