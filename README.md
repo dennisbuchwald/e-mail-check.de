@@ -4,7 +4,7 @@ Deutscher, DSGVO-konformer Mail-Tester für Nicht-Techniker: Testmail schicken, 
 
 Repository: https://github.com/dennisbuchwald/e-mail-check.de (Branch `main`)
 
-Technik: [docs/scoring.md](docs/scoring.md) (Score) · [docs/datenschutz-technik.md](docs/datenschutz-technik.md) (Datenfluss) · [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) (Betrieb)
+Score-Modell: `packages/shared/src/scoring.ts` · Betrieb: `scripts/deploy.sh`, `docker-compose.prod.yml`
 
 ## Lokal starten
 
@@ -87,7 +87,6 @@ apps/web/         Astro (statisch): Tool-Insel, Check-Seiten, Inhalte
 packages/shared/  Typen, Score-Modell (gemeinsam für Engine und Web)
 infra/            Caddy, rspamd-Konfiguration, unbound (eigener DNS-Resolver)
 tests/e2e/        Playwright
-docs/             Score, Datenfluss, Deployment
 ```
 
 ## Statistik (optional)
@@ -111,4 +110,4 @@ Eingebunden wird es erst, wenn beim Web-Build `PUBLIC_UMAMI_ID` gesetzt ist.
 
 - **Code:** [AGPL-3.0](LICENSE). Du darfst ihn nutzen, ändern und weitergeben. Wer eine veränderte Fassung als öffentlichen Dienst betreibt, muss deren Quellcode offenlegen.
 - **Texte, Logo, Design und der Name e-mail-check.de:** alle Rechte vorbehalten, siehe [LICENSE-CONTENT.md](LICENSE-CONTENT.md).
-- **Nicht im Repo:** Recherche-Daten (Keywords, SERP- und Wettbewerbsanalyse), Rechtsnotizen und interne Prüflisten. Sie liegen nur lokal (`research/`, `docs/recht-notizen.md`, `docs/offene-punkte.md`, siehe `.gitignore`).
+- **Nicht im Repo:** Recherche-Daten, Rechtsnotizen und interne Notizen. Sie liegen nur lokal.

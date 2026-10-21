@@ -1,6 +1,6 @@
 # Production overrides. Start on the server with:
 #   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
-# Values come from .env (copy .env.example). See docs/DEPLOYMENT.md.
+# Values come from .env (copy .env.example).
 
 x-logging: &logging
   logging:

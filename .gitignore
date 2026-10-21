@@ -13,8 +13,6 @@ test-results
 
 # Private data: stays local, never in the public repo
 research/
-docs/recht-notizen.md
-docs/offene-punkte.md
 .deploy-zugang.txt
 
 

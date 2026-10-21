@@ -19,7 +19,7 @@ export interface Blocklist {
 	delistUrl: string;
 }
 
-// Selection and reasons: docs/scoring.md. Only lists that may be queried for free without an account
+// Only lists that may be queried for free without an account
 // (checked 21.10.2026). Left out: UCEPROTECT and Backscatterer (paid fast delisting), Barracuda (needs a registered
 // resolver), SpamRATS (needs an API key), SORBS, NiX Spam, LashBack, WPBL (shut down or not answering).
 export const BLOCKLISTS: Blocklist[] = [

@@ -1,4 +1,4 @@
-// Score model. Every point value lives here and is documented in docs/scoring.md.
+// Score model. Every point value lives here.
 import type { Band, Finding, Impact, SubScores } from './types.ts';
 
 export const POINTS = {
@@ -58,7 +58,7 @@ export function hasAuthFailure(findings: Pick<Finding, 'id' | 'status'>[]): bool
 }
 
 export function trafficLight(score: number, findings: Pick<Finding, 'id' | 'status'>[]): 'ok' | 'warn' | 'bad' {
-	// A failing SPF/DKIM/DMARC is "bad" whatever the score (exception rule, docs/scoring.md).
+	// A failing SPF/DKIM/DMARC is "bad" whatever the score (exception rule).
 	if (score < 5 || findings.some((f) => f.status === 'bad')) return 'bad';
 	if (score < 9 || findings.some((f) => f.status === 'warn')) return 'warn';
 	return 'ok';

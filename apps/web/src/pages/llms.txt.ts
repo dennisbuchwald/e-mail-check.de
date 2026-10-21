@@ -42,7 +42,7 @@ Was der Score bedeutet:
 - Jede Mail startet bei 10 Punkten, jeder Befund zieht Punkte ab, der Score wird auf eine Nachkommastelle gerundet.
 - Beispiele für Abzüge: kein SPF-Eintrag 1,5; keine DKIM-Signatur 2; kein DMARC-Eintrag 1,5; DMARC mit p=none 0,2; Listung bei Spamhaus ZEN 3; kein PTR-Eintrag 1.
 - Ampel: Rot bei mindestens einem Problem oder Score unter 5, Orange bei Score unter 8, sonst Grün. Ein einzelnes echtes Problem macht die Ampel rot, auch bei hohem Score.
-- Die komplette Abzugstabelle steht öffentlich im Repo unter docs/scoring.md.
+- Die komplette Abzugstabelle steht öffentlich im Quellcode unter packages/shared/src/scoring.ts.
 
 Ohne Testmail prüfen die DNS-Schnellchecks (SPF, DKIM, DMARC) eine Domain direkt. Der DKIM-Check sucht ohne Selektor automatisch nach verbreiteten Selektoren.
 
@@ -71,7 +71,7 @@ ${guideSections.join('\n\n')}
 - [Vollständiger Text aller Seiten](${abs('/llms-full.txt')}): Wissen und Anleitungen in einer Datei
 - [Impressum](${abs('/impressum')})
 - [Datenschutz](${abs('/datenschutz')})
-- [Quellcode auf GitHub](https://github.com/dennisbuchwald/e-mail-check.de): Open Source, inklusive Score-Berechnung (docs/scoring.md)
+- [Quellcode auf GitHub](https://github.com/dennisbuchwald/e-mail-check.de): Open Source, inklusive Score-Berechnung (packages/shared/src/scoring.ts)
 - [${SITE.owner}](${SITE.ownerUrl}): Betreiber, privates Projekt
 `;
 

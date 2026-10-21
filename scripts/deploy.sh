@@ -3,7 +3,7 @@
 #   DEPLOY_HOST=<server-ip> scripts/deploy.sh             deploys HEAD of main (clean, pushed)
 #   DEPLOY_HOST=<server-ip> DEPLOY_REF=deploy-… scripts/deploy.sh   rollback: deploys an earlier tag
 # Every deploy of HEAD gets a tag deploy-YYYYMMDD-HHMM, so the previous state is always one command away.
-# First time on the server: cp .env.example .env and fill it (see docs/DEPLOYMENT.md).
+# First time on the server: cp .env.example .env and fill it.
 set -euo pipefail
 HOST="${DEPLOY_HOST:?DEPLOY_HOST fehlt, z. B. DEPLOY_HOST=203.0.113.10 scripts/deploy.sh}"
 DIR=/opt/e-mail-check
@@ -30,7 +30,7 @@ git archive "$COMMIT" | tar -x -C "$TMP"
 echo "$COMMIT" > "$TMP/.deployed-commit"
 
 # The only lasting data is the all-time counter (results are deleted after 7 days anyway):
-# keep a copy here before every deploy. Restore: MAILS_CHECKED_SEED=<value> in .env (see docs/DEPLOYMENT.md).
+# keep a copy here before every deploy. Restore: MAILS_CHECKED_SEED=<value> in .env.
 mkdir -p backups
 ssh "deploy@$HOST" "cd $DIR && docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T engine node --disable-warning=ExperimentalWarning -e \"const {DatabaseSync}=require('node:sqlite');const d=new DatabaseSync(process.env.DB_PATH,{readOnly:true});console.log(JSON.stringify(d.prepare('SELECT * FROM counters').all()))\"" > "backups/counters-$(date +%Y%m%d-%H%M).json" 2>/dev/null && echo "→ Zähler gesichert" || echo "→ Zähler nicht gesichert (Engine lief nicht?)"
 
