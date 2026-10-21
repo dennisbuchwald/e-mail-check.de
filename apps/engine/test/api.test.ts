@@ -66,6 +66,15 @@ describe('API', () => {
 		expect(steps.find((e) => e.step === 'reputation').detail).toMatch(/Sperrlisten abgefragt, alle sauber/);
 	});
 
+	it('serves the public counter without any number below 50', async () => {
+		const { app, service } = setup();
+		const test = service.createTest();
+		await service.handleMessage(test.address, fixture('gut.eml'), { ip: GOOD_IP, helo: 'x', sender: 'max@gut.example.test' });
+		const res = await app.request('/api/stats');
+		expect(res.status).toBe(200);
+		expect(await res.json()).toEqual({ testsToday: null });
+	});
+
 	it('rate-limits test creation per IP', async () => {
 		const { app } = setup();
 		const codes = [];
