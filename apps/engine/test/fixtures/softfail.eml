@@ -1,0 +1,25 @@
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=softfail.example.test; h=Content-Transfer-Encoding: Content-Type:
+ MIME-Version: Message-ID: Date: Subject: To: From; q=dns/txt; s=s1;
+ t=1792483200; bh=a5Ghxo3HjTa1iBGuCqw7X0Qx+CePkN4AKVkzL8dTOds=;
+ b=Lk+A0qlgSTi+MT730g4U2xBmX6FFgXLiVDJhdYkw0oUpzHjR20FF41zmSyQFjpTNMUIzFoJk9
+ bM41kSvh6GFeDcEJWdg4cTTb4OrSVt3ZHMA4R6NnrmgR/rF0zouCnIAcezSxn1rNu/J+15gweND
+ 1ceUfw+hwlLGFmVYTR5QCZHDORwYWnPsd1EvxQQFaErXgPmUJ3zneGiik1ofezttEcmIP0UTzKG
+ o8UedT4o/BLsX1xtR9DdB+yEHF6UCawy9vCL6GTGitgqyYpmOjVI2clUjzT/rB5XsBbFuXw/mp9
+ lonGl323SL/86G7C+IQb4ZRAvC9wKJgZ8ZsP1tnwrnsA==
+From: Max Mustermann <max@softfail.example.test>
+To: k7m2x9qa@test.e-mail-check.de
+Subject: Angebot Website
+Date: Tue, 20 Oct 2026 10:00:00 +0200
+Message-ID: <15.maxsoftfailexampletest@example.test>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+
+Hallo,
+
+anbei wie besprochen das Angebot für die neue Website.
+Meld dich gern, wenn du Fragen hast.
+
+Viele Grüße
+Max

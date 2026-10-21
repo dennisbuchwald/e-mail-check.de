@@ -1,0 +1,26 @@
+{
+  "name": "@emc/engine",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch --disable-warning=ExperimentalWarning src/main.ts",
+    "start": "node --disable-warning=ExperimentalWarning src/main.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@emc/shared": "workspace:*",
+    "@hono/node-server": "^2.1.5",
+    "hono": "^4.13.13",
+    "mailauth": "^8.0.1",
+    "mailparser": "^3.10.0",
+    "smtp-server": "^3.20.2"
+  },
+  "devDependencies": {
+    "@types/mailparser": "^3.9.0",
+    "@types/node": "^26.6.5",
+    "@types/smtp-server": "^3.5.13",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  }
+}

@@ -1,0 +1,19 @@
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gut.example.test;
+ h=Content-Transfer-Encoding: Content-Type: MIME-Version: Message-ID: Date:
+ Subject: To: From; q=dns/txt; s=s1; t=1792483200;
+ bh=id84uDPa9SMZAVd+g2pYg3Hl9aPfnapoGlOygxrIuV4=;
+ b=NYU8kAC+6IzhALqotVKV15uTNXd038u2ikoe48HsqULKM+xE5Q14+IjUeWNFTVxjg01NfWWxo
+ UP2ZvI5f/VSj1K0c0LzXRluhNW7NZvLaXVnZnGzBMy2VJpvZL/URyjlxoenoiXMjgHTkFsVh9fp
+ gzxWx5HqB3UcSIVNfGw61Y/HACOghqpAFprLnZMc86Nf4dnTNIvbyBaHVeFXE/FA1amwI045eAz
+ Rv7AezkiQHSQydihCKzZUWux1SSLM7lxEf0B+GQ5sSOkfm/A+7yxW0hHBB9XPxu4IoZ63dH/jv3
+ /VPSsO1vdmahciAc0/chRI9NQKsw3IemuwdEFpafP65w==
+From: Max Mustermann <max@gut.example.test>
+To: k7m2x9qa@test.e-mail-check.de
+Subject: JETZT GEWINNEN GRATIS
+Date: Tue, 20 Oct 2026 10:00:00 +0200
+Message-ID: <21.maxgutexampletest@example.test>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+
+XJS*C4JDBQADN1.NSBN3*2IDNEN*GTUBE-STANDARD-ANTI-UBE-TEST-EMAIL*C.34X

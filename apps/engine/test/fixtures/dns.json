@@ -1,0 +1,87 @@
+{
+	"gut.example.test TXT": [
+		[
+			"v=spf1 ip4:203.0.113.0/24 -all"
+		]
+	],
+	"ohne-dkim.example.test TXT": [
+		[
+			"v=spf1 ip4:203.0.113.0/24 -all"
+		]
+	],
+	"ohne-dmarc.example.test TXT": [
+		[
+			"v=spf1 ip4:203.0.113.0/24 -all"
+		]
+	],
+	"dkim-kaputt.example.test TXT": [
+		[
+			"v=spf1 ip4:203.0.113.0/24 -all"
+		]
+	],
+	"softfail.example.test TXT": [
+		[
+			"v=spf1 ip4:198.51.100.1 ~all"
+		]
+	],
+	"s1._domainkey.gut.example.test TXT": [
+		[
+			"v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApgg9TZYDKjnxGehrmH42uYZPGx8fH33b0UibL7X8t0DnXy25Re5c4o7KbM/xtkfJ/J1eTgfFmdhU1u5nvTrLQ1e38BDB5rkcchH+yQr2lwZwv6UXEDUf2h3VbLHCEoPMJZMeROg1DdbHXzK9YiY/oWsjsUzWa5YdjQUGAY2Hgj5T4vzciT3bXW4cLh3TS2fHAJNh4dtItlOFGRIdvaUhzpdwFWeq4x7PquhWn3xVtd8DZLfzVf33kLedITykFC5qyGvhOjQRD/KvPTRNPQ6/1YxUy8+07wZypdlv8KdKBEW2trrsQ7LkCe93xP+h8P8Nt8O47kOhKM373kEuEhCT+QIDAQAB"
+		]
+	],
+	"s1._domainkey.ohne-spf.example.test TXT": [
+		[
+			"v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApgg9TZYDKjnxGehrmH42uYZPGx8fH33b0UibL7X8t0DnXy25Re5c4o7KbM/xtkfJ/J1eTgfFmdhU1u5nvTrLQ1e38BDB5rkcchH+yQr2lwZwv6UXEDUf2h3VbLHCEoPMJZMeROg1DdbHXzK9YiY/oWsjsUzWa5YdjQUGAY2Hgj5T4vzciT3bXW4cLh3TS2fHAJNh4dtItlOFGRIdvaUhzpdwFWeq4x7PquhWn3xVtd8DZLfzVf33kLedITykFC5qyGvhOjQRD/KvPTRNPQ6/1YxUy8+07wZypdlv8KdKBEW2trrsQ7LkCe93xP+h8P8Nt8O47kOhKM373kEuEhCT+QIDAQAB"
+		]
+	],
+	"s1._domainkey.ohne-dmarc.example.test TXT": [
+		[
+			"v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApgg9TZYDKjnxGehrmH42uYZPGx8fH33b0UibL7X8t0DnXy25Re5c4o7KbM/xtkfJ/J1eTgfFmdhU1u5nvTrLQ1e38BDB5rkcchH+yQr2lwZwv6UXEDUf2h3VbLHCEoPMJZMeROg1DdbHXzK9YiY/oWsjsUzWa5YdjQUGAY2Hgj5T4vzciT3bXW4cLh3TS2fHAJNh4dtItlOFGRIdvaUhzpdwFWeq4x7PquhWn3xVtd8DZLfzVf33kLedITykFC5qyGvhOjQRD/KvPTRNPQ6/1YxUy8+07wZypdlv8KdKBEW2trrsQ7LkCe93xP+h8P8Nt8O47kOhKM373kEuEhCT+QIDAQAB"
+		]
+	],
+	"s1._domainkey.softfail.example.test TXT": [
+		[
+			"v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApgg9TZYDKjnxGehrmH42uYZPGx8fH33b0UibL7X8t0DnXy25Re5c4o7KbM/xtkfJ/J1eTgfFmdhU1u5nvTrLQ1e38BDB5rkcchH+yQr2lwZwv6UXEDUf2h3VbLHCEoPMJZMeROg1DdbHXzK9YiY/oWsjsUzWa5YdjQUGAY2Hgj5T4vzciT3bXW4cLh3TS2fHAJNh4dtItlOFGRIdvaUhzpdwFWeq4x7PquhWn3xVtd8DZLfzVf33kLedITykFC5qyGvhOjQRD/KvPTRNPQ6/1YxUy8+07wZypdlv8KdKBEW2trrsQ7LkCe93xP+h8P8Nt8O47kOhKM373kEuEhCT+QIDAQAB"
+		]
+	],
+	"_dmarc.gut.example.test TXT": [
+		[
+			"v=DMARC1; p=reject; rua=mailto:dmarc@gut.example.test"
+		]
+	],
+	"_dmarc.ohne-spf.example.test TXT": [
+		[
+			"v=DMARC1; p=quarantine"
+		]
+	],
+	"_dmarc.ohne-dkim.example.test TXT": [
+		[
+			"v=DMARC1; p=none"
+		]
+	],
+	"_dmarc.dkim-kaputt.example.test TXT": [
+		[
+			"v=DMARC1; p=reject"
+		]
+	],
+	"_dmarc.softfail.example.test TXT": [
+		[
+			"v=DMARC1; p=reject"
+		]
+	],
+	"10.113.0.203.in-addr.arpa PTR": [
+		"mail.gut.example.test"
+	],
+	"mail.gut.example.test A": [
+		"203.0.113.10"
+	],
+	"66.113.0.203.in-addr.arpa PTR": [
+		"mail.spammer.example.test"
+	],
+	"mail.spammer.example.test A": [
+		"203.0.113.66"
+	],
+	"66.113.0.203.zen.spamhaus.org A": [
+		"127.0.0.2"
+	]
+}

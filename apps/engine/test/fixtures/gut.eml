@@ -1,0 +1,25 @@
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gut.example.test;
+ h=Content-Transfer-Encoding: Content-Type: MIME-Version: Message-ID: Date:
+ Subject: To: From; q=dns/txt; s=s1; t=1792483200;
+ bh=a5Ghxo3HjTa1iBGuCqw7X0Qx+CePkN4AKVkzL8dTOds=;
+ b=VHDa7pI5sCZUDYmVcUxVqLMKtgd0+fcAdipqANN+FMhPdQUA622kq/cRDS9Q22UQ/Y5lKWv1M
+ eaGB4ti7r52bnIazmAdpzFXWBoE/3WvNZGsyXllutzZMjnZFl4sJ3HvtSKfd4iQPY8Jm06BN5HM
+ K1ahmguKFquFXV2KaYNzpF84k7i1AGVWvKtb0Weq6+5PeJlFc3dJfn24NPOC+1/jKAEhnC+zMC4
+ 5sSablwyFXRBA3QPoXCaUTBz2dSbLUBH3dgz71K4V+EgIs+E/bq5TV56oiEwMyzCrord1gK57qv
+ QOIieSTqvbepRfhDPt5t07dSz9G2j/ygLwZcAWl6MWSA==
+From: Max Mustermann <max@gut.example.test>
+To: k7m2x9qa@test.e-mail-check.de
+Subject: Angebot Website
+Date: Tue, 20 Oct 2026 10:00:00 +0200
+Message-ID: <15.maxgutexampletest@example.test>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+
+Hallo,
+
+anbei wie besprochen das Angebot für die neue Website.
+Meld dich gern, wenn du Fragen hast.
+
+Viele Grüße
+Max

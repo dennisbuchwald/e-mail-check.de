@@ -1,0 +1,25 @@
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=ohne-dmarc.example.test; h=Content-Transfer-Encoding: Content-Type:
+ MIME-Version: Message-ID: Date: Subject: To: From; q=dns/txt; s=s1;
+ t=1792483200; bh=a5Ghxo3HjTa1iBGuCqw7X0Qx+CePkN4AKVkzL8dTOds=;
+ b=bylbV6OF/PWJuBv5Jwqy0fC6ZkIKI7/wzJLEoEFQXKYcilqWCF66kKuJrQKZeLJpxdPSIFy3U
+ a5CTlvT64RDDVsn9pTmS8ShxxX+J++WBoc0jnpMpD2L2svPIQuza5ouV/bUPJpMP47CtGZvkrWA
+ s71tghc/pxFHdhU9T2s5c9XIiqdMGOdc9JJ/N5FsbjSpfgoBMVhtrQmyXJRnEPCvG4aQctjM1nm
+ R6RBpHF+eiltOkyS8BzjtsEGLlHjrIWquhpXThSXRYkE8VLhkCKqE9ZlvR3MSo/LKNNyu7gvJTa
+ URT9VcKdz5u6u9sV/0EYmvqn/X2fpp60FLbGTzeXRcZQ==
+From: Max Mustermann <max@ohne-dmarc.example.test>
+To: k7m2x9qa@test.e-mail-check.de
+Subject: Angebot Website
+Date: Tue, 20 Oct 2026 10:00:00 +0200
+Message-ID: <15.maxohnedmarcexampletest@example.test>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+
+Hallo,
+
+anbei wie besprochen das Angebot für die neue Website.
+Meld dich gern, wenn du Fragen hast.
+
+Viele Grüße
+Max
