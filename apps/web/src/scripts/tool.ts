@@ -255,8 +255,7 @@ export function initTool(): void {
 			d.textContent = d.dataset.placeholder;
 		}
 		$('[data-fly]').hidden = true;
-		$('[data-wait-mail]').hidden = true;
-		$('[data-wait-addr]').hidden = false;
+		$('.wait-slot').dataset.phase = 'before';
 		stopWaitTicker();
 	}
 
@@ -281,8 +280,6 @@ export function initTool(): void {
 			}, 400);
 		};
 		hint.textContent = WAIT_TIPS[0];
-		$('[data-wait-clock]').hidden = false;
-		hint.hidden = false;
 		const tick = () => {
 			const sec = Math.max(0, Math.floor((Date.now() - opened) / 1000));
 			$('[data-wait-clock]').textContent = `Postfach offen seit ${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')} · gültig bis ${until} Uhr`;
@@ -340,17 +337,16 @@ export function initTool(): void {
 		$('[data-prog]').style.setProperty('--p', `${Math.round((doneCount / STEPS.length) * 100)}%`);
 		if (step === 'received') {
 			stopWaitTicker();
-			$('[data-wait-clock]').hidden = true;
-			$('[data-wait-hint]').hidden = true;
-			$('[data-wait-addr]').hidden = true;
+			// Same slot, same height: the waiting info cross-fades into the mail card.
+			$('.wait-slot').dataset.phase = 'after';
 			$('[data-wait-title]').textContent = 'Mail ist da. Wir prüfen sie';
 			announce('Mail empfangen. Die Prüfung läuft.');
 			if (e.mail?.from || e.mail?.subject) {
 				$('[data-wm-from]').textContent = e.mail.from ?? 'unbekannt';
 				$('[data-wm-subject]').textContent = e.mail.subject ?? '';
 				$('[data-wm-subject-row]').hidden = !e.mail.subject;
-				$('[data-wait-mail]').hidden = false;
 			}
+			$('[data-wait-mail]').classList.toggle('is-empty', !e.mail?.from && !e.mail?.subject);
 			// The envelope flies into the ring, lands, then the scan starts.
 			$('[data-env-wait]').setAttribute('hidden', '');
 			const land = () => {
