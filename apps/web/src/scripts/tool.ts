@@ -610,7 +610,7 @@ export function initTool(): void {
 		// Caddy has already rendered the result into the page (or "not found"): keep that markup (no layout shift)
 		// and only add behaviour. The API answer is still needed for the provider guides.
 		const ssr = !!root.querySelector('[data-rv]');
-		if (root.querySelector('[data-rv-missing]')) return;
+		if (root.querySelector('[data-rv-missing]')) return void import('./hairline').then((m) => m.initHairline(root));
 		if (ssr) {
 			show('result');
 			hydrate(null, true);

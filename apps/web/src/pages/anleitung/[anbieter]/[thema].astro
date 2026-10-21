@@ -2,6 +2,7 @@
 import { getCollection, render } from 'astro:content';
 import Article from '../../../layouts/Article.astro';
 import { PROVIDERS, TOPIC_NAMES, guideUrl } from '../../../data/site';
+import { TOPIC_FIGURE } from '../../../data/figures';
 
 export async function getStaticPaths() {
 	const entries = await getCollection('anleitung');
@@ -31,6 +32,7 @@ const main = d.themen[0];
 	stand={d.stand}
 	geprueft={d.geprueft}
 	eyebrow={`${d.anbieterName} · ${d.themen.map((t) => TOPIC_NAMES[t].tech).join(', ')} · ca. ${d.dauer}`}
+	figure={d.themen.length > 1 ? TOPIC_FIGURE['spf-dkim-dmarc'] : TOPIC_FIGURE[d.themen[0]]}
 >
 	<Content />
 	<div slot="after" class="links">

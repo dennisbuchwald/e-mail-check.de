@@ -2,6 +2,7 @@
 import { getCollection, render } from 'astro:content';
 import Article from '../../layouts/Article.astro';
 import { PROVIDERS, guideUrl } from '../../data/site';
+import { TOPIC_FIGURE } from '../../data/figures';
 
 export async function getStaticPaths() {
 	const entries = await getCollection('wissen');
@@ -25,6 +26,7 @@ const related = (await getCollection('wissen')).filter((e) => e.id !== entry.id)
 	faq={d.faq}
 	quellen={d.quelle}
 	stand={d.stand}
+	figure={TOPIC_FIGURE[entry.id]}
 >
 	<Content />
 	<div slot="after" class="links">

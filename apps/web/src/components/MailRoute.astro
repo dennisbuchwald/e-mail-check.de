@@ -1,0 +1,201 @@
+---
+// "Der Weg deiner Mail": the six stations of the result page, each with a hairline figure.
+// The 5:4 box is reserved in HTML, so nothing shifts; the figures load in scripts/hairline.ts once the section is near.
+// Without JS the boxes stay empty and the text is fully there.
+const stations = [
+	{ nr: '01', tech: 'SPF', title: 'Absender', figure: 'hub', label: 'Netz aus Kacheln um einen Knoten: welche Server für deine Domain senden dürfen', text: 'Darf dein Server überhaupt Mails für deine Domain verschicken? Das steht im SPF-Eintrag.', href: '/wissen/spf' },
+	{ nr: '02', tech: 'DKIM', title: 'Unterschrift', figure: 'vault', label: 'Tresortür mit Zahlenschloss: die digitale Unterschrift deiner Mail', text: 'Ist deine Mail digital unterschrieben und unterwegs unverändert geblieben?', href: '/wissen/dkim' },
+	{ nr: '03', tech: 'DMARC', title: 'Schutzregel', figure: 'padlock', label: 'Vorhängeschloss: die Regel gegen Fälschungen in deinem Namen', text: 'Was passiert mit gefälschten Mails, die so tun, als kämen sie von dir?', href: '/wissen/dmarc' },
+	{ nr: '04', tech: 'Sperrlisten, rDNS', title: 'Server-Ruf', figure: 'router', label: 'Router mit Antennen: der Ruf deines Mailservers', text: 'Steht dein Server auf einer Sperrliste, und hat er einen sauberen Namen?', href: '/wissen/mails-landen-im-spam' },
+	{ nr: '05', tech: 'TLS', title: 'Transport', figure: 'relay', label: 'Weg über mehrere Stationen: die Zustellung deiner Mail', text: 'Kam deine Mail verschlüsselt an, und über welche Server lief sie?', href: null },
+	{ nr: '06', tech: 'Spamfilter, Inhalt', title: 'Posteingang', figure: 'sieve', label: 'Gestapelte Siebe: der Spamfilter prüft den Inhalt', text: 'Wie viele Spam-Punkte sammelt deine Mail, und was löst sie aus?', href: '/wissen/mails-landen-im-spam' },
+];
+---
+
+<section class="section route-sec" id="was-wir-pruefen" aria-labelledby="weg-title" data-route-sec>
+	<div class="wrap">
+		<div class="section-head">
+			<span class="eyebrow">Der Weg deiner Mail</span>
+			<h2 id="weg-title">Sechs Stationen bis ins Postfach. Wir prüfen jede.</h2>
+			<p class="route-lead">Genau diese sechs Stationen siehst du später in deinem Ergebnis, jede mit Klartext und dem, was du tun kannst.</p>
+		</div>
+		<ol class="route-grid">
+			{
+				stations.map((s, i) => (
+					<li class="card route-card" style={`--i:${i}`}>
+						<div class="route-fig" data-hairline={s.figure} data-label={s.label} />
+						<span class="mono route-nr">
+							{s.nr} · {s.tech}
+						</span>
+						<h3 class="h route-title">{s.title}</h3>
+						<p class="route-text">{s.text}</p>
+						{s.href && (
+							<a class="route-link" href={s.href}>
+								Mehr zu {s.title.toLowerCase() === 'server-ruf' ? 'Sperrlisten' : s.tech.split(',')[0]} ›
+							</a>
+						)}
+					</li>
+				))
+			}
+		</ol>
+		<div class="route-steps">
+			<ol class="mono">
+				<li><span>01</span> Adresse kopieren</li>
+				<li><span>02</span> Ganz normal schicken</li>
+				<li><span>03</span> Ergebnis in 30 s</li>
+			</ol>
+			<a class="btn btn-line" href="#tool" data-to-test>Jetzt testen ↑</a>
+		</div>
+	</div>
+</section>
+
+<script>
+	import { initHairline } from '../scripts/hairline';
+	initHairline();
+	// "Jetzt testen" scrolls up to the hero and focuses the copy button of the test address.
+	document.querySelector('[data-to-test]')?.addEventListener('click', (e) => {
+		e.preventDefault();
+		const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+		window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
+		document.querySelector<HTMLElement>('.copy-address')?.focus({ preventScroll: true });
+	});
+</script>
+
+<style>
+	.route-sec {
+		/* Colours of the figures (hairline custom properties) on our tokens. */
+		--hairline-plate: #ffffff;
+		--hairline-hi: #111113;
+		--hairline-edge: #111113;
+		--hairline-mid: #8a8b91;
+		--hairline-lo: #d4d4d8;
+		--hairline-stroke: 0.9;
+	}
+	.route-lead {
+		margin: 0;
+		max-width: 620px;
+		color: var(--muted);
+		font-size: 17px;
+		line-height: 26px;
+	}
+	.route-grid {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 24px;
+	}
+	.route-card {
+		position: relative;
+		padding: 18px 22px 22px;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		transition:
+			transform 0.3s var(--ease-soft),
+			box-shadow 0.3s ease;
+	}
+	.route-card:hover {
+		transform: translateY(-2px);
+		box-shadow: var(--shadow-lg);
+	}
+	/* Thin path between the cards of one row (desktop): fills green once when the section comes into view. */
+	.route-card:not(:nth-child(3n))::after {
+		content: '';
+		position: absolute;
+		top: 30%;
+		right: -24px;
+		width: 24px;
+		height: 2px;
+		background: var(--track);
+		background-image: linear-gradient(var(--ok), var(--ok));
+		background-repeat: no-repeat;
+		background-size: 0% 100%;
+		transition: background-size 0.5s var(--ease-soft);
+		transition-delay: calc(0.2s + var(--i) * 0.18s);
+	}
+	:global([data-route-sec].is-seen) .route-card::after {
+		background-size: 100% 100%;
+	}
+	.route-fig {
+		width: 100%;
+		aspect-ratio: 5 / 4;
+		margin-bottom: 4px;
+	}
+	.route-nr {
+		font-size: 12px;
+		letter-spacing: 0.08em;
+		color: var(--muted-2);
+	}
+	.route-title {
+		margin: 0;
+		font-size: 24px;
+	}
+	.route-text {
+		margin: 0;
+		font-size: 15px;
+		line-height: 23px;
+		color: var(--muted);
+	}
+	.route-link {
+		margin-top: auto;
+		padding-top: 6px;
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--ink);
+		align-self: flex-start;
+		min-height: 32px;
+		display: inline-flex;
+		align-items: center;
+	}
+	.route-steps {
+		margin-top: 32px;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px 28px;
+	}
+	.route-steps ol {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px 28px;
+		font-size: 13px;
+		color: var(--ink);
+	}
+	.route-steps li span {
+		color: var(--muted-2);
+		margin-right: 6px;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.route-card,
+		.route-card::after {
+			transition: none;
+		}
+	}
+	@media (max-width: 1080px) {
+		.route-grid {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+		.route-card::after {
+			display: none;
+		}
+	}
+	@media (max-width: 640px) {
+		.route-grid {
+			grid-template-columns: minmax(0, 1fr);
+		}
+		.route-steps {
+			flex-direction: column;
+			align-items: stretch;
+		}
+		.route-steps .btn {
+			width: 100%;
+			justify-content: center;
+		}
+	}
+</style>

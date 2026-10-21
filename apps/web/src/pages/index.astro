@@ -3,6 +3,7 @@ import { getEntry, render } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import Tool from '../components/Tool.astro';
 import HomeSections from '../components/HomeSections.astro';
+import MailRoute from '../components/MailRoute.astro';
 import Faq from '../components/Faq.astro';
 import Prose from '../components/Prose.astro';
 import { appSchema, faqSchema, websiteSchema } from '../data/schema';
@@ -15,14 +16,15 @@ const { Content } = await render(page);
 <Base title={page.data.seoTitel} description={page.data.beschreibung} path="/" tool jsonLd={[websiteSchema, appSchema, ...faqSchema(page.data.faq)]}>
 	<Tool title={page.data.titel} intro={page.data.intro} />
 	<div class="home-below">
+		<MailRoute />
 		<HomeSections />
 		<section class="section section-soft">
+			<div class="wrap narrow-wrap"><Faq items={page.data.faq} /></div>
+		</section>
+		<section class="section">
 			<div class="wrap content-grid">
 				<Prose class="narrow"><Content /></Prose>
 			</div>
-		</section>
-		<section class="section">
-			<div class="wrap narrow-wrap"><Faq items={page.data.faq} /></div>
 		</section>
 	</div>
 </Base>

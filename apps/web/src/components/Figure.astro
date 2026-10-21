@@ -1,0 +1,31 @@
+---
+// One hairline line figure (scripts/hairline.ts loads it when it comes near; the 5:4 box is reserved, CLS 0).
+interface Props {
+	name: 'hub' | 'vault' | 'padlock' | 'router' | 'relay' | 'sieve' | 'loupe' | 'dish';
+	/** German description for screen readers. */
+	label: string;
+	class?: string;
+}
+const { name, label, class: cls } = Astro.props;
+---
+
+<div class:list={['hl-fig', cls]} data-hairline={name} data-label={label}></div>
+
+<script>
+	import { initHairline } from '../scripts/hairline';
+	initHairline();
+</script>
+
+<style>
+	.hl-fig {
+		/* Same colours as the start page figures (MailRoute.astro). */
+		--hairline-plate: #ffffff;
+		--hairline-hi: #111113;
+		--hairline-edge: #111113;
+		--hairline-mid: #8a8b91;
+		--hairline-lo: #d4d4d8;
+		--hairline-stroke: 0.9;
+		width: 100%;
+		aspect-ratio: 5 / 4;
+	}
+</style>
