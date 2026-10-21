@@ -13,11 +13,15 @@ Stand: 21.10.2026
   - Docker: engine, rspamd 4.2, unbound (eigener Resolver) laufen, Spamhaus-Abfragen funktionieren
 
 ## Läuft gerade
-- Phase 1 Research (Hintergrund): Ergebnisse kommen nach `research/`
+- Phase 1 Research fertig (`research/`), wartet auf Freigabe der SEO-Strategie
+- Phase 3 Website begonnen (Astro-Gerüst, Design-Tokens), noch nicht committet
 
 ## Als Nächstes
 - Phase 3 Website (Astro + Tool-Insel + Prüf-Animation)
 - Stopp-Punkt: `research/seo-strategie.md` an Dennis, dann Phase 4 Inhalte
 
 ## Offene Fragen
-- keine
+- Startseite auf „mail tester“ statt „e mail check“ ausrichten?
+- `/dkim-check` als 4. Tool-Seite?
+- Hetzner als eine Sammelseite?
+- Ziel für „Lass es einrichten“-Link?
