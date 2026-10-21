@@ -19,6 +19,8 @@ const IGNORED = [
 
 /** Plain-language explanations for common content symbols. */
 const TEXTS: Record<string, string> = {
+	MISSING_MIME_VERSION: 'Der Mail fehlt die technische Angabe „MIME-Version“. Das passiert meist bei selbst gebauten Formularen oder Skripten.',
+	MIME_HEADER_CTYPE_ONLY: 'Die Mail hat nur eine unvollständige technische Formatangabe. Typisch für selbst gebaute Versand-Skripte.',
 	URL_NUMERIC_IP: 'Ein Link zeigt auf eine nackte IP-Adresse statt auf einen Domainnamen. Das ist typisch für Spam.',
 	URL_NUMERIC_IP_USER: 'Ein Link zeigt auf eine nackte IP-Adresse statt auf einen Domainnamen. Das ist typisch für Spam.',
 	R_SUSPICIOUS_URL: 'Ein Link sieht verdächtig aus, z. B. eine nackte IP-Adresse statt eines Namens.',
@@ -124,7 +126,7 @@ export function contentFinding(analysis: ContentAnalysis | null, extras: Content
 	if (links?.dead.length) {
 		const n = links.dead.length;
 		deductions.push({ reason: `${n} ${n === 1 ? 'Link funktioniert' : 'Links funktionieren'} nicht`, points: round1(Math.min(POINTS.content.deadLinkCap, n * POINTS.content.deadLink)) });
-		problems.push(`${n === 1 ? 'Ein Link führt' : `${n} Links führen`} ins Leere: ${links.dead.map((d) => `${d.host} (${d.reason})`).join(', ')}. Tote Links wirken auf Spamfilter und Leser unseriös.`);
+		problems.push(`${n === 1 ? 'Ein Link führt' : `${n} Links führen`} ins Leere: ${links.dead.map((d) => `${d.host}, ${d.reason}`).join('; ')}. Tote Links wirken auf Spamfilter und Leser unseriös.`);
 	}
 	if (links?.shorteners.length) {
 		deductions.push({ reason: 'Kurz-Links', points: POINTS.content.shortener });
