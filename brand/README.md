@@ -1,0 +1,14 @@
+# Logo e-mail-check.de
+
+Moderner, massiver Brief (Lasche ausgespart) mit grünem Prüf-Kreis (#02CA50) oben rechts, freigestellt durch einen Spalt. Haken im Kreis: Tinte #1D1D1F.
+
+| Datei | Einsatz |
+|---|---|
+| `logo-mark.svg` | Bildmarke dunkel, transparenter Hintergrund (Standard, Header) |
+| `logo-mark-weiss.svg` | Bildmarke hell für dunkle Flächen |
+| `favicon.svg`, `favicon.ico`, `favicon-16.png`, `favicon-32.png` | Browser-Tab |
+| `app-icon.svg`, `apple-touch-icon.png` (180), `icon-192.png`, `icon-512.png` | Homescreen / Web-App-Manifest |
+| `logo-mark-512.png`, `logo-mark-weiss-512.png` | Social, Presse, OG-Bilder |
+
+**Schriftzug:** Bildmarke + „e-mail-check“ in Fraunces 680 (`'SOFT' 0, 'WONK' 0`, -0.025em) + „.de“ in #8A8C8B. Abstand Marke–Text ca. 0,25× Markenhöhe.
+Freiraum um die Marke: mindestens die Breite des Prüf-Kreises.

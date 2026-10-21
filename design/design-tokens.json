@@ -1,0 +1,25 @@
+{
+  "farben": {
+    "tinte": "#1D1D1F",
+    "tinteHover": "#3A3A3D",
+    "textGedeckt": "#4D4F4E",
+    "textInaktiv": "#6B6D6C",
+    "randInaktiv": "#D4D4D8",
+    "trennlinie": "#F5F5F7",
+    "hintergrund": "#FFFFFF",
+    "statusOk": "#02CA50",
+    "statusHinweis": "#FF8A00",
+    "statusProblem": "#FF4034"
+  },
+  "farbRegel": "Statusfarben nur als Flaeche (Ring, Punkt, Pill, Logo-Haken). Text darauf immer #1D1D1F. Nie als Schriftfarbe auf Weiss.",
+  "schrift": {
+    "ueberschrift": { "familie": "Fraunces", "gewicht": 680, "achsen": "'SOFT' 0, 'WONK' 0", "laufweite": "-0.025em", "zeilenhoehe": 1.1 },
+    "fliesstext": { "familie": "Inter", "gewichte": [400, 500, 600, 700] },
+    "technisch": { "familie": "IBM Plex Mono", "gewichte": [500, 600], "einsatz": "Testadresse, DNS-Werte" }
+  },
+  "rahmen": { "stark": "6px (ab 820px abwaerts 4px)", "mittel": "2px", "fein": "1.5px" },
+  "radien": { "karteGross": "32px", "karteKlein": "24px", "innen": "16px", "klein": "8px", "pill": "999px" },
+  "abstand": [8, 16, 24, 32, 64, 128],
+  "bewegung": { "bounce": "cubic-bezier(0.34, 1.56, 0.64, 1)", "hover": "0.25-0.3s", "aufklappen": "0.35s" },
+  "button": { "hoehe": "56px", "touchMin": "44px" }
+}

@@ -1,0 +1,214 @@
+# e-mail-check.de – Projektgrundlage für die agentische Entwicklung
+
+Stand: 20.10.2026 · Owner: Dennis Buchwald
+
+Diese Datei ist die Quelle der Wahrheit für das Projekt. Wer hier entwickelt (Mensch oder Agent), liest sie zuerst.
+Entscheidungen, die sich ändern, werden hier aktualisiert.
+
+---
+
+## 0. Arbeitsweise für den Agenten
+
+- **Vor dem ersten Code:** Den Tech-Stack (Abschnitt 8) kritisch neu bewerten und mit Dennis besprechen. Der Stack ist eine Empfehlung, keine Entscheidung. Erst nach Freigabe loslegen.
+- In kleinen, lauffähigen Schritten arbeiten. Nach jedem Meilenstein kurz zusammenfassen, was steht und was als Nächstes kommt.
+- Bei echten Produkt- oder Design-Entscheidungen Dennis fragen, technische Details selbst entscheiden und begründen.
+- Oberflächentexte immer auf Deutsch, Ansprache **Du**, Klartext statt Fachbegriff.
+- Nichts an Datenschutz-Zusagen aufweichen (Abschnitt 6), ohne es mit Dennis zu klären.
+- Keine Secrets ins Repo. `.env.example` pflegen.
+
+---
+
+## 1. Was wir bauen
+
+Ein **deutscher, DSGVO-konformer Mail-Tester für Nicht-Techniker**.
+Man schickt eine Mail an eine Testadresse und bekommt in rund 30 Sekunden einen Score von 0–10, eine Ampel und eine Schritt-für-Schritt-Anleitung, wie man Probleme beim eigenen Anbieter behebt.
+
+**Positionierung in einem Satz:**
+„Du bist kein Techniker? Musst du auch nicht. Bring deine E-Mails auf 9 oder 10 von 10, ohne Fachchinesisch.“
+
+**Vorbild:** mail-tester.com, ins Deutsche übertragen und radikal vereinfacht. Profi-Tools wie MXToolbox richten sich an Admins, wir nicht.
+
+**Warum das Problem real ist:**
+- Ca. 11.000 Suchen/Monat in DE zu „e mail check“, „mail tester“, „e mail spam check“ etc. (Seobility, Okt. 2026).
+- Gmail (seit Feb. 2024) und Microsoft Outlook.com (seit Mai 2025) verlangen von Vielversendern SPF, DKIM und DMARC. Spamfilter bewerten diese Signale bei allen Absendern.
+
+## 2. Zielgruppe
+
+Webdesigner, Agenturen und Selbstständige, die Websites und Postfächer für Kunden einrichten, aber keine Mail-Experten sind.
+Typische Situationen: Kontaktformular-Mails kommen nicht an, Anbieterwechsel (z. B. zu Microsoft 365), Newsletter-Tool einrichten.
+
+**Job-to-be-done:** „Sag mir in einem Satz, ob alles passt, und wenn nicht, was ich genau wo eintragen muss.“
+
+## 3. Rahmen
+
+- Privates Side-Project von Dennis Buchwald, **nicht** dbw media.
+- Impressum: gleiche Adresse wie dbw media, aber ohne Firmenname dbw media.
+- Footer: „Ein Projekt von Dennis Buchwald“ mit Link auf dennisbuchwald.de.
+- Domain: e-mail-check.de (Name = Suchbegriff, bewusst kein Markenaufbau).
+- Wachstum: **rein über SEO**, kein Build in Public, keine Kurzvideos.
+- Ziel: so schnell wie möglich Top 3 bei Google für „e mail check“ und „mail tester“.
+- Geld: erst Traffic. Später Google-Werbung (dann mit Cookie-Banner) und/oder Test-Pakete bzw. Komfort-Funktionen.
+
+---
+
+## 4. MVP-Umfang
+
+### Drin
+1. **Mail-Test:** einmalige Testadresse, automatisches Warten, Auswertung, Ergebnis.
+2. **DNS-Schnellcheck ohne Testmail:** Domain eingeben → SPF und DMARC (und DKIM, falls Selektor bekannt) prüfen. Eigene SEO-Seiten `/dmarc-check`, `/spf-check`.
+3. **Ergebnis:** Score 0–10 mit einer Nachkommastelle, Ampel, ein Satz Klartext, max. 5 Prüfpunkte, sortiert nach Schwere (Problem → Hinweis → OK).
+4. **Anleitungen pro Anbieter** direkt aus dem Ergebnis heraus, mit Kopier-Button für DNS-Werte.
+5. **Teilbarer Ergebnis-Link** für Kunden (zufällige ID, 7 Tage gültig, `noindex`). Das ist ein Unterscheidungsmerkmal.
+6. **„Lass es einrichten“-Link** bei roten Ergebnissen (dezent).
+7. **Unbegrenzt kostenlos**, mit Missbrauchsschutz nach Best Practice (z. B. Rate-Limit pro IP, Richtwert ~10 Tests/Stunde).
+8. **Ratgeber- und Wissensseiten** (Abschnitt 7).
+9. Impressum, Datenschutz, AVV-Vorlage zum Download.
+10. Cookie-freie Statistik (z. B. Umami oder Plausible, selbst gehostet).
+
+### Bewusst nicht im MVP
+Login/Konto, Bezahlfunktion, Werbung, PDF-Bericht, DMARC-Monitoring-Abo, White-Label, API, englische Version.
+
+### Launch-fertig, wenn
+- Mail-Test liefert zuverlässig Ergebnisse,
+- DNS-Schnellcheck läuft,
+- ~20 Ratgeber sind fachlich geprüft online,
+- Impressum und Datenschutz stehen.
+
+---
+
+## 5. User Flow und Prüfpunkte
+
+1. **Start:** Nur eine Aktion. Testadresse + „Adresse kopieren“ + „Mail ist raus“. Vertrauenszeile: Server in Deutschland · sofort gelöscht · kein Konto.
+2. **Warten/Prüfen:** Animation (Abschnitt 9). Seite aktualisiert sich selbst, kein „Ergebnis prüfen“-Button.
+3. **Ergebnis:** Score-Ring + Headline + Prüfpunkte zum Aufklappen. Bei Problemen „So behebst du das“.
+4. **Anleitung:** „Wo liegt deine Domain?“ (Anbieter-Chips) → nummerierte Schritte → DNS-Wert kopieren → „Erneut testen“.
+5. **Teilen:** Link für den Kunden.
+
+| Prüfpunkt (Klartext) | Technik | Beispiel Klartext bei Fehler |
+|---|---|---|
+| Absender bestätigt | SPF | Deine Domain sagt nicht, welche Server Mails für sie senden dürfen. |
+| Mail unterschrieben | DKIM | Deine Mail hat keine digitale Unterschrift. |
+| Schutzregel | DMARC | Es gibt keine Regel, was mit gefälschten Mails in deinem Namen passieren soll. |
+| Server-Ruf | Sperrlisten, rDNS | Dein Server steht auf einer Sperrliste. |
+| Inhalt | Spamfilter-Score | Betreff nur in Großbuchstaben wirkt verdächtig. |
+
+Fachbegriff immer klein unter dem Klartext, Rohdaten für Profis ganz unten aufklappbar.
+
+---
+
+## 6. Datenschutz (nicht verhandelbar)
+
+- Hosting ausschließlich in Deutschland.
+- Mail-Inhalt nur im Speicher auswerten und **direkt danach löschen**.
+- Gespeichert wird nur die Ergebnis-Zusammenfassung (Score, Prüfpunkte), automatische Löschung nach 7 Tagen.
+- Ergebnis-Links nur mit zufälliger ID erreichbar, `noindex`, nicht in der Sitemap.
+- Kein Google Analytics, keine Tracking-Cookies im MVP → kein Cookie-Banner nötig.
+- Fonts lokal einbinden (kein Laden von Google-Servern zur Laufzeit).
+- AVV-Vorlage für Agenturen.
+
+---
+
+## 7. SEO und Inhalte
+
+**Seitenstruktur (Hub-and-Spoke, Vorbild flinkform.de):**
+- `/` Startseite: Tool zuerst und allein im sichtbaren Bereich, darunter FAQ und Ratgeber-Teaser.
+- `/dmarc-check`, `/spf-check`: eigene Tool-Seiten (DNS-Schnellcheck).
+- `/anleitung/<anbieter>/<thema>`: z. B. `/anleitung/ionos/dmarc`.
+- `/wissen/<begriff>`: z. B. „Was ist DKIM?“.
+
+**Anbieter zum Launch:** IONOS, Strato, All-Inkl, Hetzner, Google Workspace, Microsoft 365. AT/CH-Hoster später.
+
+**Inhalte:** ca. 20 Seiten zum Launch (6 Anbieter × SPF/DKIM/DMARC + Wissensseiten). KI schreibt, Fachleute prüfen jede Anleitung vor Veröffentlichung gegen die echte Oberfläche des Anbieters.
+
+**Technik-SEO:** statisch und schnell, saubere Überschriften, FAQ mit echten Suchfragen (gern mit FAQ-Schema), interne Links von jeder Anleitung aufs Tool, Sitemap, Google Search Console ab Tag 1.
+
+**Keyword-Daten (Seobility, Google.de, Okt. 2026):**
+
+| Suchbegriff | Volumen/Monat | CPC |
+|---|---|---|
+| e mail check | 4.400 | 3,27 € |
+| mail tester | 3.600 | 5,15 € |
+| dmarc check | 2.400 | 0,22 € |
+| e mail spam check | 1.600 | 2,18 € |
+| e mail tester | 1.000 | 0,84 € |
+
+Backlinks: zuerst eigene Seiten (dennisbuchwald.de, flinkform.de), dann Tool-Verzeichnisse und Webdesigner-Communities.
+
+---
+
+## 8. Technik (Empfehlung – vom Agenten neu bewerten und mit Dennis diskutieren)
+
+**Empfehlung:**
+- **Website:** Astro (statisch, sehr schnell, Ratgeber als Markdown/MDX). Alternative: Next.js, falls viel Interaktivität/Server-Rendering nötig wird.
+- **API:** kleiner Node.js-Dienst (z. B. Fastify oder Hono) oder Python (FastAPI). Aufgaben: Testadresse erzeugen, Ergebnis-Status liefern (Polling oder Server-Sent Events), DNS-Schnellcheck.
+- **Mail-Empfang:** Postfix (Catch-all auf eigener Test-Subdomain, z. B. `@test.e-mail-check.de`) → Übergabe an die Auswertung.
+- **Analyse:** rspamd (oder SpamAssassin) für Inhalts-Score und DKIM-Prüfung, eigene DNS-Abfragen für SPF/DMARC/rDNS, Abfrage gängiger Sperrlisten.
+- **Datenbank:** SQLite oder PostgreSQL, nur Ergebnis-Zusammenfassungen.
+- **Statistik:** Umami oder Plausible, selbst gehostet.
+- **Deployment:** Docker Compose.
+
+**Offene Fragen zum Bewerten:** Astro vs. Next.js für Tool + Inhalte, Node vs. Python für die Analyse, Polling vs. SSE, wie Score-Gewichtung transparent bleibt.
+
+**Infrastruktur:**
+- Entwicklung **lokal** (ca. 90 %): UI, API, DNS-Checks, rspamd in Docker mit Beispiel-Mails (.eml).
+- Echter Mail-Empfang braucht öffentliche IP + eingehenden Port 25 → Server.
+- Übergangsweise auf Dennis' bestehendem Hetzner-Server (CAX11, ARM, 2 vCPU, 4 GB, Nürnberg, dort läuft n8n). Sauber in Docker isolieren, n8n nicht beeinträchtigen.
+- Später eigener Server (Ziel: kleinster passender Hetzner-Cloud-Server in DE, hochskalierbar). Grund: Der Dienst nimmt Mails von Fremden an → Isolation von n8n.
+
+---
+
+## 9. Design
+
+**Grundhaltung:** UX radikal einfach (Vorbild Trade Republic: Komplexes simpel darstellen), Look wie ein hochwertiges SaaS-Produkt. Formensprache vom dbw-media-Styleguide (Outline statt Fläche), aber eigene Identität.
+
+**Prototyp (klickbar):** https://claude.ai/artifact/MS321wZJK4B77Q1jJnYmJW → Reihe „Final“ (Mobile + Desktop). Ältere Varianten dort dienen nur dem Vergleich.
+
+**Farben: Schwarz-Weiß, keine Akzentfarbe.** Farbe ausschließlich für den Status.
+
+| Rolle | Wert |
+|---|---|
+| Tinte (Text, Rahmen, gefüllte Buttons) | `#1D1D1F` |
+| Tinte Hover | `#3A3A3D` |
+| Fließtext gedeckt | `#4D4F4E` |
+| Inaktiv/Pending | `#6B6D6C` (Text), `#D4D4D8` (Ränder) |
+| Trennlinien | `#F5F5F7` |
+| Hintergrund/Karten | `#FFFFFF` |
+| Status OK | `#02CA50` |
+| Status Hinweis | `#FF8A00` |
+| Status Problem | `#FF4034` (Rot bedeutet immer „Problem“) |
+
+**Regel für Statusfarben:** Nur als **Fläche** einsetzen (Score-Ring, Punkte, Pills, Logo-Haken). Text darauf immer Tinte `#1D1D1F` (Kontrast ≥ 4,5:1). Nie als Schriftfarbe auf Weiß, dafür sind die Töne zu hell (Grün ca. 2,2:1, Rot ca. 3,5:1). Status-Labels = Pill mit Statusfarbe als Hintergrund, 2 px Tinte-Rahmen, schwarze Schrift.
+
+**Logo:** Moderner, massiver Brief (abgerundet, Lasche ausgespart) mit grünem Prüf-Kreis `#02CA50` oben rechts, freigestellt durch einen Spalt. Haken im Kreis Tinte (schwarz). Fertige Dateien (SVG, Favicons, App-Icons) liegen in `brand/`, Nutzungsregeln in `brand/README.md`.
+
+**Typografie:** Überschriften und Logo-Schriftzug **Fraunces**, Gewicht 680, Achsen `'SOFT' 0, 'WONK' 0` (spitze Serifen, halbfett; Referenz-Gefühl: Logo „nüchtern“), eng (`-0.025em`), `text-wrap: balance`. Fließtext **Inter**. Technische Werte (Testadresse, DNS-Einträge) in **IBM Plex Mono** (Schreibmaschinen-/Brief-Anmutung). Alle lokal einbinden.
+
+**Formen:**
+- Große Karten: 6 px Rahmen (ab 820 px abwärts 4 px), Radius 32 px (mobil 24 px).
+- Mittel: 2 px (Inputs, Chips, Code-Boxen). Nie zwei gleich starke Rahmen ineinander.
+- Buttons: Pill (999 px), 56 px hoch, gefüllt Tinte oder 2-px-Outline.
+- Bewegung: Hover mit `cubic-bezier(0.34, 1.56, 0.64, 1)` und leichtem Anheben.
+- Touch-Ziele ≥ 44 px, Kontrast ≥ 4,5:1, echte Buttons/Links (barrierefrei).
+
+**Prüf-Animation (wichtig, soll richtig befriedigend sein):**
+1. Warten: Ring mit kreisendem Punkt, gestrichelter Innenring dreht gegenläufig, Briefumschlag in der Mitte.
+2. Mail empfangen: Umschlag „ploppt“ mit Häkchen auf (Bounce).
+3. Prüfen: Scan-Strahl fährt über die Mail, Fortschrittsring füllt sich pro Check, Checkliste hakt nacheinander ab, pulsierende Punkte („Check 3 von 6“).
+4. Fertig: Ring federt, Funken-Burst, dann Ergebnis.
+Die Animation folgt dem echten Fortschritt der Analyse (Events aus der API), nicht nur einem Timer.
+
+---
+
+## 10. Später (nicht MVP)
+
+PDF-Kundenbericht · Konto mit Verlauf · Test-Pakete/Agentur-Tarif · DMARC-Monitoring als Abo · Werbung ab ~10.000 Besuchern/Monat (nur Ratgeber-Seiten und unter dem Ergebnis, nie im Test-Ablauf) · White-Label · API · weitere Anbieter (Netcup, Hostinger, AT/CH) · Überwachung via n8n.
+
+## 11. Referenzen
+
+- Start-Auftrag für den Agenten: `START-PROMPT.md`
+- Design-Quelltext, Tokens: `design/` · Logo: `brand/`
+
+- Konzept-Dokument (Hintergrund, teils älterer Stand – diese Datei hat Vorrang): https://claude.ai/code/artifact/cca40c3b-2047-4a93-a95f-41524bf8d5d3
+- Vorbild Funktion: https://mail-tester.com
+- Vorbild SEO-Aufbau: https://flinkform.de
+- Design-Grundlage: dbw-media-Styleguide (`05_Second-Brain/design-system.md`)
