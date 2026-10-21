@@ -9,3 +9,4 @@ Claude outputs/
 test-results/
 playwright-report/
 research/lighthouse/*.json
+test-results
