@@ -10,3 +10,8 @@ test-results/
 playwright-report/
 research/lighthouse/*.json
 test-results
+
+# Private data: stays local, never in the public repo
+research/
+docs/recht-notizen.md
+docs/offene-punkte.md
