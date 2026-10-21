@@ -34,7 +34,7 @@ export async function analyzeMessage(message: Buffer, env: SmtpEnvelope, rcpt: s
 	const now = deps.now?.() ?? new Date();
 
 	// Reputation and content do not depend on the auth results: start them right away.
-	const reputation = checkReputation(env.ip, deps.resolver);
+	const reputation = checkReputation(env.ip, deps.resolver, undefined, env.helo);
 	const parsed = await simpleParser(message, { skipImageLinks: true, skipTextToHtml: true, skipTextLinks: true }).catch(() => null);
 	const meta = mailMeta(parsed, env, now);
 	onStep('received', { mail: { from: meta.from, subject: meta.subject }, detail: meta.tls.used ? `Verschlüsselt empfangen (${meta.tls.version ?? 'TLS'})` : 'Unverschlüsselt empfangen' });

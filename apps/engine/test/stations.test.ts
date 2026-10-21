@@ -78,3 +78,20 @@ describe('end to end: freemail sender like a real iCloud mail', () => {
 		expect(hops).toEqual(['p00-icloudmta-asmtp.me.com', 'mr-2004c.eps.apple.com', 'mx.e-mail-check.de']);
 	});
 });
+
+describe('server reputation extras', () => {
+	it('compares the HELO name and keeps positive lists apart from blocklists', async () => {
+		const { checkReputation, reverseIp } = await import('../src/checks/reputation.ts');
+		const lists = [
+			{ name: 'Test-Sperrliste', zone: 'bl.example.test', major: false, ipv6: false, delistUrl: 'https://bl.example.test' },
+			{ name: 'Test-Positivliste', zone: 'wl.example.test', major: false, ipv6: false, allow: true, delistUrl: 'https://wl.example.test' },
+		];
+		const resolver = fakeResolver({ [`${reverseIp(GOOD_IP)}.wl.example.test A`]: ['127.0.0.2'] });
+		const good = await checkReputation(GOOD_IP, resolver, lists, 'mail.gut.example.test');
+		expect(good.status).toBe('ok');
+		expect(good.raw).toMatchObject({ helo: 'mail.gut.example.test', heloMatches: true, lists: [{ list: 'Test-Sperrliste', listed: false }], allowLists: [{ list: 'Test-Positivliste', listed: true }] });
+		const odd = await checkReputation(GOOD_IP, resolver, lists, 'localhost');
+		expect(odd.raw).toMatchObject({ helo: 'localhost', heloMatches: false });
+		expect(odd.deductions).toEqual([]);
+	});
+});
