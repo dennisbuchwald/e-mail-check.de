@@ -1,8 +1,8 @@
 // Scrollytelling for "Der Weg deiner Mail" (components/MailRoute.astro).
 // The scene loads when the section comes near. While the section is on screen, one rAF per scroll turns the
-// position of the reading line inside the step list into progress 0..1 for the scene. The dimming of inactive
-// steps runs on a CSS view timeline; browsers without one get is-steps/is-active classes from here instead.
-// Reduced motion: no scroll link, the scene shows its end state (all stations green).
+// position of the reading line inside the step list into progress 0..1 for the scene, marks the active step
+// (is-active, the others dim to 30 % while the section has is-steps) and the finale (is-arrived).
+// Reduced motion: no scroll link, the scene shows its end state (logo with its check), nothing dims.
 type Scene = { update(o: { progress?: number; play?: boolean }): void };
 
 export function initMailRoute(): void {
@@ -12,7 +12,6 @@ export function initMailRoute(): void {
 	if (!sec || !box || !list || !('IntersectionObserver' in window)) return;
 	const steps = [...list.querySelectorAll<HTMLElement>('[data-step]')];
 	const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-	const timeline = CSS.supports('animation-timeline: view()');
 	const stacked = matchMedia('(max-width: 1080px)');
 	if (reduced) sec.classList.add('is-static');
 
@@ -39,13 +38,12 @@ export function initMailRoute(): void {
 		frame = 0;
 		const p = progress();
 		scene?.update({ progress: p });
-		if (!timeline) {
-			const i = Math.round(p * (steps.length - 1));
-			if (i !== active) {
-				steps.forEach((s, k) => s.classList.toggle('is-active', k === i));
-				active = i;
-			}
+		const i = Math.round(p * (steps.length - 1));
+		if (i !== active) {
+			steps.forEach((s, k) => s.classList.toggle('is-active', k === i));
+			active = i;
 		}
+		sec.classList.toggle('is-arrived', p >= 0.985);
 	};
 	const onScroll = () => {
 		if (!frame) frame = requestAnimationFrame(tick);
@@ -63,9 +61,10 @@ export function initMailRoute(): void {
 		if (on) {
 			addEventListener('scroll', onScroll, { passive: true });
 			addEventListener('resize', onScroll, { passive: true });
-			if (!timeline) sec.classList.add('is-steps');
+			sec.classList.add('is-steps');
 			onScroll();
 		} else {
+			sec.classList.remove('is-steps');
 			removeEventListener('scroll', onScroll);
 			removeEventListener('resize', onScroll);
 		}

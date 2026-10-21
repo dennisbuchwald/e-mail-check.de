@@ -22,7 +22,7 @@ for (const [name, width, height, reducedMotion] of [['desktop', 1440, 900, 'no-p
 		const box = document.querySelector('[data-mailroute]').getBoundingClientRect();
 		return { top: mid(steps[0]), height: mid(steps[steps.length - 1]) - mid(steps[0]), stage: box.height };
 	});
-	const stops = reducedMotion === 'reduce' ? [['liste', list.top - 300, 0]] : [0, 0.5, 1].map((p) => {
+	const stops = reducedMotion === 'reduce' ? [['liste', list.top - 300, 0]] : (process.env.PS ? process.env.PS.split(',').map(Number) : [0, 0.17, 0.33, 0.5, 0.67, 0.83, 1]).map((p) => {
 		const free = width <= 1080 ? 76 + 16 + list.stage : 0;
 		const line = free + (height - free) / 2;
 		return [`p${String(p).replace('.', '')}`, list.top + p * list.height - line, p];
@@ -44,6 +44,11 @@ for (const [name, width, height, reducedMotion] of [['desktop', 1440, 900, 'no-p
 		await page.waitForTimeout(1800);
 		console.log(name, tag, Math.round(y), await page.evaluate(() => Math.round(scrollY)));
 		await page.screenshot({ path: `${out}/${name}-${tag}.png` });
+		if (process.env.SCENE) {
+			const bb = await page.evaluate(() => { const s = document.querySelector('[data-mailroute] svg'); const b = s.querySelector('g').getBBox(); return [b.x, b.y, b.width, b.height].map(Math.round); });
+			console.log('  bbox', bb.join(' '));
+			await page.locator('[data-mailroute]').screenshot({ path: `${out}/szene-${name}-${tag}.png` });
+		}
 	}
 	await page.close();
 }

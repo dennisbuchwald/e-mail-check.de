@@ -132,5 +132,8 @@ test('mail route: the scene follows the scroll, every station turns green at the
 		const last = document.querySelectorAll<HTMLElement>('.route-step')[5].getBoundingClientRect();
 		window.scrollBy({ top: last.top + last.height / 2 - innerHeight * 0.3, behavior: 'instant' });
 	});
-	await expect(page.locator('[data-mailroute] .dot.ok')).toHaveCount(6, { timeout: 5000 });
+	// every station's marker has popped (r > 0), the envelope became the logo with its green check, the finale text shows
+	await expect.poll(() => page.locator('[data-mailroute] .mk-done').evaluateAll((els) => els.filter((e) => Number(e.getAttribute('r')) > 0).length), { timeout: 5000 }).toBe(6);
+	await expect.poll(() => page.locator('[data-mailroute] .badge').getAttribute('r').then(Number), { timeout: 5000 }).toBeGreaterThan(0);
+	await expect(page.getByText('Angekommen.')).toBeVisible();
 });

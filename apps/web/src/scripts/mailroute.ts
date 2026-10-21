@@ -7,6 +7,7 @@ export type MailrouteOptions = { progress?: number; play?: boolean; theme?: 'aut
 export type Mailroute = { update(o: MailrouteOptions): void; destroy(): void };
 
 const LAP_S = 7;
+const VIEWBOX = '0 35 400 250';
 
 export function mailroute(el: HTMLElement, options: MailrouteOptions = {}): Mailroute {
 	const opts = { ...options };
@@ -20,7 +21,10 @@ export function mailroute(el: HTMLElement, options: MailrouteOptions = {}): Mail
 		else el.removeAttribute('data-hairline-theme');
 	};
 	dress();
-	const svg = HL.mk('svg', { viewBox: '0 0 400 320', 'aria-hidden': 'true' }, el);
+	// Weak devices get the travel and the checks without the small moments (scene reads data-lite).
+	if ((navigator.hardwareConcurrency ?? 8) <= 4) el.dataset.lite = '1';
+	// The scene is wider than the package's 5:4 frame: crop the viewBox to it (8:5).
+	const svg = HL.mk('svg', { viewBox: VIEWBOX, 'aria-hidden': 'true' }, el);
 	let text = 'rest';
 	const read = { get textContent() { return text; }, set textContent(v: string) { text = v ?? ''; } };
 	const at = () => (reduced ? 1 : Math.min(1, Math.max(0, opts.progress ?? 0)));
@@ -54,7 +58,7 @@ export function mailroute(el: HTMLElement, options: MailrouteOptions = {}): Mail
 			loop.unregister();
 			engine.destroy();
 			svg.remove();
-			for (const a of ['data-hairline', 'role', 'aria-label', 'data-hairline-theme']) el.removeAttribute(a);
+			for (const a of ['data-hairline', 'role', 'aria-label', 'data-hairline-theme', 'data-lite']) el.removeAttribute(a);
 		},
 	};
 }
