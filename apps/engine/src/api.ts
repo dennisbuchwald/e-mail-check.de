@@ -79,7 +79,8 @@ export function createApi(opts: ApiOptions): Hono {
 			});
 			// Replay what already happened, so late subscribers see the full progress.
 			const now = opts.service.status(id)!;
-			for (const step of now.done) await send({ type: 'step', step });
+			const replay = opts.service.stepEvents(id);
+			for (const step of now.done) await send(replay.find((e) => e.step === step) ?? { type: 'step', step });
 			if (now.state === 'done' && now.resultId) await send({ type: 'done', resultId: now.resultId });
 			if (now.state === 'expired') await send({ type: 'expired' });
 			if (now.state === 'error') await send({ type: 'error', message: 'Die Auswertung ist fehlgeschlagen.' });
