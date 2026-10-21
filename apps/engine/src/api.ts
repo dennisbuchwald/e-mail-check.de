@@ -23,9 +23,11 @@ export function createApi(opts: ApiOptions): Hono {
 	const app = new Hono().basePath('/api');
 	const testLimit = new RateLimiter(opts.rateLimit.tests, 3600_000);
 	const dnsLimit = new RateLimiter(opts.rateLimit.dns, 3600_000);
+	const statsLimit = new RateLimiter(120, 3600_000);
 	setInterval(() => {
 		testLimit.sweep();
 		dnsLimit.sweep();
+		statsLimit.sweep();
 	}, 600_000).unref();
 
 	const ipOf =
@@ -48,6 +50,13 @@ export function createApi(opts: ApiOptions): Hono {
 	};
 
 	app.get('/health', (c) => c.json({ ok: true }));
+
+	// Public counter for the status bar: one number, no personal data, cached for 60 s.
+	app.get('/stats', (c) => {
+		const wait = statsLimit.hit(ipOf(c));
+		if (wait) return tooMany(c, wait);
+		return c.json({ testsToday: opts.service.testsToday() });
+	});
 
 	app.post('/tests', (c) => {
 		const wait = testLimit.hit(ipOf(c));

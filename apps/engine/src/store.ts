@@ -41,6 +41,12 @@ export class Store {
 		this.db.prepare('INSERT INTO tests (id, local, state, created_at, expires_at) VALUES (?, ?, ?, ?, ?)').run(row.id, row.local, 'waiting', row.createdAt, row.expiresAt);
 	}
 
+	/** Number of analyzed tests created at or after `sinceIso` (for the public counter). */
+	countDoneSince(sinceIso: string): number {
+		const row = this.db.prepare("SELECT COUNT(*) AS n FROM tests WHERE state = 'done' AND created_at >= ?").get(sinceIso) as { n: number };
+		return Number(row.n);
+	}
+
 	getTest(id: string): TestRow | undefined {
 		return toTest(this.db.prepare('SELECT * FROM tests WHERE id = ?').get(id));
 	}
