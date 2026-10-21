@@ -33,11 +33,11 @@ describe('C1: HTML scanning runs in linear time', () => {
 });
 
 describe('SMTP limits', () => {
-	const PORT = 25271;
+	let PORT = 0;
 	const store = new Store(':memory:');
 	const service = new TestService({ store, testDomain: 'test.e-mail-check.de', testTtlMinutes: 60, deps: { resolver: fakeResolver(), mta: 'mx.test', resultTtlDays: 7, scanContent: null } });
 	const server = createSmtpServer(service, { hostname: 'mx.test', maxMessageBytes: 4096, allowXclient: false, maxPerIp: 3, maxBadRcpt: 4 });
-	beforeAll(() => new Promise<void>((r) => server.listen(PORT, r)));
+	beforeAll(() => new Promise<void>((r) => server.listen(0, () => ((PORT = (server.server.address() as { port: number }).port), r()))));
 	afterAll(() => new Promise<void>((r) => server.close(() => r())));
 
 	/** Sends commands one reply at a time and returns the reply codes. */
