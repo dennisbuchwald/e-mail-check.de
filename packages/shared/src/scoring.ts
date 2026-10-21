@@ -98,8 +98,11 @@ export function enrichFindings(findings: Finding[]): Finding[] {
 const WORDS = ['Null', 'Eine', 'Zwei', 'Drei', 'Vier', 'Fünf', 'Sechs'];
 
 /** Two-line verdict (design/redesign/ergebnis-v2-prototyp.html, tab D): line 1 ink, line 2 grey. */
-export function verdictFor(score: number, findings: Pick<Finding, 'status'>[]): { line1: string; line2: string } {
+export function verdictFor(score: number, findings: (Pick<Finding, 'status'> & { findings?: Finding[] })[]): { line1: string; line2: string } {
 	const bad = findings.filter((f) => f.status === 'bad').length;
+	// The spam filter itself says spam (rspamd ≥ 6): say so, whatever the other stations do.
+	const rspamd = findings.flatMap((s) => s.findings ?? []).find((f) => f.id === 'content')?.raw?.rspamdScore;
+	if (typeof rspamd === 'number' && rspamd >= 6) return { line1: 'Deine Mail landet im Spam.', line2: bad > 1 ? 'Der Inhalt ist das größte Problem.' : 'Der Inhalt ist das Problem.' };
 	const warn = findings.filter((f) => f.status === 'warn').length;
 	if (bandFor(score) === 'risk') return { line1: 'Hier landet viel im Spam.', line2: 'So behebst du es.' };
 	if (bad > 0) return { line1: 'Deine Mail kommt an, aber nicht überall.', line2: bad === 1 ? 'Eine Sache solltest du beheben.' : `${bad} Dinge solltest du beheben.` };

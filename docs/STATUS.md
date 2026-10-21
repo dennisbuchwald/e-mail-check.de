@@ -8,6 +8,7 @@ Stand: 21.10.2026
 - **Redesign 21.10.2026** (`REDESIGN-PROMPT.md`): cleaner SaaS-Stil, Hero mit Aura, Sektionen „Was wir prüfen“ und „Was bedeutet die Zahl?“, neue Ergebnis-Seite mit Mail-Kopf, Bändern, Teil-Scores, Ausnahme-Karte und Aktionsplan (+X Pkt. pro Behebung). Betreff und Absender bleiben nur 60 Min im RAM. Vorher/Nachher: `docs/redesign/`. E2E 8/8 grün.
 - **Warte-Erlebnis (21.10.2026):** „Mail-Programm öffnen“ (mailto), Radar-Sweep mit Uhr „Postfach offen seit“, wechselnde Tipps, Hilfe nach 45 s, Brief fliegt in den Ring, Absender/Betreff erscheinen, fünf Lämpchen am Ring in Ergebnisfarbe, Live-Zeilen mit echten Werten (SSE `step` trägt `status`, `detail`, bei `received` `mail`).
 - **Redesign V2 abgeschlossen (21.10.2026, nicht deployt):** Statusleiste mit Wortmarke „mail / check“, Pille mit echtem Zähler (`GET /api/stats`, ab 50 sichtbar) und Tastatur-Menü „Ratgeber“; Hero mit Mail-Fenster auf Punktraster, Aura entfernt; Animation A (Prüf-Punkt springt beim Laden ins Logo) und B (Wortmarke wird beim Scrollen zum Logo, Fallback `.is-compact` für Firefox und Reduced Motion), alles ohne Animationsbibliothek; Footer-Wortmarke, neues OG-Bild. Lighthouse mobil Startseite 98/100/100/100, CLS 0. Screenshots `docs/redesign/v2/`. Damit ist das Design fertig, neue Ideen nur als Vorschlag hier.
+- **Ergebnis V2 (21.10.2026):** Zustellweg mit sechs Stationen und Messgrafiken, serverseitig gerendert (Caddy-Templates), neue Checks: Freemail (−0,2), Transport/TLS und Zustellkette, 10 freie Sperrlisten plus DNSWL und Mailspike als Positivlisten, HELO-Abgleich, Inhalts-Hinweise (Bild/Text, Textfassung, kurze Mail), Newsletter-Erkennung erweitert, rspamd-Regeln einzeln auf Deutsch. **Link-Abruf entfernt** (Links werden nie aufgerufen, vorher HEAD/GET auf tote Links). „Mail-Quelle & Header“ mit Text, HTML (Sandbox) und Header nur live, nichts gespeichert. Screenshots `docs/redesign/ergebnis-v2/`. A11y 100, CLS 0.
 - **Inhalte**: 27 Seiten (4 Tools, 5 Wissen, 16 Anleitungen, Übersicht, Vergleich `/mail-tester-alternative`), alle mit Quelle und Stand, Anleitungen mit `geprueft: false`.
 - **Technik-SEO**: Titles/Descriptions, Canonicals, strukturierte Daten, Sitemap, robots.txt, OG-Bild, 404. Lighthouse mobil ≥ 95 in allen Kategorien.
 - **Recht**: Impressum (Platzhalter), Datenschutz + AVV als Entwurf (noindex).
@@ -53,3 +54,9 @@ Suchvolumen: Seobility, Google.de, Monat, Stand 21.10.2026.
 | OG-Bild mit Unterzeile „Kostenloser Mail-Tester · Server in Deutschland“ | Ohne sie ist in Vorschauen nicht erkennbar, was das Tool tut. |
 
 Nebenbei behoben: `apps/web/src/data/` war wegen der Regel `data/` nie im öffentlichen Repo (frischer Klon hätte nicht gebaut); der CSS-Minifier hat `animation-timeline` ungültig zusammengefasst; kleine Skripte wurden inline gebaut und von der CSP blockiert.
+
+## Ergebnis V2: offen bei Dennis
+
+- **Spamhaus:** frei nur nicht-kommerziell. Vor Werbung oder bezahlten Paketen eine bezahlte DQS nötig; besser jetzt den kostenlosen DQS-Schlüssel beantragen und Spamhaus schriftlich fragen, ob ein öffentlicher Mail-Tester abgedeckt ist.
+- **Barracuda** (Resolver-IP 167.235.225.13 kostenlos registrieren) und **SpamRATS** (kostenloser API-Schlüssel) wären sinnvolle Ergänzungen. Beides braucht ein Konto, deshalb nicht eingebaut.
+- Datenschutzerklärung an die neuen Punkte angepasst (Zustellkette, Vorschau nur live, Links nie aufgerufen, Listenbetreiber). Bei der rechtlichen Prüfung mit ansehen.

@@ -16,8 +16,8 @@ interface Props {
 	path?: string;
 	noindex?: boolean;
 	jsonLd?: Record<string, unknown>[];
-	/** Tool pages: body carries the tool state (start, wait, result …). */
-	tool?: boolean;
+	/** Tool pages: body carries the tool state (start, wait, result …); "result" for /ergebnis/<id>, so the layout is right before JS. */
+	tool?: boolean | 'result';
 	/** Soft grey page background (result, sub pages). */
 	soft?: boolean;
 }
@@ -56,7 +56,7 @@ const ogImage = new URL('/og.png', SITE.url).href;
 		{umamiId && <script defer src="/stats/script.js" data-website-id={umamiId} data-host-url="/stats" data-do-not-track="true" />}
 		{jsonLd.map((data) => <script type="application/ld+json" set:html={JSON.stringify(data)} />)}
 	</head>
-	<body data-tool-state={tool ? 'start' : undefined} class:list={[{ soft }]}>
+	<body data-tool-state={tool === 'result' ? 'result' : tool ? 'start' : undefined} class:list={[{ soft }]}>
 		<a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
 		<header class="statusbar" data-statusbar>
 			<div class="wrap sb-inner">

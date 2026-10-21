@@ -69,6 +69,10 @@ describe('verdict (two lines, by station status)', () => {
 		[8.5, st('ok', 'ok', 'bad', 'ok', 'ok', 'ok'), 'Deine Mail kommt an, aber nicht überall.', 'Eine Sache solltest du beheben.'],
 		[3, st('bad', 'bad', 'bad', 'bad', 'ok', 'ok'), 'Hier landet viel im Spam.', 'So behebst du es.'],
 	])('%s', (score, stations, line1, line2) => expect(verdictFor(score as number, stations)).toEqual({ line1, line2 }));
+	it('says spam when the spam filter does, even at 6 points', () => {
+		const content = { id: 'content', status: 'bad', raw: { rspamdScore: 15 } } as unknown as Finding;
+		expect(verdictFor(6, [{ status: 'ok' }, { status: 'bad', findings: [content] }])).toEqual({ line1: 'Deine Mail landet im Spam.', line2: 'Der Inhalt ist das Problem.' });
+	});
 });
 
 describe('mail meta', () => {

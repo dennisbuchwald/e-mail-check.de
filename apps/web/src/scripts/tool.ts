@@ -390,7 +390,7 @@ export function initTool(): void {
 		if (gen !== generation) return;
 		if (!res?.ok) return message('Ergebnis nicht gefunden', 'Das Ergebnis konnte nicht geladen werden. Starte bitte einen neuen Test.');
 		history.pushState({ resultId }, '', `/ergebnis/${resultId}`);
-		renderResult(res.data);
+		renderResult(res.data, true);
 	}
 
 	// ---- result (markup: packages/shared/src/result-view.ts, same as the server renders) ----
@@ -475,7 +475,7 @@ export function initTool(): void {
 		if (r) result = r;
 	}
 
-	function renderResult(r: MailResult) {
+	function renderResult(r: MailResult, live = false) {
 		result = r;
 		$('[data-result-view]').innerHTML = renderResultView(r, { shareUrl: `${location.origin}/ergebnis/${r.id}`, setupUrl: root!.dataset.setupUrl });
 		hydrate(r, true);
@@ -484,7 +484,8 @@ export function initTool(): void {
 		const v = r.verdict ?? { line1: r.headline, line2: '' };
 		announce(`Ergebnis: ${fmt(r.score)} von 10, ${BAND_LABEL[r.band]}. ${v.line1} ${v.line2}`);
 		$('[data-headline]').focus({ preventScroll: true });
-		if (!reduced && 'vibrate' in navigator && matchMedia('(pointer: coarse)').matches) navigator.vibrate?.([12, 40, 18]);
+		// Only right after a live test: browsers block vibration before the first tap anyway.
+		if (live && !reduced && 'vibrate' in navigator && matchMedia('(pointer: coarse)').matches) navigator.vibrate?.([12, 40, 18]);
 	}
 
 	// ---- guide ----
@@ -606,17 +607,22 @@ export function initTool(): void {
 
 	// ---- boot ----
 	if (mode === 'result') {
-		// Caddy has already rendered the result into the page (or "not found"). With JS we re-render it from the API,
-		// because only that response carries the subject during the tester's first hour.
+		// Caddy has already rendered the result into the page (or "not found"): keep that markup (no layout shift)
+		// and only add behaviour. The API answer is still needed for the provider guides.
 		const ssr = !!root.querySelector('[data-rv]');
 		if (root.querySelector('[data-rv-missing]')) return;
+		if (ssr) {
+			show('result');
+			hydrate(null, true);
+		}
 		const id = location.pathname.split('/').filter(Boolean)[1] ?? '';
 		api<MailResult & { message?: string }>(`/api/results/${encodeURIComponent(id)}`)
 			.then((res) => {
-				if (res.ok) return renderResult(res.data);
-				if (!ssr) message('Ergebnis nicht gefunden', 'Ergebnisse werden nach 7 Tagen automatisch gelöscht. Mach einfach einen neuen Test.');
+				if (res.ok && ssr) result = res.data;
+				else if (res.ok) renderResult(res.data);
+				else if (!ssr) message('Ergebnis nicht gefunden', 'Ergebnisse werden nach 7 Tagen automatisch gelöscht. Mach einfach einen neuen Test.');
 			})
-			.catch(() => (ssr ? hydrate(null, true) : message('Gerade geht es nicht', 'Der Server ist nicht erreichbar. Probier es gleich noch einmal.')));
+			.catch(() => (ssr ? undefined : message('Gerade geht es nicht', 'Der Server ist nicht erreichbar. Probier es gleich noch einmal.')));
 	} else {
 		resetAnimation();
 		resumeOrCreate();

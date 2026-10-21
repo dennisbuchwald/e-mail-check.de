@@ -48,7 +48,7 @@ function stationValue(st: Station): string {
 		case 'absender': {
 			if (rawOf(st, 'sender').freemail) return 'Freemail';
 			const r = rawOf(st, 'spf').result;
-			return r ? `SPF ${r}` : 'SPF fehlt';
+			return r && r !== 'none' ? `SPF ${r}` : 'SPF fehlt';
 		}
 		case 'unterschrift': {
 			const sig = (rawOf(st, 'dkim').signatures ?? []).find((s: Raw) => s.result === 'pass') ?? rawOf(st, 'dkim').signatures?.[0];
@@ -169,7 +169,7 @@ function stationVisual(st: Station, r: MailResult): string {
 				.map((s) => `<div class="r"><span>${esc(ruleTitle(s.name))} <small class="mono">${esc(s.name)}</small></span><span class="pt mono ${s.score > 0 ? 'p' : s.score < 0 ? 'g' : ''}">${s.score > 0 ? '+' : ''}${fmt(s.score)}</span></div>`)
 				.join('');
 			const own = ((c.checks ?? []) as Raw[])
-				.map((x) => `<div class="r"><span>${esc(x.title)}</span><span class="pt mono ${x.points > 0 ? 'p' : ''}">${x.points > 0 ? `−${fmt(x.points)}` : x.status === 'ok' ? 'ok' : 'Hinweis'}</span></div>`)
+				.map((x) => `<div class="r"><span>${esc(x.title)}</span><span class="pt mono ${x.points > 0 ? 'p' : ''}">${x.points > 0 ? `−${fmt(x.points)}` : x.status === 'ok' ? 'ok' : x.status === 'info' ? 'Info' : 'Hinweis'}</span></div>`)
 				.join('');
 			const links = c.links ? `<div class="rv-kv"><span>Links</span><b>${c.links.total} gelesen, ${c.links.domains} Domains gegen URI-Sperrlisten geprüft, nie aufgerufen</b></div>` : '';
 			return `<span class="eyebrow">Spam-Score</span><div class="h rv-big">${score === null ? '–' : fmt(score)} <small>Pkt.</small></div><div class="rv-gauge" style="--pos:${pos}%"><span class="mk"></span></div><div class="rv-ticks"><span style="left:0">0</span><span style="left:26.6%">4 Verdacht</span><span style="left:40%">6 Spam</span><span style="right:0">15</span></div>${links}<div class="rv-rules">${own}${rules || '<div class="r"><span>Keine Spamfilter-Regel angeschlagen</span><span></span></div>'}</div>`;
