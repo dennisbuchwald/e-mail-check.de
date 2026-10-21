@@ -19,7 +19,7 @@ faq:
   - frage: "Ist DKIM bei STRATO automatisch aktiv?"
     antwort: "Ja. STRATO unterschreibt alle Mails mit DKIM, die ausschließlich über die STRATO-Mailserver (smtp.strato.de) verschickt werden. Das gilt laut STRATO schon seit Jahren."
   - frage: "Warum findet ein DKIM-Check bei meiner STRATO-Domain nichts?"
-    antwort: "Die meisten Prüftools brauchen den Selektor, also den Namen vor ._domainkey. STRATO nutzt eigene Selektoren und wechselt sie gelegentlich. Am zuverlässigsten prüfst du DKIM deshalb mit einer echten Testmail."
+    antwort: "Die meisten Prüftools brauchen den Selektor, also den Namen vor ._domainkey. STRATO nutzt derzeit strato-dkim-0002 und strato-dkim-0003 und wechselt sie gelegentlich. Am zuverlässigsten prüfst du DKIM deshalb mit einer echten Testmail."
   - frage: "Muss ich bei STRATO DKIM-Einträge selbst pflegen?"
     antwort: "Nur in zwei Fällen: wenn ein externer Dienst in deinem Namen verschickt, oder wenn deine Domain eigene Nameserver nutzt, du aber STRATO-Mail verwendest. Im zweiten Fall musst du nachziehen, wenn STRATO die Selektoren wechselt."
   - frage: "Welche Zeichen sind im DKIM-Präfix bei STRATO erlaubt?"
@@ -34,9 +34,8 @@ quelle:
 stand: "2026-10-21"
 geprueft: false
 offenePunkte:
-  - "Exakte CNAME-Ziele für eigene Nameserver: Die FAQ nennt die Selektoren strato-dkim-0002 und strato-dkim-0003 unter rzone.de, aber nicht den vollständigen Host und Zielwert. Gegen Oberfläche bzw. FAQ #539 prüfen, bevor konkrete Werte in die Anleitung kommen."
-  - "Oberfläche prüfen: Lässt STRATO bei TXT-Records lange DKIM-Schlüssel (2048 Bit) in einem Feld zu?"
-  - "Wartezeit: Die DKIM-FAQ nennt keine, die DNS-FAQ nennt bis zu 24 Stunden für DNS-Änderungen."
+  - "Oberfläche prüfen: Lässt STRATO bei TXT-Records lange DKIM-Schlüssel (2048 Bit) in einem Feld zu? Die FAQ nennt kein Limit."
+  - "CNAME-Ziele aus FAQ #539 per DNS bestätigt (21.10.2026): strato-dkim-0002 (RSA) und strato-dkim-0003 (Ed25519). STRATO kündigt Selektorwechsel nicht an, Werte vor Veröffentlichung erneut prüfen."
 ---
 
 ## Vorher prüfen: Sind deine Mails schon unterschrieben?
@@ -63,7 +62,14 @@ Ein paar Regeln von STRATO, die oft zu Fehlermeldungen führen:
 
 ### Deine Domain nutzt eigene Nameserver
 
-Liegt deine DNS-Zone nicht bei STRATO, du verschickst aber über STRATO, musst du die DKIM-Einträge selbst pflegen. STRATO nennt dafür zwei CNAME-Einträge auf die aktuellen STRATO-Selektoren. Achtung: STRATO wechselt diese Selektoren in Abständen. Prüf deshalb regelmäßig mit einer Testmail, ob deine Mails noch unterschrieben sind.
+Liegt deine DNS-Zone nicht bei STRATO, du verschickst aber über STRATO, musst du die DKIM-Einträge selbst pflegen. STRATO nennt dafür zwei CNAME-Einträge, die du bei deinem DNS-Anbieter anlegst:
+
+| Hostname | Zeigt auf |
+|---|---|
+| `strato-dkim-0002._domainkey` | `strato-dkim-0002._domainkey.rzone.de` |
+| `strato-dkim-0003._domainkey` | `strato-dkim-0003._domainkey.rzone.de` |
+
+Achtung: STRATO wechselt diese Selektoren in Abständen. Prüf deshalb regelmäßig mit einer Testmail, ob deine Mails noch unterschrieben sind.
 
 ## Sonderfall: Ein weiterer Dienst verschickt Mails für dich
 

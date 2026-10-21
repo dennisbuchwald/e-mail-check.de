@@ -7,7 +7,7 @@ anbieter: "strato"
 anbieterName: "STRATO"
 themen: ["dmarc"]
 dauer: "10 Minuten"
-kurzantwort: "Bei STRATO ist DMARC bereits automatisch aktiv: Für deine Domain gilt die STRATO Standard DMARC-Regel. Du musst nur etwas tun, wenn du eine eigene Regel festlegen willst, zum Beispiel weil ein Newsletter-Tool in deinem Namen verschickt oder du Berichte von großen Mailanbietern bekommen möchtest."
+kurzantwort: "Bei STRATO ist DMARC bereits automatisch aktiv, und zwar streng: Die STRATO Standard DMARC-Regel lautet v=DMARC1;p=reject;. Verschickt ein Newsletter-Tool ohne DKIM für deine Domain, werden seine Mails abgelehnt. Dann richtest du DKIM im Tool ein oder legst eine eigene Regel an."
 schritte:
   dmarc:
     - text: "Erst prüfen, ob du überhaupt etwas ändern musst: Die **STRATO Standard DMARC-Regel** ist schon aktiv."
@@ -21,7 +21,7 @@ schritte:
     - text: "Mit **Einstellung übernehmen** speichern und nach einigen Stunden mit einer Testmail prüfen."
 faq:
   - frage: "Warum zeigt mein DMARC-Check bei STRATO eine Regel, die ich nie angelegt habe?"
-    antwort: "Das ist die STRATO Standard DMARC-Regel. STRATO aktiviert sie automatisch für deine Domain. Du kannst sie behalten oder durch eine eigene Regel ersetzen."
+    antwort: "Das ist die STRATO Standard DMARC-Regel. STRATO aktiviert sie automatisch für deine Domain, sie lautet v=DMARC1;p=reject;. Du kannst sie behalten oder durch eine eigene Regel ersetzen."
   - frage: "Bekomme ich bei STRATO DMARC-Reports?"
     antwort: "Von STRATO selbst nicht: Der STRATO-Mailserver verschickt aus Datenschutzgründen keine DMARC-Reports. Trägst du eine Report-Adresse ein, schicken dir andere große Mailanbieter ihre Berichte. STRATO rät Einsteigern allerdings davon ab."
   - frage: "Wie komme ich zur STRATO-Standardregel zurück?"
@@ -36,14 +36,19 @@ quelle:
 stand: "2026-10-21"
 geprueft: false
 offenePunkte:
-  - "Welche Policy nutzt die STRATO Standard DMARC-Regel (none, quarantine oder reject)? Die FAQ sagt es nicht eindeutig. Per DMARC-Check einer STRATO-Domain ermitteln und ergänzen."
-  - "Oberfläche prüfen: Wird der eigene _dmarc-Eintrag im DMARC-Bereich oder unter TXT- und CNAME-Records angelegt, und wo genau sitzt der Button Einstellung übernehmen?"
-  - "Weitere STRATO-FAQ https://www.strato.de/faq/hosting/DMARC-Policy/ noch nicht ausgewertet."
+  - "Policy der Standardregel per DNS belegt (9 STRATO-Domains, 21.10.2026): v=DMARC1;p=reject; ohne rua. Die STRATO-FAQ nennt den Wert nicht. Die FAQ DMARC-Policy beschreibt nur STRATOs eigene Domains (ebenfalls reject)."
+  - "Oberfläche prüfen: Wird der eigene _dmarc-Eintrag im DMARC-Bereich oder unter TXT- und CNAME-Records angelegt, und wo genau sitzt der Button Einstellung übernehmen? Die FAQ lässt das offen."
 ---
 
 ## Vorher prüfen: Welche Regel gilt gerade?
 
-Gib deine Domain im [DMARC-Check](/dmarc-check) ein. Bei STRATO findest du dort fast immer schon einen Eintrag, auch wenn du nie etwas angelegt hast. Das ist die **STRATO Standard DMARC-Regel**. Der Check zeigt dir, welche Regel sie gerade setzt.
+Gib deine Domain im [DMARC-Check](/dmarc-check) ein. Bei STRATO findest du dort fast immer schon einen Eintrag, auch wenn du nie etwas angelegt hast. Das ist die **STRATO Standard DMARC-Regel**. Sie ist streng:
+
+```
+v=DMARC1;p=reject;
+```
+
+Mails, die weder SPF noch DKIM passend zu deiner Domain bestehen, werden damit abgelehnt. Für Mails aus deinem STRATO-Postfach ist das kein Problem, STRATO unterschreibt sie automatisch.
 
 Ob deine Mails die Regel bestehen, siehst du mit einer echten Mail. Schick über den [Mail-Test](/) eine Testmail aus deinem STRATO-Postfach. Unter **Schutzregel** steht, ob DMARC passt. Die Grundlagen erklären wir in [DMARC einfach erklärt](/wissen/dmarc).
 
@@ -84,9 +89,9 @@ Das geht nur, wenn kein TXT-Eintrag mit dem Präfix `_dmarc` mehr existiert. Lö
 
 ## Sonderfall: Ein weiterer Dienst verschickt Mails für dich
 
-Hier kann die automatische Standardregel zur Falle werden. DMARC prüft jede Mail mit deiner Domain als Absender, egal über welchen Server sie kommt. Verschickt ein Newsletter-Tool, Microsoft 365 oder ein Kontaktformular in deinem Namen, muss dieser Dienst SPF oder DKIM passend zu deiner Domain bestehen. Sonst greift die Regel, und seine Mails landen je nach Einstellung im Spam oder werden abgelehnt.
+Hier wird die automatische Standardregel zur Falle. DMARC prüft jede Mail mit deiner Domain als Absender, egal über welchen Server sie kommt. Verschickt ein Newsletter-Tool, Microsoft 365 oder ein Kontaktformular in deinem Namen, muss dieser Dienst SPF oder DKIM passend zu deiner Domain bestehen. Sonst greift die STRATO-Regel `p=reject`, und seine Mails werden abgelehnt.
 
-Typisches Bild: Deine STRATO-Mails kommen an, der Newsletter landet aber plötzlich im Spam. So gehst du vor:
+Typisches Bild: Deine STRATO-Mails kommen an, der Newsletter aber nicht. Als schnelle Übergangslösung kannst du eine eigene Regel mit `p=none` anlegen, bis der Dienst sauber eingerichtet ist. So gehst du vor:
 
 1. Liste alle Dienste auf, die mit deiner Adresse verschicken.
 2. Nimm jeden in deinen SPF-Eintrag auf: [SPF-Eintrag bei STRATO setzen](/anleitung/strato/spf).

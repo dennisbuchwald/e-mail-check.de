@@ -18,7 +18,7 @@ schritte:
         host: "@"
         wert: "v=spf1 a mx include:spf.kasserver.com ~all"
     - text: "Auf **speichern** klicken. Nicht **Zone zurücksetzen** nutzen, das löscht alle Zusatzeinträge."
-    - text: "Einige Stunden warten, dann mit einer Testmail prüfen."
+    - text: "Etwa zwei Stunden warten, dann mit einer Testmail prüfen."
 faq:
   - frage: "Ist SPF bei ALL-INKL automatisch aktiv?"
     antwort: "Ja, für den Versand über den ALL-INKL-Mailserver ist SPF standardmäßig angelegt. Der Standardwert lautet v=spf1 a mx include:spf.kasserver.com ~all. Anpassen musst du ihn nur für zusätzliche Versender."
@@ -27,7 +27,7 @@ faq:
   - frage: "Was macht Zone zurücksetzen im KAS?"
     antwort: "Es stellt die Standard-DNS-Einstellungen wieder her und legt den Standard-SPF an. Dabei werden aber alle Einträge gelöscht, die du zusätzlich angelegt hast, etwa DKIM-Einträge eines Newsletter-Tools oder dein DMARC-Eintrag."
   - frage: "Wie lange dauert es, bis der SPF-Eintrag bei ALL-INKL wirkt?"
-    antwort: "ALL-INKL nennt in der Anleitung keine Zeit. DNS-Änderungen brauchen erfahrungsgemäß einige Minuten bis wenige Stunden, bis sie überall sichtbar sind. Teste nach ein paar Stunden und notfalls am nächsten Tag noch einmal."
+    antwort: "ALL-INKL nennt in der Anleitung keine Zeit. Die Einträge im KAS haben eine Gültigkeit (TTL) von zwei Stunden, alte Werte können also so lange zwischengespeichert sein. Teste nach zwei Stunden und notfalls am nächsten Tag noch einmal."
 quelle:
   - titel: "ALL-INKL Anleitung: SPF"
     url: "https://all-inkl.com/wichtig/anleitungen/kas/tools/dns-werkzeuge/spf_482.html"
@@ -36,9 +36,9 @@ quelle:
 stand: "2026-10-21"
 geprueft: false
 offenePunkte:
-  - "Wartezeit: Die ALL-INKL-Anleitung nennt keine. Im KAS oder beim Support klären, wie schnell Änderungen wirken."
+  - "Wartezeit: Die ALL-INKL-Anleitung nennt keine. Per DNS gemessen (21.10.2026): TTL 7200 Sekunden auf ns5.kasserver.com. Zwei Stunden ist daher unsere Ableitung, keine Herstellerangabe."
   - "Oberfläche prüfen: In welchen Tarifen erscheint die Meldung Diese DNS-Einstellungen sind in Ihrem Tarif leider nicht möglich, und kann man dann überhaupt eigene includes ergänzen?"
-  - "Oberfläche prüfen: Wird der Standard-SPF im KAS als bearbeitbarer Eintrag angezeigt?"
+  - "Standardwert per DNS belegt (4 Domains auf KAS-Nameservern): v=spf1 a mx include:spf.kasserver.com ~all. Laut Anleitung wird er bearbeitet. In der Oberfläche bestätigen, dass er als normaler Eintrag mit Bearbeiten-Knopf erscheint."
 ---
 
 ## Vorher prüfen: Was steht in deinem SPF-Eintrag?
@@ -101,7 +101,7 @@ Der Knopf stellt die Standard-DNS-Einstellungen wieder her. Dabei löscht er all
 
 ## Danach testen
 
-Warte nach dem Speichern ein paar Stunden. Schick dann über den [Mail-Test](/) aus jedem Dienst eine Testmail, aus deinem ALL-INKL-Postfach und zum Beispiel einen Test-Newsletter. So siehst du, ob jeder Versender bestätigt ist. Fällt nur ein Dienst durch, stimmt meist sein `include` nicht: Vergleich den Wert Zeichen für Zeichen mit der Hilfe des Dienstes und prüf, ob er vor dem `~all` steht.
+Warte nach dem Speichern etwa zwei Stunden. So lange können alte Werte zwischengespeichert sein. Schick dann über den [Mail-Test](/) aus jedem Dienst eine Testmail, aus deinem ALL-INKL-Postfach und zum Beispiel einen Test-Newsletter. So siehst du, ob jeder Versender bestätigt ist. Fällt nur ein Dienst durch, stimmt meist sein `include` nicht: Vergleich den Wert Zeichen für Zeichen mit der Hilfe des Dienstes und prüf, ob er vor dem `~all` steht.
 
 Weiter geht es mit [DKIM bei ALL-INKL einrichten](/anleitung/all-inkl/dkim) und [DMARC bei ALL-INKL einrichten](/anleitung/all-inkl/dmarc). Andere Anbieter findest du in der [Übersicht der Anleitungen](/anleitung).
 

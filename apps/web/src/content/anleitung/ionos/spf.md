@@ -34,9 +34,10 @@ quelle:
 stand: "2026-10-21"
 geprueft: false
 offenePunkte:
-  - "Oberfläche prüfen: Lässt sich der von IONOS angelegte SPF-Eintrag direkt bearbeiten (include ergänzen), oder muss man ihn löschen und als allgemeinen SPF (TXT) neu anlegen?"
-  - "Oberfläche prüfen: Welchen Wert trägt IONOS SPF (TXT) genau ein, und wie sieht er nach der automatischen Ergänzung eines bestehenden Eintrags aus?"
-  - "Oberfläche prüfen: Steht im Feld Hostname für die Hauptdomain @ oder bleibt es leer?"
+  - "Standardwert per DNS belegt (5 Domains mit IONOS-Nameservern, 21.10.2026): v=spf1 include:_spf-eu.ionos.com ~all, TTL 1 Stunde. Offen: wie der Eintrag nach der automatischen Ergänzung eines fremden SPF aussieht (IONOS nennt kein Beispiel)."
+  - "Bearbeiten laut IONOS-Hilfe möglich (SPF-Record in der DNS-Übersicht bearbeiten oder löschen). In der Oberfläche prüfen, ob dabei der Typ IONOS SPF (TXT) erhalten bleibt."
+  - "Oberfläche prüfen: Steht im Feld Hostname für die Hauptdomain @ oder bleibt es leer? Die Hilfeseite nennt das Feld nicht."
+  - "Menüname: Die IONOS-Hilfe schreibt im Text Domain & SSL, in den Bildunterschriften Domains & SSL."
 ---
 
 ## Vorher prüfen: Ist dein SPF-Eintrag schon da?
@@ -78,7 +79,7 @@ Das ist der häufigste Grund, warum SPF bei IONOS-Kunden scheitert. Deine IONOS-
 
 Jeder dieser Dienste muss im SPF-Eintrag stehen, sonst gelten seine Mails als nicht bestätigt. Die Regel lautet: **ein einziger SPF-Eintrag, alle Versender darin.** Lege also keinen zweiten SPF-Eintrag an, sondern ergänze den bestehenden.
 
-IONOS hilft dabei ein Stück: Gibt es schon einen SPF-Eintrag für einen anderen Dienst, ergänzt IONOS diesen beim Aktivieren von IONOS SPF automatisch. Ein kombinierter Eintrag sieht ungefähr so aus:
+IONOS hilft dabei ein Stück: Gibt es schon einen SPF-Eintrag für einen anderen Dienst, ergänzt IONOS diesen beim Aktivieren von IONOS SPF automatisch. Einen vorhandenen IONOS-Eintrag kannst du laut IONOS in der DNS-Übersicht auch direkt bearbeiten. Ein kombinierter Eintrag sieht ungefähr so aus:
 
 ```
 v=spf1 include:_spf-eu.ionos.com include:spf.dein-newsletter-tool.example ~all

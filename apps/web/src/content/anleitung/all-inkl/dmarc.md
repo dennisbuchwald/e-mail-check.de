@@ -17,11 +17,11 @@ schritte:
         typ: "TXT"
         host: "_dmarc"
         wert: "v=DMARC1; p=none; rua=mailto:dmarc@{domain}"
-    - text: "Speichern, einige Stunden warten und mit dem DMARC-Check prüfen."
+    - text: "Speichern, etwa zwei Stunden warten und mit dem DMARC-Check prüfen."
     - text: "Erst wenn alle Versender bestehen, die Regel auf **p=quarantine** und später **p=reject** verschärfen."
 faq:
   - frage: "Ist DMARC bei ALL-INKL automatisch aktiv?"
-    antwort: "ALL-INKL nennt v=DMARC1; p=none; als Standardwert. Ob der Eintrag bei deiner Domain schon angelegt ist, zeigt dir der DMARC-Check. Mit p=none wird ohnehin nichts blockiert, die Regel beobachtet nur."
+    antwort: "Laut ALL-INKL wird v=DMARC1; p=none; automatisch gesetzt. Bei älteren Domains fehlt der Eintrag aber oft, das zeigt dir der DMARC-Check. Mit p=none wird ohnehin nichts blockiert, die Regel beobachtet nur."
   - frage: "Welche DMARC-Regel soll ich bei ALL-INKL wählen?"
     antwort: "Starte mit p=none und einer Report-Adresse. Prüf dann, ob alle Versender SPF oder DKIM bestehen. Erst danach verschärfst du auf quarantine und später auf reject."
   - frage: "Kann ich DMARC-Berichte an eine andere Domain schicken lassen?"
@@ -34,14 +34,16 @@ quelle:
 stand: "2026-10-21"
 geprueft: false
 offenePunkte:
-  - "Unklar, ob ALL-INKL den Standard-DMARC v=DMARC1; p=none; automatisch für jede Domain anlegt oder nur als Empfehlung nennt. Per DMARC-Check einer ALL-INKL-Domain prüfen."
+  - "Widerspruch: Die ALL-INKL-Anleitung sagt, v=DMARC1; p=none; werde automatisch gesetzt. Per DNS (21.10.2026) hatten nur 2 von 5 Domains auf KAS-Nameservern diesen Eintrag, 3 gar keinen. Vermutlich nur bei neueren Domains, mit ALL-INKL klären."
   - "Oberfläche prüfen: Löscht Zone zurücksetzen auch den DMARC-Eintrag, oder gehört ein Standard-DMARC zur Zone?"
-  - "Wartezeit: Die ALL-INKL-Anleitung nennt keine."
+  - "Wartezeit: Anleitung nennt keine. Gemessene TTL im KAS 7200 Sekunden, daher etwa zwei Stunden (eigene Ableitung)."
 ---
 
 ## Vorher prüfen: Gibt es schon eine DMARC-Regel?
 
 Gib deine Domain im [DMARC-Check](/dmarc-check) ein. Er zeigt, ob bereits ein Eintrag existiert und welche Regel gilt. Gibt es einen, bearbeitest du ihn. Zwei DMARC-Einträge machen die Regel ungültig.
+
+Laut ALL-INKL wird der Standard `v=DMARC1; p=none;` automatisch gesetzt. Bei älteren Domains fehlt er aber häufig. Dann legst du ihn wie unten beschrieben neu an.
 
 DMARC baut auf SPF und DKIM auf. Für den ALL-INKL-Mailserver sind beide laut ALL-INKL schon eingerichtet. Prüf das mit einer Testmail über den [Mail-Test](/): Stehen **Absender bestätigt** und **Mail unterschrieben** auf grün, bist du bereit. Was DMARC macht, erklären wir in [DMARC einfach erklärt](/wissen/dmarc).
 
@@ -104,7 +106,7 @@ v=DMARC1; p=quarantine; rua=mailto:dmarc@deine-domain.de
 
 ## Danach testen
 
-Warte nach dem Speichern ein paar Stunden. Prüf dann mit dem [DMARC-Check](/dmarc-check), ob die neue Regel erscheint. Eine Testmail über den [Mail-Test](/) zeigt dir unter **Schutzregel**, ob deine Mails sie bestehen. Lass `p=none` ein paar Wochen laufen und lies die Berichte, bevor du verschärfst. Tauchen dort unbekannte Server auf, hast du entweder einen Dienst vergessen oder jemand fälscht Mails in deinem Namen. Alle Anbieter findest du in der [Übersicht der Anleitungen](/anleitung).
+Warte nach dem Speichern etwa zwei Stunden. Prüf dann mit dem [DMARC-Check](/dmarc-check), ob die neue Regel erscheint. Eine Testmail über den [Mail-Test](/) zeigt dir unter **Schutzregel**, ob deine Mails sie bestehen. Lass `p=none` ein paar Wochen laufen und lies die Berichte, bevor du verschärfst. Tauchen dort unbekannte Server auf, hast du entweder einen Dienst vergessen oder jemand fälscht Mails in deinem Namen. Alle Anbieter findest du in der [Übersicht der Anleitungen](/anleitung).
 
 ## Typische Fehler und Lösungen
 

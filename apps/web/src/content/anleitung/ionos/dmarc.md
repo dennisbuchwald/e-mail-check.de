@@ -7,10 +7,11 @@ anbieter: "ionos"
 anbieterName: "IONOS"
 themen: ["dmarc"]
 dauer: "5 Minuten"
-kurzantwort: "Bei IONOS ist DMARC nicht automatisch eingerichtet. Du legst den Eintrag selbst an: einen TXT-Record mit dem Hostnamen _dmarc in den DNS-Einstellungen deiner Domain. Starte mit der Regel p=none, damit keine echte Mail verloren geht."
+kurzantwort: "Nutzt deine Domain IONOS-Mail und die IONOS-Nameserver, gibt es meist schon eine DMARC-Regel: IONOS verweist _dmarc per CNAME auf eine eigene Regel mit p=none, die nur beobachtet. Für eine eigene Regel ersetzt du diesen Eintrag durch einen TXT-Record mit dem Hostnamen _dmarc."
 schritte:
   dmarc:
     - text: "Im IONOS Konto bei deiner Domain unter **Aktionen** die drei Punkte anklicken und **DNS** wählen."
+    - text: "Gibt es schon einen **CNAME** mit dem Hostnamen **_dmarc** (Ziel dmarc.ionos.de), diesen zuerst löschen. Sonst lässt sich kein TXT anlegen."
     - text: "**Record hinzufügen** klicken und beim Feld **Typ** **TXT** auswählen."
     - text: "Bei **Hostname** **_dmarc** und bei **Wert** diesen Eintrag eintragen. Die Adresse nach mailto: muss ein Postfach sein, das du liest."
       eintrag:
@@ -21,7 +22,7 @@ schritte:
     - text: "Nach einigen Wochen ohne Probleme die Regel auf **p=quarantine** und später **p=reject** verschärfen."
 faq:
   - frage: "Ist DMARC bei IONOS automatisch aktiv?"
-    antwort: "Die IONOS-Hilfe beschreibt DMARC nur als Eintrag, den du selbst anlegst. Prüf mit dem DMARC-Check, ob für deine Domain schon eine Regel existiert. Wenn nicht, legst du sie wie in dieser Anleitung an."
+    antwort: "Meist ja, auch wenn die IONOS-Hilfe es nicht erwähnt. Bei Domains mit IONOS-Mail zeigt _dmarc per CNAME auf dmarc.ionos.de, dort steht v=DMARC1; p=none;. Diese Regel beobachtet nur. Der DMARC-Check zeigt dir, ob das bei deiner Domain so ist."
   - frage: "Welche DMARC-Regel soll ich bei IONOS wählen?"
     antwort: "Starte mit p=none und einer Report-Adresse. So siehst du erst, ob alle deine Versender sauber durchkommen. Erst wenn das passt, wechselst du zu quarantine und später zu reject."
   - frage: "Wie lange dauert es, bis der DMARC-Eintrag bei IONOS wirkt?"
@@ -34,24 +35,27 @@ quelle:
 stand: "2026-10-21"
 geprueft: false
 offenePunkte:
-  - "Prüfen, ob IONOS für neue Domains inzwischen automatisch einen DMARC-Eintrag anlegt. Die Hilfeseite sagt dazu nichts."
-  - "Oberfläche prüfen: Bietet IONOS beim Record-Typ eine eigene DMARC-Vorlage, oder nur das allgemeine TXT?"
+  - "Automatischer DMARC per DNS belegt (5 Domains mit IONOS-Mail, 21.10.2026): _dmarc CNAME → dmarc.ionos.de mit v=DMARC1; p=none;. Die IONOS-Hilfe erwähnt das nicht. Domains mit IONOS-Nameservern ohne IONOS-Mail hatten keinen Eintrag."
+  - "Oberfläche prüfen: Erscheint der CNAME _dmarc in der DNS-Übersicht als löschbarer Eintrag, oder ersetzt IONOS ihn beim Anlegen des TXT selbst?"
 ---
 
 ## Vorher prüfen: Gibt es schon eine DMARC-Regel?
 
 Gib deine Domain im [DMARC-Check](/dmarc-check) ein. Er zeigt dir, ob es bereits einen Eintrag gibt und welche Regel darin steht. Existiert schon einer, änderst du ihn, statt einen zweiten anzulegen. Zwei DMARC-Einträge machen die Regel ungültig.
 
+Bei IONOS findest du oft eine Regel, die du nie angelegt hast: Für Domains mit IONOS-Mail zeigt `_dmarc` per CNAME auf `dmarc.ionos.de`. Dort steht `v=DMARC1; p=none;`. Diese Regel schützt noch nicht, sie beobachtet nur, und sie schickt dir keine Berichte.
+
 DMARC baut auf SPF und DKIM auf. Bevor du die Regel anlegst, sollten beide passen. Schick dazu über den [Mail-Test](/) eine Testmail aus deinem IONOS-Postfach. Stehen **Absender bestätigt** und **Mail unterschrieben** auf grün, bist du bereit. Was hinter DMARC steckt, erklären wir in [DMARC einfach erklärt](/wissen/dmarc).
 
 ## Schritt für Schritt: DMARC-Eintrag bei IONOS anlegen
 
 1. Melde dich im IONOS Konto an. Klick bei deiner Domain unter **Aktionen** auf die drei Punkte und wähle **DNS**.
-2. Klick auf **Record hinzufügen**. Wähle beim Feld **Typ** den Eintrag **TXT**.
-3. Trag im Feld **Hostname** `_dmarc` ein. IONOS macht daraus automatisch `_dmarc.deine-domain.de`.
-4. Trag im Feld **Wert** deine Regel ein (siehe unten).
-5. Die **TTL** kannst du optional anpassen. Für den Start reicht die Voreinstellung.
-6. Klick auf **Speichern**.
+2. Steht in der Liste schon ein **CNAME** mit dem Hostnamen `_dmarc`, lösch ihn. Unter einem Namen mit CNAME darf kein weiterer Eintrag stehen.
+3. Klick auf **Record hinzufügen**. Wähle beim Feld **Typ** den Eintrag **TXT**.
+4. Trag im Feld **Hostname** `_dmarc` ein. IONOS macht daraus automatisch `_dmarc.deine-domain.de`.
+5. Trag im Feld **Wert** deine Regel ein (siehe unten).
+6. Die **TTL** kannst du optional anpassen. Für den Start reicht die Voreinstellung.
+7. Klick auf **Speichern**.
 
 Für den Start empfehlen wir diesen Wert:
 
@@ -100,5 +104,6 @@ Laut IONOS ist die Änderung sofort aktiv und nach spätestens einer Stunde übe
 |---|---|---|
 | Kein DMARC-Eintrag gefunden | Hostname falsch, z. B. `_dmarc.deine-domain.de` doppelt eingetragen. | Im Feld Hostname nur `_dmarc` eintragen. |
 | Mehrere DMARC-Einträge | Zwei TXT-Einträge unter `_dmarc`. | Einen löschen, nur einen behalten. |
+| TXT lässt sich nicht speichern | Unter `_dmarc` steht noch der IONOS-CNAME. | CNAME `_dmarc` löschen, dann TXT anlegen. |
 | Ungültige Syntax | `v=DMARC1` steht nicht vorne oder Semikolons fehlen. | Wert aus dieser Anleitung kopieren. |
 | DMARC fail | SPF und DKIM passen nicht zur Absender-Domain. | Fehlenden Dienst in SPF und DKIM ergänzen. |

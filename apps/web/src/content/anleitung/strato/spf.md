@@ -7,12 +7,12 @@ anbieter: "strato"
 anbieterName: "STRATO"
 themen: ["spf"]
 dauer: "10 Minuten"
-kurzantwort: "Bei STRATO wählst du die SPF-Regel in den DNS-Einstellungen deiner Domain aus einer Liste. Verschickst du nur über STRATO, reicht laut STRATO in den meisten Fällen die Voreinstellung. Einen eigenen SPF-Eintrag brauchst du, sobald ein externer Dienst wie ein Newsletter-Tool oder Microsoft 365 in deinem Namen verschickt."
+kurzantwort: "Bei STRATO wählst du die SPF-Regel in den DNS-Einstellungen deiner Domain aus einer Liste. Voreingestellt ist Keine STRATO SPF-Regel, deine Domain hat dann gar keinen SPF-Eintrag. Das reicht laut STRATO meist. Einen eigenen SPF-Eintrag brauchst du, sobald ein externer Dienst wie ein Newsletter-Tool in deinem Namen verschickt."
 schritte:
   spf:
     - text: "Im STRATO Kunden-Login **Domains** und dann **Domainverwaltung** öffnen."
     - text: "Bei deiner Domain auf das **Zahnrad** klicken und den Reiter **DNS** wählen."
-    - text: "Nur STRATO-Mail? Die SPF-Regel auf der Voreinstellung lassen. Externer Versender? Eine eigene TXT-Regel anlegen."
+    - text: "Nur STRATO-Mail? Die Voreinstellung **Keine STRATO SPF-Regel** lassen. Externer Versender? Eine eigene TXT-Regel anlegen."
     - text: "Eigene Regel: Präfix leer lassen, als **Wert** alle Versender in einen Eintrag schreiben. Das include des Newsletter-Tools aus dessen Hilfe ergänzen."
       eintrag:
         typ: "TXT"
@@ -21,7 +21,7 @@ schritte:
     - text: "Speichern und bis zu 24 Stunden warten, dann mit einer Testmail prüfen."
 faq:
   - frage: "Welche SPF-Regel soll ich bei STRATO wählen?"
-    antwort: "Verschickst du ausschließlich über STRATO, reicht laut STRATO meist die Voreinstellung. Sobald ein externer Dienst in deinem Namen verschickt, brauchst du eine eigene SPF-Regel, in der STRATO und der externe Dienst gemeinsam stehen."
+    antwort: "Verschickst du ausschließlich über STRATO, reicht laut STRATO meist die Voreinstellung Keine STRATO SPF-Regel. Deine Mails bestehen DMARC dann über die STRATO-Signatur (DKIM). Verschickt ein externer Dienst, brauchst du eine eigene Regel mit STRATO und dem Dienst."
   - frage: "Was passiert, wenn ich zwei SPF-Einträge habe?"
     antwort: "Dann ist SPF ungültig, und Empfänger werten deine Domain so, als hätte sie keinen SPF-Eintrag. Pro Domain ist nur ein SPF-Eintrag erlaubt. Alle Versender gehören in diesen einen Eintrag."
   - frage: "Wie lange dauert es, bis der SPF-Eintrag bei STRATO wirkt?"
@@ -36,9 +36,9 @@ quelle:
 stand: "2026-10-21"
 geprueft: false
 offenePunkte:
-  - "Oberfläche prüfen: Welche Optionen bietet das SPF-Dropdown genau (Keine STRATO SPF-Regel, Standard STRATO Mailserver, Fail, Softfail, eigene Regel) und welchen Wert erzeugt jede? Die FAQ widerspricht sich, ob Keine STRATO SPF-Regel oder Standard STRATO Mailserver die empfohlene Voreinstellung ist."
-  - "Den kombinierten Wert v=spf1 include:_spf.strato.com include:… ~all nennt STRATO nicht. Die FAQ nennt nur v=spf1 redirect=_spf.strato.com (bei eigenen Nameservern). Gegen die Oberfläche bzw. den STRATO-Support prüfen, welcher kombinierte Wert für externe Versender richtig ist."
-  - "Oberfläche prüfen: Wird eine eigene SPF-Regel über das SPF-Feld oder über TXT- und CNAME-Records angelegt?"
+  - "Voreinstellung per DNS belegt (9 STRATO-Domains, 21.10.2026): kein SPF-Eintrag, passend zu Keine STRATO SPF-Regel aus der DMARC-FAQ. Offen: welche Werte Standard STRATO Mailserver, Fail und Softfail genau erzeugen (FAQ nennt nur v=spf1 redirect=_spf.strato.com als Beispiel)."
+  - "Kombinierter Wert v=spf1 include:_spf.strato.com include:… ~all ist technisch gültig (_spf.strato.com existiert per DNS, endet selbst auf -all), STRATO nennt ihn aber nirgends. Mit STRATO-Support oder Oberfläche abgleichen."
+  - "Oberfläche prüfen: Liegen Präfix und Wert der eigenen Regel direkt im SPF-Bereich (so die DNS-FAQ) oder unter TXT- und CNAME-Records?"
 ---
 
 ## Vorher prüfen: Was steht gerade in deinem SPF?
@@ -56,13 +56,13 @@ Noch genauer ist eine echte Mail: Schick über den [Mail-Test](/) eine Testmail 
 
 | Option | Wofür |
 |---|---|
-| Keine STRATO SPF-Regel | Laut STRATO für die meisten Fälle ausreichend. |
+| Keine STRATO SPF-Regel | Voreinstellung. Es gibt dann keinen SPF-Eintrag. Laut STRATO meist ausreichend. |
 | Standard STRATO Mailserver | Regel für den Versand über die STRATO-Mailserver. |
 | Fail | Nicht genannte Server werden abgelehnt. Empfohlen bei eigenem Mailserver. |
 | Softfail | Nicht genannte Server gelten nur als verdächtig. Meist zum Testen. |
 | Eigene Regel | Freier TXT-Eintrag mit Präfix und Wert. |
 
-5. Verschickst du nur über STRATO, lässt du die Voreinstellung stehen.
+5. Verschickst du nur über STRATO, lässt du die Voreinstellung **Keine STRATO SPF-Regel** stehen. Der [SPF-Check](/spf-check) meldet dann „kein Eintrag“. Das ist bei STRATO normal: Deine Mails bestehen DMARC über die STRATO-Signatur (DKIM).
 6. Speichere deine Auswahl. Änderungen können bis zu 24 Stunden dauern.
 
 Die genaue Beschriftung kann in deinem Kunden-Login leicht abweichen. Entscheidend ist: Ohne externe Versender musst du hier meist nichts ändern.
