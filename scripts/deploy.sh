@@ -13,8 +13,8 @@ pnpm --filter @emc/engine test >/dev/null
 echo "→ Dateien nach $HOST:$DIR"
 rsync -az --delete \
 	--exclude node_modules --exclude .git --exclude 'apps/web/dist' --exclude 'apps/web/.astro' \
-	--exclude research --exclude design --exclude test-results --exclude playwright-report \
-	--exclude .env --exclude 'data' \
+	--exclude /research --exclude /docs/recht-notizen.md --exclude /docs/offene-punkte.md --exclude design --exclude test-results --exclude playwright-report \
+	--exclude /.env --exclude /data --exclude /apps/engine/data --exclude /.deploy-zugang.txt \
 	./ "deploy@$HOST:$DIR/"
 
 echo "→ Bauen und starten"
