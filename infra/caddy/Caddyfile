@@ -2,6 +2,20 @@
 {
 	auto_https off
 	admin off
+	# No IP addresses or browser IDs in the logs (privacy policy): Caddy's handler warnings, e.g. on a 502
+	# during an engine restart, would otherwise contain the full request (audit, 21.10.2026).
+	log {
+		format filter {
+			wrap json
+			fields {
+				request>remote_ip delete
+				request>remote_port delete
+				request>client_ip delete
+				request>headers delete
+				request>tls delete
+			}
+		}
+	}
 }
 
 import /etc/caddy/site.caddy

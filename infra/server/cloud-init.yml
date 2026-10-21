@@ -11,9 +11,9 @@ packages:
 
 users:
   - default
+  # No sudo: the docker group is all a deploy needs (and is root-equivalent already, so no second way in).
   - name: deploy
     shell: /bin/bash
-    sudo: "ALL=(ALL) NOPASSWD:ALL"
 
 write_files:
   # Real client IPs for published ports (needed for SPF), small logs.
@@ -28,7 +28,7 @@ write_files:
     content: |
       PasswordAuthentication no
       KbdInteractiveAuthentication no
-      PermitRootLogin prohibit-password
+      PermitRootLogin no
   - path: /etc/apt/apt.conf.d/20auto-upgrades
     content: |
       APT::Periodic::Update-Package-Lists "1";

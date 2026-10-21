@@ -16,7 +16,7 @@ export interface TestRow {
 export class Store {
 	private db: DatabaseSync;
 
-	constructor(path: string) {
+	constructor(path: string, opts: { mailsCheckedSeed?: number } = {}) {
 		if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
 		this.db = new DatabaseSync(path);
 		this.db.exec(`
@@ -44,6 +44,8 @@ export class Store {
 		this.db
 			.prepare("INSERT OR IGNORE INTO counters (name, value) SELECT 'mails_checked', COUNT(*) FROM tests WHERE state = 'done'")
 			.run();
+		// Restore after a lost volume: the backed-up value (scripts/deploy.sh) never lowers the counter.
+		if (opts.mailsCheckedSeed) this.db.prepare("UPDATE counters SET value = MAX(value, ?) WHERE name = 'mails_checked'").run(opts.mailsCheckedSeed);
 	}
 
 	createTest(row: Omit<TestRow, 'state' | 'resultId'>): void {

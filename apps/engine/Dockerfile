@@ -1,5 +1,5 @@
 # Build context: repository root
-FROM node:24-alpine AS deps
+FROM node:24-alpine@sha256:6a1c190e17215d844926b0677f4bf87273ff7d5e54db06d3b5b5863ab0b09a3d AS deps
 WORKDIR /app
 RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -7,7 +7,7 @@ COPY apps/engine/package.json apps/engine/
 COPY packages/shared/package.json packages/shared/
 RUN pnpm install --frozen-lockfile --prod --filter @emc/engine...
 
-FROM node:24-alpine
+FROM node:24-alpine@sha256:6a1c190e17215d844926b0677f4bf87273ff7d5e54db06d3b5b5863ab0b09a3d
 WORKDIR /app
 ENV NODE_ENV=production DB_PATH=/data/e-mail-check.sqlite
 COPY --from=deps /app/node_modules ./node_modules

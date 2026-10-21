@@ -19,8 +19,14 @@
 	}
 
 	# Statistics (only when the "stats" profile runs). Same origin: no third party, no CSP exception.
-	handle_path /stats/* {
+	# Only the tracking script and its endpoint are public; the Umami login stays unreachable from outside (audit I6).
+	@stats path /stats/script.js /stats/api/send
+	handle @stats {
+		uri strip_prefix /stats
 		reverse_proxy umami:3000
+	}
+	handle /stats/* {
+		respond 404
 	}
 
 	# Shared results: the static shell plus the server-rendered result (engine /api/results/<id>/view),
@@ -42,13 +48,17 @@
 		root * /srv
 		@assets path /_astro/*
 		header @assets Cache-Control "public, max-age=31536000, immutable"
-		@pages not path /_astro/*
+		@static path *.png *.ico *.webmanifest /favicon.svg
+		header @static Cache-Control "public, max-age=86400"
+		@pages not path /_astro/* *.png *.ico *.webmanifest /favicon.svg
 		header @pages Cache-Control "public, max-age=300"
 		# Clean URLs: /spf-check → spf-check.html, trailing slash → without.
 		@slash path_regexp slash ^(.+)/$
 		redir @slash {re.slash.1} 301
 		try_files {path} {path}.html
-		file_server
+		file_server {
+			precompressed br gzip
+		}
 	}
 
 	handle_errors {

@@ -6,7 +6,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "typecheck": "astro check"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",
