@@ -17,7 +17,7 @@ schritte:
         typ: "TXT"
         host: "_dmarc.{domain}"
         wert: "v=DMARC1; p=none; rua=mailto:dmarc@{domain}"
-    - text: "Berichte auswerten: Bestehen alle Versender, auf **p=quarantine** und später **p=reject** umstellen."
+    - text: "Mindestens eine Woche Berichte auswerten. Bestehen alle Versender, auf **p=quarantine** und später **p=reject** umstellen."
 faq:
   - frage: "Wie richte ich DMARC für Google Workspace ein?"
     antwort: "Du legst bei deinem Domain-Anbieter einen TXT-Eintrag mit dem Host _dmarc an. In der Google Admin-Konsole musst du dafür nichts einstellen. Vorher sollten SPF und DKIM laufen, Google empfiehlt danach 48 Stunden Wartezeit."
@@ -30,10 +30,12 @@ faq:
 quelle:
   - titel: "Google Workspace Admin-Hilfe: DMARC einrichten"
     url: "https://knowledge.workspace.google.com/admin/security/set-up-dmarc?hl=de"
+  - titel: "Google Workspace Admin-Hilfe: Empfohlene DMARC-Einführung"
+    url: "https://knowledge.workspace.google.com/admin/security/recommended-dmarc-rollout?hl=de"
 stand: "2026-10-21"
 geprueft: false
 offenePunkte:
-  - "Google nennt keine Dauer für die none-Phase. „Einige Wochen“ ist unsere Empfehlung, mit Dennis abstimmen."
+  - "Google nennt für die none-Phase eine Woche mit täglicher Berichtsprüfung. Unsere Empfehlung „mindestens eine Woche, besser ein paar Wochen“ mit Dennis abstimmen."
   - "Links auf Hoster-Anleitungen (/anleitung/ionos/dmarc usw.) setzen voraus, dass diese Seiten zum Launch online sind."
 ---
 
@@ -63,10 +65,10 @@ v=DMARC1; p=none; rua=mailto:dmarc@deine-domain.de
 
 Die Klicks für deinen Hoster: [DMARC bei IONOS](/anleitung/ionos/dmarc), [DMARC bei STRATO](/anleitung/strato/dmarc), [DMARC bei ALL-INKL](/anleitung/all-inkl/dmarc), [Hetzner](/anleitung/hetzner/spf-dkim-dmarc).
 
-**5. Schrittweise verschärfen.** Zeigen die Berichte, dass alle echten Versender bestehen, stellst du um. Mit `pct` gilt die Regel zuerst nur für einen Teil der Mails:
+**5. Schrittweise verschärfen.** Google empfiehlt, `p=none` mindestens eine Woche laufen zu lassen und die Berichte in der Zeit täglich anzusehen. Wir raten zu ein paar Wochen, damit auch seltene Versender auftauchen. Zeigen die Berichte, dass alle echten Versender bestehen, stellst du um. Mit `pct` gilt die Regel zuerst nur für einen Teil der Mails. Google nennt für kleine Firmen einen Start mit etwa 10 Prozent:
 
 ```
-v=DMARC1; p=quarantine; pct=25; rua=mailto:dmarc@deine-domain.de
+v=DMARC1; p=quarantine; pct=10; rua=mailto:dmarc@deine-domain.de
 ```
 
 Läuft das ohne Probleme, erhöhst du `pct` bis 100 und gehst am Ende auf:
@@ -83,7 +85,7 @@ Was bedeuten die Teile des Eintrags? Eine kurze Übersicht:
 | `p=none` | Regel: nichts blockieren, nur beobachten |
 | `p=quarantine` | Mails, die durchfallen, landen im Spam |
 | `p=reject` | Mails, die durchfallen, werden abgelehnt |
-| `pct=25` | Regel gilt nur für 25 Prozent der durchgefallenen Mails |
+| `pct=10` | Regel gilt nur für 10 Prozent der durchgefallenen Mails |
 | `rua=mailto:…` | Adresse für die Sammelberichte |
 
 Google beschreibt außerdem `adkim` und `aspf`. Damit stellst du ein, wie genau die Domains übereinstimmen müssen. Für den Start brauchst du beides nicht.

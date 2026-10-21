@@ -31,10 +31,14 @@ faq:
 quelle:
   - titel: "Google Workspace Admin-Hilfe: SPF einrichten"
     url: "https://knowledge.workspace.google.com/admin/security/set-up-spf?hl=de"
+  - titel: "Microsoft Learn: SPF für Microsoft 365 (Empfehlung -all)"
+    url: "https://learn.microsoft.com/de-de/defender-office-365/email-authentication-spf-configure"
+  - titel: "M3AAWG: Email Authentication Recommended Best Practices (2020)"
+    url: "https://www.m3aawg.org/sites/default/files/doc_files/m3aawg-email-authentication-recommended-best-practices-09-2020.pdf"
 stand: "2026-10-21"
 geprueft: false
 offenePunkte:
-  - "Google empfiehlt ~all und erwähnt -all nicht. Microsoft empfiehlt -all. Für Domains mit Google und Microsoft gemeinsam abstimmen, welche Empfehlung wir geben."
+  - "SPF-Linie (~all bei mehreren Versendern laut Google und M3AAWG, -all nur bei einem einzigen Dienst mit DKIM und DMARC laut Microsoft) mit Dennis bestätigen."
   - "Links auf Hoster-Anleitungen (/anleitung/ionos/spf usw.) setzen voraus, dass diese Seiten zum Launch online sind."
 ---
 
@@ -100,5 +104,7 @@ Weiter geht es mit [DKIM in Google Workspace](/anleitung/google-workspace/dkim),
 | Eintrag wird nicht erkannt | Tippfehler | Kein Punkt am Ende, Doppelpunkt nach `include`, kein Leerzeichen danach |
 
 Ein Hinweis zu `~all`: Google empfiehlt in seiner Anleitung diese weiche Variante. Mails von nicht genannten Servern werden dann nicht abgelehnt, sondern nur als verdächtig markiert. Das ist ein sicherer Start, solange du nicht weißt, ob wirklich alle Versender eingetragen sind. Die eigentliche Schutzwirkung kommt später über DMARC.
+
+Und wenn Microsoft 365 auch im Eintrag steht? Microsoft empfiehlt für reine Microsoft-365-Domains `-all`. Sobald zwei Dienste mit deiner Domain verschicken, bleib bei `~all`. Das empfiehlt auch der Branchenverband M3AAWG, weil ein hartes `-all` bei manchen Empfängern zur Ablehnung führt, bevor DMARC überhaupt geprüft wird, etwa bei weitergeleiteten Mails.
 
 Häufig passiert der Fehler beim Umzug: Vorher lagen die Postfächer beim Hoster, jetzt bei Google. Der alte Eintrag des Hosters bleibt stehen und Google fehlt. Laufen über den Hoster noch Formular-Mails, lässt du dessen Angabe im Eintrag und ergänzt Google. Wird der Hoster gar nicht mehr zum Verschicken genutzt, kannst du seine Angabe entfernen.

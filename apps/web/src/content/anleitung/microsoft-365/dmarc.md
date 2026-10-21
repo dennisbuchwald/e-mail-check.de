@@ -18,7 +18,7 @@ schritte:
         host: "_dmarc.{domain}"
         wert: "v=DMARC1; p=none; rua=mailto:dmarc@{domain}"
     - text: "Achte darauf, dass es nur **einen** _dmarc-Eintrag gibt."
-    - text: "Werte ein paar Wochen die Berichte aus. Dann auf **p=quarantine** und später **p=reject** umstellen."
+    - text: "Werte mindestens eine Woche, besser ein paar Wochen die Berichte aus. Dann auf **p=quarantine** und später **p=reject** umstellen."
 faq:
   - frage: "Wie richte ich DMARC in Office 365 ein?"
     antwort: "Du legst einen TXT-Eintrag mit dem Namen _dmarc bei dem Anbieter an, der deine Domain verwaltet. In Microsoft 365 selbst gibt es dafür keine Einstellung, außer für die Adresse auf onmicrosoft.com. Ein guter Start ist v=DMARC1; p=none; rua=mailto: plus dein Berichtspostfach."
@@ -27,15 +27,19 @@ faq:
   - frage: "Was passiert bei quarantine oder reject mit meinen eigenen Mails?"
     antwort: "Schlägt DMARC bei einer Mail aus Microsoft 365 fehl und deine Regel lautet quarantine oder reject, schickt Microsoft diese Mail über einen Pool für riskante Absender. Das lässt sich laut Microsoft nicht abschalten. Deshalb vorher SPF und DKIM sauber einrichten."
   - frage: "Wo stelle ich DMARC für die onmicrosoft.com-Adresse ein?"
-    antwort: "Das geht im Microsoft 365 Admin Center bei der Domain auf onmicrosoft.com. Dort legst du einen TXT-Eintrag mit dem Namen _dmarc an. Für deine eigene Domain ist das nicht nötig, weil der Eintrag beim Domain-Anbieter liegt."
+    antwort: "Im Microsoft 365 Admin Center unter Alle anzeigen > Einstellungen > Domänen. Dort wählst du die Domain auf onmicrosoft.com, öffnest den Reiter DNS-Einträge und legst einen TXT-Eintrag mit dem Namen _dmarc an. Verschickst du über diese Adresse keine Mails, empfiehlt Microsoft den Wert v=DMARC1; p=reject."
 quelle:
   - titel: "Microsoft Learn: Einrichten von DMARC zum Überprüfen von E-Mails in Microsoft 365"
     url: "https://learn.microsoft.com/de-de/defender-office-365/email-authentication-dmarc-configure"
+  - titel: "Microsoft Learn: Hinzufügen einer Domäne zu Microsoft 365 (DNS-Einträge im Admin Center)"
+    url: "https://learn.microsoft.com/de-de/microsoft-365/admin/setup/add-domain"
+  - titel: "Google Workspace Admin-Hilfe: Empfohlene DMARC-Einführung (none mindestens eine Woche)"
+    url: "https://knowledge.workspace.google.com/admin/security/recommended-dmarc-rollout?hl=de"
 stand: "2026-10-21"
 geprueft: false
 offenePunkte:
-  - "Microsoft nennt keine Dauer für die none-Phase. „Ein paar Wochen“ ist unsere Empfehlung, mit Dennis abstimmen."
-  - "Menüpfad im Admin Center für onmicrosoft.com ist in der maschinellen Übersetzung unklar (Alle anzeigen > Einstellungen > Domänen), daher im Text nur allgemein genannt."
+  - "Microsoft nennt keine Dauer für die none-Phase, Google mindestens eine Woche. „Mindestens eine Woche, besser ein paar Wochen“ ist unsere Empfehlung, mit Dennis abstimmen."
+  - "Admin-Center-Pfad (Alle anzeigen > Einstellungen > Domänen > Reiter DNS-Einträge) steht so in zwei Microsoft-Learn-Seiten. Den Button zum Hinzufügen übersetzt Microsoft uneinheitlich (Eintrag hinzufügen / Datensätze hinzufügen), daher im Text neutral formuliert."
   - "Links auf Hoster-Anleitungen (/anleitung/ionos/dmarc usw.) setzen voraus, dass diese Seiten zum Launch online sind."
 ---
 
@@ -67,7 +71,7 @@ v=DMARC1; p=none; rua=mailto:dmarc@deine-domain.de
 
 Die Klicks bei deinem Hoster findest du hier: [DMARC bei IONOS](/anleitung/ionos/dmarc), [DMARC bei STRATO](/anleitung/strato/dmarc), [DMARC bei ALL-INKL](/anleitung/all-inkl/dmarc), [Hetzner](/anleitung/hetzner/spf-dkim-dmarc).
 
-**4. Berichte lesen und verschärfen.** Wenn in den Berichten nur noch deine echten Versender auftauchen und alle bestehen, stellst du um auf:
+**4. Berichte lesen und verschärfen.** Microsoft nennt keine feste Dauer für diese Phase und rät nur, die Berichte am Anfang wöchentlich zu prüfen. Google empfiehlt mindestens eine Woche. Wir raten zu ein paar Wochen, damit auch seltene Versender wie Rechnungs- oder Buchungsmails auftauchen. Wenn in den Berichten nur noch deine echten Versender auftauchen und alle bestehen, stellst du um auf:
 
 ```
 v=DMARC1; p=quarantine; rua=mailto:dmarc@deine-domain.de
@@ -92,6 +96,8 @@ Microsoft empfiehlt, Massen-Mails über eine Subdomain wie `news.deine-domain.de
 Ein praktischer Weg: Die Subdomain bekommt zuerst `p=none`, während deine Hauptdomain schon auf `quarantine` steht. So schützt du deine Geschäftsmails, ohne dass ein falsch eingerichteter Newsletter sofort im Spam landet.
 
 Hast du Domains, die gar keine Mails verschicken, schützt du sie mit einer strengen Regel. Microsoft nennt dafür `v=DMARC1; p=reject;` ohne Berichtsadresse. So kann niemand mit diesen Domains Mails in deinem Namen fälschen.
+
+Das gilt laut Microsoft auch für deine Adresse auf onmicrosoft.com, wenn du darüber nichts verschickst. Diesen Eintrag setzt du ausnahmsweise im Microsoft 365 Admin Center: **Alle anzeigen** > **Einstellungen** > **Domänen**, dort die Domain auf onmicrosoft.com anklicken, Reiter **DNS-Einträge**, neuen Eintrag hinzufügen. Typ **TXT (Text)**, TXT-Name `_dmarc`, TXT-Wert `v=DMARC1; p=reject`, dann **Speichern**.
 
 ## Danach testen
 

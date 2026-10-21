@@ -27,11 +27,12 @@ faq:
 quelle:
   - titel: "Google Workspace Admin-Hilfe: DKIM einrichten"
     url: "https://knowledge.workspace.google.com/admin/security/set-up-dkim?hl=de"
+  - titel: "Google Workspace Admin-Hilfe: Probleme mit DKIM beheben (lange Schlüssel aufteilen)"
+    url: "https://knowledge.workspace.google.com/admin/security/troubleshoot-dkim-issues?hl=de"
 stand: "2026-10-21"
 geprueft: false
 offenePunkte:
-  - "Button-Bezeichnung „Neuen Eintrag erstellen“ laut Hilfeseite, in der echten Admin-Konsole prüfen."
-  - "Google nennt kein konkretes Zeichenlimit für TXT-Einträge. Ob IONOS, STRATO, ALL-INKL den 2.048-Bit-Schlüssel ohne Aufteilen annehmen, in der jeweiligen Oberfläche prüfen."
+  - "Ob IONOS, STRATO und ALL-INKL den 2.048-Bit-Schlüssel in einem Feld annehmen oder aufgeteilt brauchen, gehört in die jeweilige Hoster-Anleitung und ist dort noch offen."
   - "Links auf Hoster-Anleitungen (/anleitung/ionos/dkim usw.) setzen voraus, dass diese Seiten zum Launch online sind."
 ---
 
@@ -47,7 +48,7 @@ Du brauchst ein Superadmin-Konto. Gmail muss für deine Domain seit 24 bis 72 St
 
 **1. Bereich öffnen.** In der Admin-Konsole öffnest du das Menü und klickst auf **Apps** > **Google Workspace** > **Gmail** > **E-Mail authentifizieren**.
 
-**2. Schlüssel erzeugen.** Wähl deine Domain aus und klick auf **Neuen Eintrag erstellen**. Als Schlüssellänge nimmst du **2.048**. Nur wenn dein Domain-Anbieter so lange Einträge nicht annimmt, nimmst du 1.024. Den Präfix lässt du auf `google`. Mit **Erstellen** speicherst du.
+**2. Schlüssel erzeugen.** Wähl im Menü **Ausgewählte Domain** deine Domain aus und klick auf **Neuen Eintrag erstellen**. Als Schlüssellänge nimmst du **2.048**. Nur wenn dein Domain-Anbieter so lange Einträge nicht annimmt, nimmst du 1.024. Den Präfix lässt du auf `google`. Mit **Erstellen** speicherst du. Google bestätigt das mit „Einstellungen für die DKIM-Authentifizierung aktualisiert“.
 
 Google zeigt dir jetzt zwei Werte: den Host `google._domainkey` und einen langen Wert, der mit `v=DKIM1; k=rsa; p=` beginnt. Lass das Fenster offen.
 
@@ -87,6 +88,6 @@ Danach kommt die Schutzregel: [DMARC für Google Workspace](/anleitung/google-wo
 |---|---|---|
 | Schlüssel lässt sich nicht erzeugen | Gmail ist erst kurz aktiv | 24 bis 72 Stunden warten |
 | Authentifizierung startet nicht | DNS-Eintrag fehlt noch oder ist noch nicht sichtbar | Eintrag prüfen, warten, erneut klicken |
-| Eintrag wird abgelehnt oder abgeschnitten | Anbieter begrenzt die Länge von TXT-Einträgen | Beim Anbieter nachsehen, ob lange Werte möglich sind, sonst 1.024 Bit wählen |
+| Eintrag wird abgelehnt oder abgeschnitten | Anbieter begrenzt die Länge von TXT-Einträgen | Laut Google den Wert in Stücke von höchstens 255 Zeichen teilen, jedes in Anführungszeichen, alle im selben Eintrag. Geht das nicht, 1.024 Bit wählen |
 | Test zeigt keine DKIM-Zeile | Mail ist nicht signiert, Authentifizierung noch nicht gestartet | In der Admin-Konsole prüfen, ob „E-Mail wird mit DKIM authentifiziert“ angezeigt wird |
 | Check findet nichts | Host doppelt, etwa `google._domainkey.deine-domain.de.deine-domain.de` | Nur `google._domainkey` eintragen, wenn der Anbieter die Domain anhängt |
