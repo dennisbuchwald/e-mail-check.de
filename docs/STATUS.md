@@ -2,26 +2,23 @@
 
 Stand: 21.10.2026
 
-## Steht
-- Phase 0: Plan + Stack freigegeben (`docs/PLAN.md`)
-- Phase 2 Engine (`apps/engine`):
-  - SMTP-Empfang nur für gültige Testadressen, Mail nur im RAM
-  - Prüfungen SPF, DKIM, DMARC (Alignment), rDNS, 5 Sperrlisten, Inhalt (rspamd)
-  - Score + Ampel + Klartext (`docs/scoring.md`)
-  - API: Testadresse, Status, SSE-Fortschritt, Ergebnis (7 Tage, noindex), DNS-Schnellcheck, Rate-Limit
-  - 35 Tests grün (Fixtures `.eml` mit simuliertem DNS, SMTP-Integration, API, Ablauf/Löschung)
-  - Docker: engine, rspamd 4.2, unbound (eigener Resolver) laufen, Spamhaus-Abfragen funktionieren
+## Steht (lokal komplett lauffähig: `docker compose up -d --build`)
+- **Engine** (`apps/engine`): SMTP-Empfang nur im RAM, SPF/DKIM/DMARC mit Alignment, rDNS, 5 Sperrlisten über eigenen Resolver, Inhalt per rspamd, Score + Klartext, API mit SSE, DNS-Schnellcheck mit Versender-Erkennung, Rate-Limit, Löschung nach 7 Tagen. 35 Tests grün.
+- **Website** (`apps/web`): Startseite mit Tool und Prüf-Animation an echten Events, Ergebnis mit Prüfpunkten, Anleitung im Ergebnis (Anbieter wird erkannt), Teilen-Link `/ergebnis/<id>` (noindex), DNS-Checks `/spf-check`, `/dkim-check`, `/dmarc-check`.
+- **Inhalte**: 26 Seiten laut `research/seo-strategie.md` (4 Tools, 5 Wissen, 16 Anleitungen, Übersicht), alle mit Quelle, Stand, `geprueft: false`.
+- **Technik-SEO**: Titles/Descriptions, Canonicals, strukturierte Daten, Sitemap, robots.txt, OG-Bild, 404. Lighthouse mobil ≥ 95 in allen Kategorien.
+- **Recht**: Impressum (Platzhalter), Datenschutz + AVV als Entwurf (noindex).
+- **Statistik**: Umami als Compose-Profil vorbereitet, lokal aus.
+- **E2E**: 8 Playwright-Tests grün (Desktop + Mobil).
+- **Doku**: README, `docs/scoring.md`, `docs/DEPLOYMENT.md`, `docs/offene-punkte.md`, `research/abschluss-audit.md`.
 
-## Läuft gerade
-- Phase 1 Research fertig (`research/`), wartet auf Freigabe der SEO-Strategie
-- Phase 3 Website begonnen (Astro-Gerüst, Design-Tokens), noch nicht committet
+## Fehlt bis zum Launch
+1. Impressum-Daten eintragen (Dennis).
+2. Datenschutz + AVV rechtlich prüfen lassen.
+3. 56 offene Punkte der Anleitungen gegen die echten Oberflächen prüfen (`docs/offene-punkte.md`).
+4. Server + DNS nach `docs/DEPLOYMENT.md` (braucht Freigabe).
 
-## Als Nächstes
-- Phase 3 Website (Astro + Tool-Insel + Prüf-Animation)
-- Stopp-Punkt: `research/seo-strategie.md` an Dennis, dann Phase 4 Inhalte
-
-## Offene Fragen
-- Startseite auf „mail tester“ statt „e mail check“ ausrichten?
-- `/dkim-check` als 4. Tool-Seite?
-- Hetzner als eine Sammelseite?
-- Ziel für „Lass es einrichten“-Link?
+## Offene Fragen an Dennis
+- Wer prüft die Anleitungen fachlich gegen die Anbieter-Oberflächen?
+- Eigener Server sofort oder übergangsweise auf dem n8n-CAX11?
+- SPF-Linie für Domains mit Google und Microsoft: `~all` oder `-all`?
