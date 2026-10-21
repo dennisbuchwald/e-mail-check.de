@@ -1,6 +1,7 @@
 // Runs all checks on one message and reports each finished step.
 // The message buffer is only held for the duration of this call.
 import { randomBytes } from 'node:crypto';
+import type { MailPreview } from '@emc/shared';
 import { bandFor, computeScore, enrichFindings, hasAuthFailure, stationsOf, subScores, summarize, trafficLight, verdictFor, type Finding, type MailMeta, type MailResult, type StepId, type StepInfo } from '@emc/shared';
 import { checkAuth, type SmtpEnvelope } from './checks/auth.ts';
 import { checkReputation } from './checks/reputation.ts';
@@ -30,13 +31,14 @@ export function newId(bytes = 16): string {
 	return randomBytes(bytes).toString('base64url');
 }
 
-export async function analyzeMessage(message: Buffer, env: SmtpEnvelope, rcpt: string, deps: AnalyzeDeps, onStep: (step: StepId, info?: StepInfo) => void): Promise<MailResult> {
+export async function analyzeMessage(message: Buffer, env: SmtpEnvelope, rcpt: string, deps: AnalyzeDeps, onStep: (step: StepId, info?: StepInfo) => void, onPreview?: (preview: MailPreview) => void): Promise<MailResult> {
 	const now = deps.now?.() ?? new Date();
 
 	// Reputation and content do not depend on the auth results: start them right away.
 	const reputation = checkReputation(env.ip, deps.resolver, undefined, env.helo);
 	const parsed = await simpleParser(message, { skipImageLinks: true, skipTextToHtml: true, skipTextLinks: true }).catch(() => null);
 	const meta = mailMeta(parsed, env, now);
+	if (onPreview && parsed) onPreview(previewOf(parsed));
 	onStep('received', { mail: { from: meta.from, subject: meta.subject }, detail: meta.tls.used ? `Verschlüsselt empfangen (${meta.tls.version ?? 'TLS'})` : 'Unverschlüsselt empfangen' });
 	const content = runContentChecks(message, parsed, env, rcpt, deps);
 
@@ -121,6 +123,17 @@ function mailMeta(parsed: ParsedMail | null, env: SmtpEnvelope, now: Date): Mail
 		receivedAt: now.toISOString(),
 		tls: { used: !!env.tls, version: env.tls?.version ?? null },
 	};
+}
+
+const CAP = { text: 100_000, html: 300_000, headers: 30_000 };
+
+/** The mail for the source panel, capped. Handed to the caller once, never part of the result. */
+export function previewOf(parsed: ParsedMail): MailPreview {
+	const html = typeof parsed.html === 'string' ? parsed.html : null;
+	const text = parsed.text ?? null;
+	const headers = parsed.headerLines.map((h) => h.line).join('\n');
+	const truncated = (html?.length ?? 0) > CAP.html || (text?.length ?? 0) > CAP.text || headers.length > CAP.headers;
+	return { text: text?.slice(0, CAP.text) ?? null, html: html?.slice(0, CAP.html) ?? null, headers: headers.slice(0, CAP.headers), truncated };
 }
 
 /** Words, images and parts of the mail: counts only, the text itself is not kept. */

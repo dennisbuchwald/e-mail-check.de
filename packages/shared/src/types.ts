@@ -112,10 +112,19 @@ export interface StepInfo {
 	mail?: { from: string | null; subject: string | null };
 }
 
+/** Text, HTML and header lines of the received mail, capped in size. Only ever lives in RAM and in the tester's browser. */
+export interface MailPreview {
+	text: string | null;
+	html: string | null;
+	headers: string;
+	truncated: boolean;
+}
+
 /** Server-sent event payloads. */
 export type ProgressEvent =
 	| ({ type: 'step'; step: StepId } & StepInfo)
-	| { type: 'done'; resultId: string }
+	/** preview: the mail itself for the "Mail-Quelle & Header" panel. Sent once to the person who ran the test, never stored. */
+	| { type: 'done'; resultId: string; preview?: MailPreview }
 	| { type: 'error'; message: string }
 	| { type: 'expired' };
 

@@ -22,7 +22,7 @@ const purge = () => console.log(`purge: ${store.purge()} rows deleted`);
 purge();
 setInterval(purge, 3600_000).unref();
 
-const api = createApi({ service, resolver, rateLimit: config.rateLimit, trustProxy: config.trustProxy });
+const api = createApi({ service, resolver, rateLimit: config.rateLimit, trustProxy: config.trustProxy, siteUrl: config.siteUrl });
 const http = serve({ fetch: api.fetch, port: config.httpPort }, () => console.log(`api listening on :${config.httpPort}`));
 
 // Production: STARTTLS with the certificate Caddy fetched for the MX hostname.

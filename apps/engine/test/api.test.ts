@@ -75,6 +75,39 @@ describe('API', () => {
 		expect(await res.json()).toEqual({ mailsChecked: null });
 	});
 
+	it('renders the result server-side as HTML, without subject or sender', async () => {
+		const { app, service } = setup();
+		const test = service.createTest();
+		const res = (await service.handleMessage(test.address, fixture('gut.eml'), { ip: GOOD_IP, helo: 'mail.gut.example.test', sender: 'max@gut.example.test', tls: { version: 'TLSv1.3' } }))!;
+		const view = await app.request(`/api/results/${res.id}/view`);
+		expect(view.headers.get('content-type')).toContain('text/html');
+		const html = await view.text();
+		expect(html).toContain('Deine Mail kam sauber an.');
+		expect(html.match(/role="tab"/g)?.length).toBeGreaterThanOrEqual(6);
+		expect(html).toContain(`/ergebnis/${res.id}`);
+		expect(html).not.toContain('Angebot Website');
+		expect(html).not.toContain('max@gut.example.test');
+		const missing = await (await app.request('/api/results/AAAAAAAAAAAAAAAAAAAAAA/view')).text();
+		expect(missing).toContain('Ergebnis nicht gefunden');
+	});
+
+	it('sends the mail preview once with the live done event and never stores it', async () => {
+		const { app, service, store } = setup();
+		const test = service.createTest();
+		const events: { type: string; preview?: { text: string | null; headers: string } }[] = [];
+		const off = service.subscribe(test.id, (e) => events.push(e as never));
+		const res = (await service.handleMessage(test.address, fixture('gut.eml'), { ip: GOOD_IP, helo: 'x', sender: 'max@gut.example.test' }))!;
+		off();
+		const done = events.find((e) => e.type === 'done')!;
+		expect(done.preview?.text).toContain('Angebot für die neue Website');
+		expect(done.preview?.headers).toContain('Subject: Angebot Website');
+		expect(JSON.stringify(store.getResult(res.id))).not.toContain('Angebot für die neue Website');
+		// A late subscriber (SSE replay) gets the done event without the preview.
+		const replay = await (await app.request(`/api/tests/${test.id}/events`)).text();
+		expect(replay).toContain('event: done');
+		expect(replay).not.toContain('Angebot für die neue Website');
+	});
+
 	it('rate-limits test creation per IP', async () => {
 		const { app } = setup();
 		const codes = [];

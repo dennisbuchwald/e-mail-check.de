@@ -3,6 +3,8 @@ const env = process.env;
 export const config = {
 	/** Domain the test addresses live on (MX points here in production). */
 	testDomain: env.TEST_DOMAIN ?? 'test.e-mail-check.de',
+	/** Public site URL, used for share links in server-rendered results. */
+	siteUrl: (env.SITE_URL ?? 'https://e-mail-check.de').replace(/\/$/, ''),
 	/** Hostname this server announces in SMTP and Authentication-Results. */
 	hostname: env.MX_HOSTNAME ?? 'mx.e-mail-check.de',
 	smtpPort: Number(env.SMTP_PORT ?? 2525),
