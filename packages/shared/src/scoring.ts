@@ -94,7 +94,6 @@ export function enrichFindings(findings: Finding[]): Finding[] {
 export function summarize(score: number, findings: Finding[]): { headline: string; sub: string } {
 	const band = bandFor(score);
 	const todo = findings.filter((f) => f.status === 'bad' || (f.status === 'warn' && (f.gain ?? 0) > 0));
-	const authNote = hasAuthFailure(findings) ? ' Wichtig: Mindestens eine der drei Grundlagen (SPF, DKIM, DMARC) schlägt fehl. Das allein kann Mails in den Spam schicken, egal wie hoch die Zahl ist.' : '';
 	let headline: string;
 	if (todo.length === 0) headline = band === 'good' ? 'Alles im grünen Bereich.' : 'Solide. Mehr geht hier kaum.';
 	else if (band === 'risk') headline = 'Hier landet viel im Spam. So behebst du es.';
@@ -106,5 +105,6 @@ export function summarize(score: number, findings: Finding[]): { headline: strin
 		endangered: 'Ein Teil deiner Mails landet wahrscheinlich im Spam. Arbeite die Punkte unten der Reihe nach ab, der erste bringt am meisten.',
 		risk: 'Viele deiner Mails landen im Spam oder werden abgelehnt. Erst beheben, dann wieder versenden.',
 	};
-	return { headline, sub: sub[band] + authNote };
+	// The exception rule (hasAuthFailure) is shown as its own notice in the UI, not repeated here.
+	return { headline, sub: sub[band] };
 }
