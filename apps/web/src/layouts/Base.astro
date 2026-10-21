@@ -127,19 +127,17 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
 		position: sticky;
 		top: 0;
 		z-index: 20;
-		background: rgba(255, 255, 255, 0.86);
-		backdrop-filter: saturate(1.4) blur(12px);
-		-webkit-backdrop-filter: saturate(1.4) blur(12px);
+		background-color: rgba(255, 255, 255, 0.8);
+		backdrop-filter: blur(12px);
+		-webkit-backdrop-filter: blur(12px);
 		border-bottom: 1px solid var(--line);
 	}
+	/* Home: glass bar over the full-height hero, stays on top while scrolling. */
 	.site-header.overlay {
-		position: absolute;
+		position: fixed;
 		left: 0;
 		right: 0;
-		background: transparent;
-		backdrop-filter: none;
-		-webkit-backdrop-filter: none;
-		border-bottom-color: transparent;
+		border-bottom-color: rgba(17, 17, 19, 0.06);
 	}
 	.head-inner {
 		height: 72px;
