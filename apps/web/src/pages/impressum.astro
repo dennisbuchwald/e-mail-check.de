@@ -1,19 +1,29 @@
 ---
 import Article from '../layouts/Article.astro';
+// Draft: legal basis and open questions in docs/recht-notizen.md.
 ---
 
 <Article title="Impressum" seoTitle="Impressum | e-mail-check.de" description="Impressum von e-mail-check.de, einem Projekt von Dennis Buchwald." path="/impressum" crumbs={[{ href: '/', label: 'Start' }, { href: '/impressum', label: 'Impressum' }]} cta={false}>
-	<p class="draft"><strong>Platzhalter:</strong> Die Angaben in eckigen Klammern trägt Dennis vor dem Livegang ein.</p>
-	<h2>Angaben gemäß § 5 DDG</h2>
-	<p>Dennis Buchwald<br />[Straße und Hausnummer]<br />[PLZ Ort]</p>
+	<p class="draft"><strong>Entwurf:</strong> Nach bestem Wissen erstellt, keine Rechtsberatung. Vor dem Livegang fachlich prüfen lassen. Angaben in eckigen Klammern sind Platzhalter.</p>
+
+	<h2>Anbieter</h2>
+	<p>Angaben gemäß § 5 Digitale-Dienste-Gesetz (DDG) und § 18 Abs. 1 Medienstaatsvertrag (MStV):</p>
+	<p>Dennis Buchwald<br />Oststraße 12<br />74072 Heilbronn<br />Deutschland</p>
+
 	<h2>Kontakt</h2>
-	<p>E-Mail: [E-Mail-Adresse]<br />Telefon: [Telefonnummer]</p>
+	<p>E-Mail: [E-Mail-Adresse]<br />Telefon: [Telefonnummer, optional]</p>
+
 	<h2>Umsatzsteuer</h2>
-	<p>[Umsatzsteuer-Identifikationsnummer, falls vorhanden]</p>
+	<p>[Nur eintragen, falls für dieses Angebot vorhanden: Umsatzsteuer-Identifikationsnummer gemäß § 27a Umsatzsteuergesetz. Sonst diesen Abschnitt löschen.]</p>
+
 	<h2>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h2>
-	<p>Dennis Buchwald, [Anschrift wie oben]</p>
-	<h2>Haftung für Inhalte und Links</h2>
-	<p>Die Anleitungen auf dieser Website werden sorgfältig erstellt. Anbieter ändern ihre Oberflächen aber regelmäßig, deshalb übernehmen wir keine Gewähr für Vollständigkeit und Aktualität. Für Inhalte externer Links sind die jeweiligen Betreiber verantwortlich.</p>
+	<p>Dennis Buchwald, Anschrift wie oben</p>
+
+	<h2>Hinweis zu den Anleitungen</h2>
+	<p>Die Anleitungen und Prüfergebnisse auf dieser Website erstellen wir sorgfältig. Mail-Anbieter und Hoster ändern ihre Oberflächen und Regeln aber regelmäßig. Prüf deshalb vor jeder Änderung an deinen DNS-Einträgen, ob die Schritte zu dem passen, was du bei deinem Anbieter siehst. Im Zweifel hilft dir der Support deines Anbieters.</p>
+
+	<h2>Links zu anderen Websites</h2>
+	<p>Für die Inhalte verlinkter Websites sind deren Betreiber verantwortlich. Erfahren wir von rechtswidrigen Inhalten auf einer verlinkten Seite, entfernen wir den Link.</p>
 </Article>
 
 <style>

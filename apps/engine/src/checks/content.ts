@@ -7,7 +7,6 @@ export interface RspamdSymbol {
 	name: string;
 	score: number;
 	description?: string;
-	options?: string[];
 }
 
 const IGNORED = [
@@ -81,7 +80,9 @@ export async function scanWithRspamd(url: string, message: Buffer, env: SmtpEnve
 	const json = (await res.json()) as { action?: string; required_score?: number; symbols?: Record<string, RspamdSymbol> };
 	const symbols = Object.values(json.symbols ?? {})
 		.filter((s) => !IGNORED.some((re) => re.test(s.name)))
-		.map((s) => ({ name: s.name, score: round1(s.score), description: s.description, options: s.options?.slice(0, 3) }));
+		// Only rule name, score and rspamd's generic description. Never `options`: they contain
+		// excerpts of the message (links, words), which must not outlive the analysis.
+		.map((s) => ({ name: s.name, score: round1(s.score), description: s.description }));
 	let score = round1(symbols.reduce((sum, s) => sum + s.score, 0));
 	// Pre-filters like GTUBE reject outright with 0 points: treat that as clear spam.
 	if (json.action === 'reject' && symbols.some((s) => s.name === 'GTUBE')) {
