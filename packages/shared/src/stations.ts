@@ -1,6 +1,6 @@
 // Result page V2: the delivery route with six stations (design/redesign/ergebnis-v2-prototyp.html, tab D).
 // Each station groups one or two findings; its status is the worst of them.
-import { round1 } from './scoring.ts';
+import { round1, STATUS_RANK } from './scoring.ts';
 import type { CheckId, Finding, Status } from './types.ts';
 
 export type StationId = 'absender' | 'unterschrift' | 'schutzregel' | 'serverruf' | 'transport' | 'posteingang';
@@ -24,7 +24,7 @@ export interface Station {
 	gain: number;
 }
 
-const RANK: Record<Status, number> = { bad: 3, warn: 2, ok: 1, skip: 0 };
+const RANK = STATUS_RANK;
 
 export function stationsOf(findings: Finding[]): Station[] {
 	return STATION_DEFS.map((def, index) => {

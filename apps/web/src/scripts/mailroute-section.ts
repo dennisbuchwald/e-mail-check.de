@@ -53,7 +53,8 @@ export function initMailRoute(): void {
 		(entries) => {
 			if (entries.some((e) => e.isIntersecting)) load();
 		},
-		{ rootMargin: '600px 0px' },
+		// Phones: the section sits right under the hero, a big margin would load the scene with the page.
+		{ rootMargin: matchMedia('(max-width: 1080px)').matches ? '150px 0px' : '600px 0px' },
 	).observe(sec);
 	if (reduced) return;
 	new IntersectionObserver((entries) => {

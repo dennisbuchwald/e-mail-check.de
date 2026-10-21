@@ -1,3 +1,18 @@
+/* Fonts: own subsets in src/fonts (see README there), preloaded in layouts/Base.astro. */
+@font-face {
+	font-family: 'Fraunces Variable';
+	font-style: normal;
+	font-weight: 680;
+	font-display: swap;
+	src: url('../fonts/fraunces-680-latin.woff2') format('woff2');
+}
+@font-face {
+	font-family: 'Inter Variable';
+	font-style: normal;
+	font-weight: 400 700;
+	font-display: swap;
+	src: url('../fonts/inter-400-700-latin.woff2') format('woff2-variations'), url('../fonts/inter-400-700-latin.woff2') format('woff2');
+}
 /* Design system (redesign 21.10.2026,: calm SaaS, fine lines, lab character.
    Status colors only as dots, thin bars and tinted chips. Text is always ink. */
 :root {

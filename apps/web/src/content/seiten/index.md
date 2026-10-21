@@ -36,7 +36,7 @@ Das Ergebnis kannst du als Link teilen, zum Beispiel mit deinem Kunden oder dein
 
 ## Was wir prüfen
 
-Wir prüfen fünf Dinge. Oben steht immer der Klartext, darunter klein der Fachbegriff. Die Rohdaten für Profis findest du ganz unten im Ergebnis zum Aufklappen.
+Wir prüfen sechs Stationen. Oben steht immer der Klartext, darunter klein der Fachbegriff. Die Rohdaten für Profis findest du ganz unten im Ergebnis zum Aufklappen.
 
 | Prüfpunkt | Was dahintersteckt | Fachbegriff |
 |---|---|---|
