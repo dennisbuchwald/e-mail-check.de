@@ -261,7 +261,7 @@ function nerdArea(r: MailResult): string {
 		esc(kind),
 		`<span class="tag with-dot is-${l.listed === null ? 'skip' : l.allow ? (l.listed ? 'ok' : 'skip') : l.listed ? 'bad' : 'ok'}">${l.listed === null ? 'keine Antwort' : l.allow ? (l.listed ? 'eingetragen' : 'nicht eingetragen') : l.listed ? 'gelistet' : 'sauber'}</span>`,
 	];
-	const listRows = [...((rep.lists ?? []) as Raw[]).map((l) => listRow(l, l.major ? 'groß' : 'klein')), ...((rep.allowLists ?? []) as Raw[]).map((l) => listRow({ ...l, allow: true }, 'Positivliste'))];
+	const listRows = [...((rep.lists ?? []) as Raw[]).map((l) => listRow(l, l.major ? 'groß' : 'klein')), ...((rep.allowLists ?? []) as Raw[]).map((l) => listRow({ ...l, allow: true }, 'positiv'))];
 	const serverRows = [
 		['IP-Adresse', mono(rep.ip)],
 		['Rückwärts-Name (rDNS)', `${mono(rep.ptr ?? 'keiner')}${rep.ptr ? ` · ${rep.ptrMatches ? 'zeigt zurück auf die IP' : 'zeigt nicht zurück'}` : ''}`],
