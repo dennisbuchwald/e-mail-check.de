@@ -91,6 +91,7 @@ describe('API', () => {
 		expect(html).toContain('Deine Mail kam sauber an.');
 		expect(html.match(/class="rv-hot( [^"]*)?"/g)?.length).toBe(6);
 		expect(html.match(/data-panel="/g)?.length).toBe(6);
+		expect(html).toContain('So kommt die Zahl zustande');
 		expect(html).toContain(`/ergebnis/${res.id}`);
 		expect(html).not.toContain('Angebot Website');
 		expect(html).not.toContain('max@gut.example.test');

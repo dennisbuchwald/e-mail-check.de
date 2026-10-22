@@ -78,6 +78,12 @@ test('start → mail → animation → result → steps → share', async ({ pag
 	const html = await (await shared.request.get(url)).text();
 	expect(html.match(/class="rv-hot( [^"]*)?"/g)?.length).toBe(6);
 	expect(html).toContain('data-todo');
+	// "Für Nerds": the whole calculation and every list, collapsed, also without JavaScript.
+	expect(html).toContain('<details class="card rv-nerd"');
+	expect(html).toContain('So kommt die Zahl zustande');
+	await expect(shared.locator('.rv-nerd')).not.toHaveAttribute('open', '');
+	await shared.locator('.rv-nerd summary').click();
+	await expect(shared.locator('.rv-ledger tfoot')).toContainText(await score.innerText());
 	expect(html).toContain('Hier landet viel im Spam.');
 });
 
@@ -152,6 +158,11 @@ test('"Eingetragen? Jetzt prüfen": the DNS re-check turns the step green and ra
 	let policy = 'none';
 	await page.route('**/api/results/*', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify(result) }));
 	await page.route(`**/ergebnis/${result.id}`, (r) => r.fulfill({ contentType: 'text/html', body: shell }));
+	// The shell comes from the local build, so its scripts must too (the container may carry other hashes).
+	await page.route('**/_astro/**', (r) => {
+		const file = `apps/web/dist${new URL(r.request().url()).pathname}`;
+		r.fulfill({ body: readFileSync(file), contentType: file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : undefined });
+	});
 	await page.route('**/api/dns?*', (r) =>
 		r.fulfill({ contentType: 'application/json', body: JSON.stringify({ findings: [{ id: 'dmarc', status: policy === 'none' ? 'warn' : 'ok', raw: { record: `v=DMARC1; p=${policy}`, policy } }] }) }),
 	);

@@ -216,6 +216,100 @@ function todoCard(t: Todo, i: number, opts: ResultViewOptions): string {
 <p>${esc(t.why)}</p>${t.record ? recordBox(t.record) : ''}${links || check ? `<div class="rv-todo-actions">${check}${links}</div>` : ''}<p class="rv-todo-status" data-todo-status aria-live="polite"></p>${setupLine(opts, t.check)}</li>`;
 }
 
+/** One table for the nerd area: rows of [label, value] (value is already escaped HTML). */
+const nerdTable = (caption: string, head: string[], rows: string[][]) =>
+	rows.length
+		? `<table class="rv-nt"><caption class="sr-only">${esc(caption)}</caption><thead><tr>${head.map((h) => `<th scope="col">${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c, i) => (i ? `<td>${c}</td>` : `<th scope="row">${c}</th>`)).join('')}</tr>`).join('')}</tbody></table>`
+		: '';
+const nerdSec = (title: string, body: string, more?: { href: string; label: string }) =>
+	`<section class="rv-nerd-sec"><h3 class="h">${esc(title)}</h3>${body}${more ? `<a class="rv-nerd-more" href="${more.href}">${esc(more.label)} ›</a>` : ''}</section>`;
+const yes = (v: unknown) => (v === true ? 'ja' : v === false ? 'nein' : '–');
+const mono = (v: unknown) => `<span class="mono">${esc(v ?? '–')}</span>`;
+
+/** "Für Nerds": everything we measured, one place, collapsed at the very bottom. Only what the stored summary holds. */
+function nerdArea(r: MailResult): string {
+	const f = (id: string): Raw => (r.findings.find((x) => x.id === id)?.raw ?? {}) as Raw;
+	const spf = f('spf'), dkim = f('dkim'), dmarc = f('dmarc'), rep = f('reputation'), tr = f('transport'), c = f('content'), sender = f('sender');
+	const domain = sender.domain ?? r.fromDomain ?? spf.domain;
+
+	// 1. The calculation: 10 minus every deduction, never below 0.
+	const deductions = r.findings.flatMap((x) => x.deductions.map((d) => [esc(x.tech), esc(d.reason), `<span class="mono">−${fmt1(d.points)}</span>`]));
+	const ledger = `<table class="rv-nt rv-ledger"><caption class="sr-only">Punkterechnung</caption><thead><tr><th scope="col">Prüfung</th><th scope="col">Grund</th><th scope="col">Punkte</th></tr></thead><tbody><tr><th scope="row">Start</th><td>jede Mail beginnt bei 10</td><td><span class="mono">10,0</span></td></tr>${deductions.map((d) => `<tr><th scope="row">${d[0]}</th><td>${d[1]}</td><td>${d[2]}</td></tr>`).join('') || '<tr><th scope="row">Abzüge</th><td>keine</td><td><span class="mono">0,0</span></td></tr>'}</tbody><tfoot><tr><th scope="row">Ergebnis</th><td>nie unter 0</td><td><span class="mono">${fmt1(r.score)}</span></td></tr></tfoot></table>`;
+	const sub = r.subScores ? `<p class="rv-small">Teilwerte: Authentifizierung ${r.subScores.auth} %, Server-Ruf ${r.subScores.reputation} %, Inhalt ${r.subScores.content} %.</p>` : '';
+
+	// 2. Authentication, written like an Authentication-Results header (our own summary, not a header of your mail).
+	const sigs = (dkim.signatures ?? []) as Raw[];
+	const authLines = [
+		`spf=${spf.result ?? 'none'}${spf.domain ? ` smtp.mailfrom=${spf.domain}` : ''}${spf.clientIp ? ` client-ip=${spf.clientIp}` : ''}${spf.helo ? ` helo=${spf.helo}` : ''}`,
+		...(sigs.length ? sigs.map((g) => `dkim=${g.result ?? '?'} header.d=${g.domain ?? '?'} header.s=${g.selector ?? '?'}${g.algo ? ` a=${g.algo}` : ''}${g.bits ? ` (${g.bits}-bit)` : ''}${g.aligned ? ' aligned' : ''}`) : ['dkim=none']),
+		`dmarc=${dmarc.result ?? 'none'}${dmarc.policy ? ` (p=${dmarc.policy})` : ''}${domain ? ` header.from=${domain}` : ''}`,
+	];
+	const lookups = spf.lookups as Raw | undefined;
+	const authRows = [
+		['SPF-Eintrag', mono(spf.record ? `"${spf.record}"` : 'kein Eintrag')],
+		...(lookups ? [['DNS-Abfragen', mono(`${lookups.count ?? 0} von ${lookups.limit ?? 10}${lookups.void ? `, ${lookups.void} leer` : ''}`)]] : []),
+		['DMARC-Eintrag', mono(dmarc.record ? `"${dmarc.record}"` : 'kein Eintrag')],
+		['DMARC über SPF', esc(dmarc.spfAligned ? `ja (${dmarc.spfAligned})` : 'nein')],
+		['DMARC über DKIM', esc(dmarc.dkimAligned ? `ja (${dmarc.dkimAligned})` : 'nein')],
+		['Freemail-Absender', yes(sender.freemail)],
+	];
+	const sigRows = sigs.map((g) => [esc(g.domain ?? '?'), mono(g.selector ?? '?'), mono(g.algo ?? '?'), mono(g.bits ? `${g.bits} Bit` : '?'), esc(g.result ?? '?'), esc(g.aligned ? 'ja' : 'nein')]);
+
+	// 3. Server and lists.
+	const listRow = (l: Raw, kind: string) => [
+		l.delistUrl ? `<a href="${esc(l.delistUrl)}" target="_blank" rel="noopener">${esc(l.list)}</a>` : esc(l.list),
+		esc(kind),
+		`<span class="tag with-dot is-${l.listed === null ? 'skip' : l.allow ? (l.listed ? 'ok' : 'skip') : l.listed ? 'bad' : 'ok'}">${l.listed === null ? 'keine Antwort' : l.allow ? (l.listed ? 'eingetragen' : 'nicht eingetragen') : l.listed ? 'gelistet' : 'sauber'}</span>`,
+	];
+	const listRows = [...((rep.lists ?? []) as Raw[]).map((l) => listRow(l, l.major ? 'groß' : 'klein')), ...((rep.allowLists ?? []) as Raw[]).map((l) => listRow({ ...l, allow: true }, 'Positivliste'))];
+	const serverRows = [
+		['IP-Adresse', mono(rep.ip)],
+		['Rückwärts-Name (rDNS)', `${mono(rep.ptr ?? 'keiner')}${rep.ptr ? ` · ${rep.ptrMatches ? 'zeigt zurück auf die IP' : 'zeigt nicht zurück'}` : ''}`],
+		['HELO', `${mono(rep.helo)}${rep.helo ? ` · ${rep.heloMatches ? 'passt zur IP' : 'passt nicht zur IP'}` : ''}`],
+		...(rep.bigSender ? [['Großer Versender', esc(`${rep.bigSender}: kleine Listen kosten hier keine Punkte`)]] : []),
+	];
+
+	// 4. Transport.
+	const hops = (tr.hops ?? []) as { host: string; sec: number }[];
+	const trRows = [
+		['Verschlüsselung', esc(tr.tls ? (tr.tls.used ? tr.tls.version ?? 'TLS' : 'ohne TLS') : '–')],
+		['Unterwegs', esc(fmtDuration(tr.durationSec) ?? 'nicht sicher bestimmbar')],
+	];
+	const hopRows = hops.map((h, i) => [esc(String(i + 1)), mono(h.host), mono(`+${h.sec} s`)]);
+
+	// 5. Content.
+	const sym = ((c.symbols ?? []) as Raw[]).slice().sort((a, b) => b.score - a.score);
+	const symRows = sym.map((x) => [mono(x.name), esc(ruleTitle(x.name)), mono(`${x.score > 0 ? '+' : ''}${fmt(x.score)}`)]);
+	const body = (c.body ?? {}) as Raw, links = (c.links ?? {}) as Raw, unsub = (c.unsubscribe ?? {}) as Raw;
+	const contentRows = [
+		['Spam-Score (rspamd)', mono(typeof c.rspamdScore === 'number' ? `${fmt(c.rspamdScore)} · ab 4 Verdacht, ab 6 Spam` : '–')],
+		['Wörter / Bilder', mono(`${body.words ?? '–'} / ${body.images ?? '–'}`)],
+		['Textfassung / HTML', esc(`${yes(body.hasText)} / ${yes(body.hasHtml)}`)],
+		['Links', esc(links.total !== undefined ? `${links.total} gelesen, ${links.domains} Domains geprüft, nie aufgerufen${links.shorteners?.length ? `, Kürzer: ${links.shorteners.join(', ')}` : ''}` : '–')],
+		['Newsletter erkannt', yes(unsub.bulk)],
+		['List-Unsubscribe / One-Click', esc(`${yes(unsub.header)} / ${yes(unsub.oneClick)}`)],
+	];
+
+	// 6. Providers and the raw summary.
+	const prov = r.providers ?? {};
+	const provRows = [
+		['DNS liegt bei', esc(prov.dns?.name ?? 'nicht erkannt')],
+		['Postfach liegt bei', esc(prov.mail?.name ?? 'nicht erkannt')],
+	];
+	const json = JSON.stringify({ score: r.score, band: r.band, subScores: r.subScores, providers: r.providers, findings: r.findings.map((x) => ({ id: x.id, status: x.status, abzug: x.deductions, raw: x.raw })) }, null, 2);
+
+	return `<details class="card rv-nerd" id="rv-nerd"><summary><span class="eyebrow">Für Nerds</span><span class="h rv-nerd-title">Alles, was wir gemessen haben</span><span class="rv-nerd-sub">Rechnung, Einträge, alle Listen und Regeln</span></summary>
+<div class="rv-nerd-body">
+${nerdSec('So kommt die Zahl zustande', ledger + sub)}
+${nerdSec('Absender, Unterschrift, Schutzregel', `${rawBox(authLines)}<p class="rv-small">Unsere Zusammenfassung im Stil eines Authentication-Results-Headers.</p>${nerdTable('Einträge', ['Was', 'Wert'], authRows)}${sigRows.length ? nerdTable('DKIM-Signaturen', ['Domain', 'Selektor', 'Verfahren', 'Schlüssel', 'Ergebnis', 'passt'], sigRows) : ''}`, { href: '/wissen/spf-dkim-dmarc', label: 'SPF, DKIM und DMARC erklärt' })}
+${nerdSec('Server-Ruf', `${nerdTable('Server', ['Was', 'Wert'], serverRows)}${nerdTable('Sperrlisten', ['Liste', 'Art', 'Ergebnis'], listRows)}<p class="rv-small">Große Listen kosten bis zu 3 Punkte, kleine höchstens 0,3 zusammen. Positivlisten geben keine Punkte, sie zeigen nur einen guten Ruf.</p>`)}
+${nerdSec('Transport', `${nerdTable('Transport', ['Was', 'Wert'], trRows)}${nerdTable('Zustellkette', ['#', 'Server', 'Zeit'], hopRows)}`)}
+${nerdSec('Inhalt', `${nerdTable('Inhalt', ['Was', 'Wert'], contentRows)}${symRows.length ? nerdTable('Spamfilter-Regeln', ['Regel', 'Bedeutung', 'Punkte'], symRows) : '<p class="rv-small">Keine Spamfilter-Regel angeschlagen.</p>'}`, { href: '/wissen/mails-landen-im-spam', label: 'Warum Mails im Spam landen' })}
+${nerdSec('Anbieter', nerdTable('Anbieter', ['Was', 'Wert'], provRows) + '<p class="rv-small">Erkannt über die Nameserver (NS) und Mailserver (MX) deiner Domain.</p>', { href: '/anleitung', label: 'Alle Anleitungen' })}
+${nerdSec('Rohdaten', `<div class="rv-nerd-json"><pre class="rv-pre">${esc(json)}</pre><button type="button" class="copybtn" data-copy="${esc(json)}">${COPY}<span>JSON kopieren</span></button></div><p class="rv-small">Genau das speichern wir 7 Tage. Den Inhalt deiner Mail nicht.</p>`)}
+</div></details>`;
+}
+
 export function renderResultView(r: MailResult, opts: ResultViewOptions): string {
 	const stations = stationsOf(r.findings);
 	const verdict = r.verdict ?? verdictFor(r.score, stations);
@@ -253,12 +347,6 @@ export function renderResultView(r: MailResult, opts: ResultViewOptions): string
 		? `<details class="card rv-passed"><summary><span class="eyebrow">Bestanden</span><span class="rv-passed-chips">${passed.map((f) => `<span class="tag with-dot is-ok">${esc(PASSED_LABEL[f.id] ?? f.tech)}</span>`).join('')}</span><span class="rv-passed-more">Details</span></summary><ul>${passed.map((f) => `<li><b>${esc(f.title)}</b> <span>${esc(f.text)}</span></li>`).join('')}</ul></details>`
 		: '';
 
-	const rawAll = JSON.stringify(
-		r.findings.map((f) => ({ id: f.id, status: f.status, abzug: f.deductions, raw: f.raw })),
-		null,
-		2,
-	);
-
 	return `<div class="rv" data-rv data-final="${r.score}" data-result-id="${esc(r.id)}">
 <div class="card rv-head">
 	<span class="rv-head-i"><span class="eyebrow">Absender</span><span class="mono" data-mh-from>${esc(r.mail?.from ?? r.fromDomain ?? 'unbekannt')}</span></span>
@@ -290,13 +378,13 @@ ${passedHtml}
 </div>
 <section class="card rv-source" id="rv-source" hidden aria-label="Mail-Quelle und Header">
 	<div class="rv-source-tabs" role="tablist" aria-label="Ansicht">
-		<button type="button" role="tab" aria-selected="true" data-src="text">Text</button><button type="button" role="tab" aria-selected="false" data-src="html">HTML</button><button type="button" role="tab" aria-selected="false" data-src="headers">Header</button><button type="button" role="tab" aria-selected="false" data-src="raw">Rohdaten</button>
+		<button type="button" role="tab" aria-selected="true" data-src="text">Text</button><button type="button" role="tab" aria-selected="false" data-src="html">HTML</button><button type="button" role="tab" aria-selected="false" data-src="headers">Header</button>
 	</div>
 	<div class="rv-src" data-src-panel="text"><p class="rv-small" data-preview-missing>Text, HTML und Header siehst du nur direkt nach deinem Test. Wir speichern den Inhalt deiner Mail nicht, auch nicht für diesen Link.</p><pre class="rv-pre" data-preview-text hidden></pre></div>
 	<div class="rv-src" data-src-panel="html" hidden><p class="rv-small" data-preview-missing>Nur direkt nach deinem Test verfügbar. Externe Bilder und Skripte werden nie geladen.</p><iframe class="rv-frame" title="HTML-Ansicht deiner Mail" sandbox="" data-preview-html hidden></iframe></div>
 	<div class="rv-src" data-src-panel="headers" hidden><p class="rv-small" data-preview-missing>Nur direkt nach deinem Test verfügbar.</p><pre class="rv-pre" data-preview-headers hidden></pre></div>
-	<div class="rv-src" data-src-panel="raw" hidden><pre class="rv-pre">${esc(rawAll)}</pre></div>
 </section>
+${nerdArea(r)}
 </div>`;
 }
 
