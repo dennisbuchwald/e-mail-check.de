@@ -111,7 +111,7 @@ function stationVisual(st: Station, r: MailResult): string {
 			const sender = rawOf(st, 'sender');
 			const domain = sender.domain ?? r.fromDomain ?? spf.domain ?? 'unbekannt';
 			const tip = sender.freemail
-				? `<div class="rv-tip"><span class="dot" style="background:var(--warn)"></span><span><b>Eigene Domain nutzen</b>Zum Beispiel <span class="mono">name@deine-firma.de</span>. Bringt die letzten ${fmt1(0.2)} Punkte.</span></div>`
+				? `<div class="rv-tip"><span class="dot" style="background:var(--warn)"></span><span><b>Eigene Domain nutzen</b>Zum Beispiel <span class="mono">name@deine-firma.de</span>. Kostet keine Punkte, wirkt aber seriöser.</span></div>`
 				: '';
 			return `<span class="eyebrow">Absender-Domain</span><div class="h rv-big">${esc(domain)}</div>${tip}${rawBox([
 				`Received-SPF: ${spf.result ?? 'none'}${spf.domain ? ` (${spf.domain}` : ''}${spf.clientIp ? `: ${spf.clientIp}` : ''}${spf.domain ? ')' : ''}${spf.helo ? ` helo=${spf.helo}` : ''}`,

@@ -5,8 +5,8 @@ export const POINTS = {
 	spf: { none: 1.5, fail: 2, softfail: 1, neutral: 0.5, permerror: 1.5, temperror: 0.5 },
 	dkim: { none: 2, fail: 2.5, notAligned: 0.5, temperror: 0.5 },
 	dmarc: { none: 1.5, fail: 2.5, monitorOnly: 0.2, temperror: 0.5 },
-	/** Freemail sender (gmail, icloud, gmx …): a hint, not a problem. */
-	sender: { freemail: 0.2 },
+	/** Freemail sender (gmail, icloud, gmx …): a hint without points, the mail itself arrives fine. */
+	sender: { freemail: 0 },
 	/** Major lists (Spamhaus, SpamCop, PSBL): a problem. Small, aggressive lists: only a hint, at most 0.3 together. */
 	reputation: { majorList: 3, listCap: 4, smallList: 0.2, smallListCap: 0.3, noPtr: 1, ptrMismatch: 0.5 },
 	/** Transport to us: no TLS or outdated TLS. */
@@ -108,6 +108,8 @@ export function verdictFor(score: number, findings: (Pick<Finding, 'status'> & {
 	const warn = findings.filter((f) => f.status === 'warn').length;
 	if (bandFor(score) === 'risk') return { line1: 'Hier landet viel im Spam.', line2: 'So behebst du es.' };
 	if (bad > 0) return { line1: 'Deine Mail kommt an, aber nicht überall.', line2: bad === 1 ? 'Eine Sache solltest du beheben.' : `${bad} Dinge solltest du beheben.` };
+	// At 10 the hints cost nothing (freemail): "letzte Stufe" would promise points that are not there.
+	if (warn > 0 && score >= 10) return { line1: 'Deine Mail kam sauber an.', line2: warn === 1 ? 'Ein Tipp, der keine Punkte kostet.' : `${WORDS[warn] ?? warn} Tipps, die keine Punkte kosten.` };
 	if (warn > 0) return { line1: 'Deine Mail kam sauber an.', line2: warn === 1 ? 'Ein Tipp für die letzte Stufe.' : `${WORDS[warn] ?? warn} Tipps für die letzte Stufe.` };
 	return { line1: 'Deine Mail kam sauber an.', line2: 'Jede Station grün.' };
 }

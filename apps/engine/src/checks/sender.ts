@@ -11,8 +11,8 @@ export function senderFinding(fromDomain: string | null): Finding {
 			...base,
 			status: 'warn',
 			title: 'Absender mit Freemail-Adresse',
-			text: `Du schickst von einer kostenlosen Adresse (${fromDomain}). Für Kunden- und Firmenmails lieber eine Adresse deiner eigenen Domain nutzen: Das wirkt seriöser, und Spamfilter sind bei Freemail-Absendern strenger.`,
-			deductions: [{ reason: 'Freemail-Absender', points: POINTS.sender.freemail }],
+			text: `Du schickst von einer kostenlosen Adresse (${fromDomain}). Für Kunden- und Firmenmails lieber eine Adresse deiner eigenen Domain nutzen: Das wirkt seriöser, und Spamfilter sind bei Freemail-Absendern strenger. Punkte kostet das nicht, weil deine Mail sauber ankommt.`,
+			deductions: POINTS.sender.freemail ? [{ reason: 'Freemail-Absender', points: POINTS.sender.freemail }] : [],
 			raw: { domain: fromDomain, freemail: true },
 		};
 	}

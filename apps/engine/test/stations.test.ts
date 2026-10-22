@@ -10,10 +10,10 @@ describe('freemail', () => {
 		for (const d of ['gmail.com', 'icloud.com', 'gmx.de', 'web.de', 't-online.de', 'outlook.com', 'posteo.de', 'proton.me', 'ICLOUD.COM']) expect(isFreemail(d), d).toBe(true);
 		for (const d of ['dbw-media.de', 'example.com', 'gmail.example.test', null]) expect(isFreemail(d)).toBe(false);
 	});
-	it('is a hint with 0.2 points, not a problem', () => {
+	it('is a hint without points, not a problem', () => {
 		const f = senderFinding('icloud.com');
 		expect(f.status).toBe('warn');
-		expect(f.deductions).toEqual([{ reason: 'Freemail-Absender', points: 0.2 }]);
+		expect(f.deductions).toEqual([]);
 		expect(f.text).toContain('eigenen Domain');
 		expect(senderFinding('dbw-media.de').status).toBe('ok');
 		expect(senderFinding(null).status).toBe('skip');
@@ -46,9 +46,9 @@ describe('transport', () => {
 describe('stations', () => {
 	const f = (id: Finding['id'], status: Finding['status'], points = 0): Finding => ({ id, status, title: id, tech: id, text: '', deductions: points ? [{ reason: id, points }] : [], raw: {} });
 	it('groups findings into six stations, worst status wins, skip only if nothing was checked', () => {
-		const st = stationsOf([f('spf', 'ok'), f('sender', 'warn', 0.2), f('dkim', 'ok'), f('dmarc', 'bad', 2.5), f('reputation', 'ok'), f('content', 'skip')]);
+		const st = stationsOf([f('spf', 'ok'), f('sender', 'warn'), f('dkim', 'ok'), f('dmarc', 'bad', 2.5), f('reputation', 'ok'), f('content', 'skip')]);
 		expect(st.map((s) => [s.id, s.status, s.gain])).toEqual([
-			['absender', 'warn', 0.2],
+			['absender', 'warn', 0],
 			['unterschrift', 'ok', 0],
 			['schutzregel', 'bad', 2.5],
 			['serverruf', 'ok', 0],
@@ -68,12 +68,12 @@ describe('stations', () => {
 });
 
 describe('end to end: freemail sender like a real iCloud mail', () => {
-	it('scores 9.8 with one hint at the sender station, chain from the Received headers', async () => {
+	it('scores 10 with one hint at the sender station, chain from the Received headers', async () => {
 		const r = await analyzeMessage(fixture('freemail.eml'), { ip: GOOD_IP, helo: 'mail.gut.example.test', sender: 'max.muster@icloud.com', tls: { version: 'TLSv1.3' } }, 'k7m2x9qa@test.e-mail-check.de', { resolver: fakeResolver(), mta: 'mx.e-mail-check.de', resultTtlDays: 7, scanContent: async () => ({ score: 0.7, symbols: [{ name: 'SUBJ_ALL_CAPS', score: 0.3 }, { name: 'MV_CASE', score: 0.5 }, { name: 'MIME_GOOD', score: -0.1 }] }), now: () => new Date('2026-10-20T08:00:13Z') }, () => {});
-		expect(r.score).toBe(9.8);
+		expect(r.score).toBe(10);
 		const st = stationsOf(r.findings);
 		expect(st.map((s) => s.status)).toEqual(['warn', 'ok', 'ok', 'ok', 'ok', 'ok']);
-		expect(r.verdict).toEqual({ line1: 'Deine Mail kam sauber an.', line2: 'Ein Tipp für die letzte Stufe.' });
+		expect(r.verdict).toEqual({ line1: 'Deine Mail kam sauber an.', line2: 'Ein Tipp, der keine Punkte kostet.' });
 		const hops = (r.findings.find((x) => x.id === 'transport')!.raw as { hops: { host: string }[] }).hops.map((h) => h.host);
 		expect(hops).toEqual(['p00-icloudmta-asmtp.me.com', 'mr-2004c.eps.apple.com', 'mx.e-mail-check.de']);
 	});

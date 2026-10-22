@@ -39,8 +39,8 @@ describe('exception rule', () => {
 
 describe('sub scores', () => {
 	it('turns deductions per area into percent', () => {
-		const s = subScores([f('spf', 'ok'), f('sender', 'warn', 0.2), f('dkim', 'bad', 2), f('dmarc', 'warn', 0.2), f('reputation', 'ok'), f('transport', 'ok'), f('content', 'warn', 0.6)]);
-		expect(s).toEqual({ auth: Math.round(100 * (1 - 2.4 / 7.2)), reputation: 100, content: Math.round(100 * (1 - 0.6 / 5.3)) });
+		const s = subScores([f('spf', 'ok'), f('sender', 'warn'), f('dkim', 'bad', 2), f('dmarc', 'warn', 0.2), f('reputation', 'ok'), f('transport', 'ok'), f('content', 'warn', 0.6)]);
+		expect(s).toEqual({ auth: Math.round(100 * (1 - 2.2 / 7)), reputation: 100, content: Math.round(100 * (1 - 0.6 / 5.3)) });
 	});
 	it('hides an area that could not be checked', () => {
 		expect(subScores([f('spf', 'ok'), f('reputation', 'skip'), f('content', 'skip')]).reputation).toBeNull();
@@ -64,6 +64,7 @@ describe('verdict (two lines, by station status)', () => {
 	it.each([
 		[10, st('ok', 'ok', 'ok', 'ok', 'ok', 'ok'), 'Deine Mail kam sauber an.', 'Jede Station grün.'],
 		[9.8, st('warn', 'ok', 'ok', 'ok', 'ok', 'ok'), 'Deine Mail kam sauber an.', 'Ein Tipp für die letzte Stufe.'],
+		[10, st('warn', 'ok', 'ok', 'ok', 'ok', 'ok'), 'Deine Mail kam sauber an.', 'Ein Tipp, der keine Punkte kostet.'],
 		[9.4, st('warn', 'ok', 'warn', 'ok', 'ok', 'ok'), 'Deine Mail kam sauber an.', 'Zwei Tipps für die letzte Stufe.'],
 		[7.5, st('ok', 'bad', 'bad', 'ok', 'ok', 'warn'), 'Deine Mail kommt an, aber nicht überall.', '2 Dinge solltest du beheben.'],
 		[8.5, st('ok', 'ok', 'bad', 'ok', 'ok', 'ok'), 'Deine Mail kommt an, aber nicht überall.', 'Eine Sache solltest du beheben.'],
