@@ -298,10 +298,17 @@ const ogImage = new URL('/og.jpg', SITE.url).href;
 			transform: translate(-1750.8px, -76px) scale(3);
 		}
 	}
+	/* Scrolled: frosted glass, the page blurs behind the bar. */
 	@keyframes sb-bg {
+		from {
+			-webkit-backdrop-filter: blur(0px) saturate(1);
+			backdrop-filter: blur(0px) saturate(1);
+		}
 		to {
-			background-color: rgba(255, 255, 255, 0.86);
-			box-shadow: 0 1px 0 #ededf0;
+			background-color: rgba(255, 255, 255, 0.62);
+			box-shadow: 0 1px 0 rgba(17, 17, 19, 0.06);
+			-webkit-backdrop-filter: blur(20px) saturate(1.8);
+			backdrop-filter: blur(20px) saturate(1.8);
 		}
 	}
 	/* The timeline sits in a second selector on purpose: the CSS minifier would otherwise fold
@@ -341,11 +348,14 @@ const ogImage = new URL('/og.jpg', SITE.url).href;
 	.statusbar {
 		transition:
 			background-color 0.3s ease,
-			box-shadow 0.3s ease;
+			box-shadow 0.3s ease,
+			backdrop-filter 0.3s ease;
 	}
 	.statusbar.is-compact {
-		background-color: rgba(255, 255, 255, 0.86);
-		box-shadow: 0 1px 0 #ededf0;
+		background-color: rgba(255, 255, 255, 0.62);
+		box-shadow: 0 1px 0 rgba(17, 17, 19, 0.06);
+		-webkit-backdrop-filter: blur(20px) saturate(1.8);
+		backdrop-filter: blur(20px) saturate(1.8);
 	}
 	.statusbar.is-compact :global(.wm-text) {
 		opacity: 0;

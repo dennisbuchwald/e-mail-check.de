@@ -1,21 +1,18 @@
 ---
 // Soft mesh gradient in the aura tokens (--aura-1 … --aura-4). Never carries a status colour.
+// Only two places: the start page hero (drifts) and the closing band (still).
 // Blobs are radial gradients, not blur filters (cheap on phones); only transform moves,
-// and only while the aura is on screen (scripts/aura.ts). Phones and reduced motion: still.
-// hero: start page behind the status bar · band: closing band · soft: score scale
-// head: guide header · hint: behind verdict and score on the result page, never moves.
+// and only while the hero is on screen (scripts/aura.ts). Reduced motion: still.
 interface Props {
-	variant?: 'hero' | 'band' | 'soft' | 'head' | 'hint';
+	variant?: 'hero' | 'band';
 	grain?: boolean;
 	class?: string;
 }
 const { variant = 'hero', grain = false, class: cls } = Astro.props;
-const moves = variant === 'hero' || variant === 'band';
-const blobs = variant === 'soft' || variant === 'hint' ? 3 : 4;
 ---
 
-<div class:list={['aura', `aura--${variant}`, { grain }, cls]} aria-hidden="true" data-aura={moves ? 'move' : undefined}>
-	<div class="aura-in">{Array.from({ length: blobs }, (_, i) => <i class={`b${i + 1}`} />)}</div>
+<div class:list={['aura', `aura--${variant}`, { grain }, cls]} aria-hidden="true" data-aura={variant === 'hero' ? 'move' : undefined}>
+	<div class="aura-in"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i></div>
 </div>
 
 <script>
@@ -100,38 +97,30 @@ const blobs = variant === 'soft' || variant === 'hint' ? 3 : 4;
 		height: 90%;
 	}
 
-	/* Score scale: a tender wash behind the bar. */
-	.aura--soft i {
-		opacity: 0.5;
+	/* Drift, hero only: 18 to 26 s, alternate, transform only, paused off screen.
+	   Phones: half the way and slower, so it is barely noticeable. */
+	[data-aura='move'] {
+		--amp: 1;
+		--slow: 1;
 	}
-	.aura--soft::after {
-		background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.72));
+	@media (max-width: 760px) {
+		[data-aura='move'] {
+			--amp: 0.5;
+			--slow: 1.6;
+		}
 	}
-
-	/* Result page: a breath behind verdict and score. Neutral blue and violet; "Sehr gut" swaps pink for green (Tool.astro). */
-	.aura--hint i {
-		opacity: 0.32;
-	}
-	.aura--hint .b3 {
-		--c: var(--aura-2);
-	}
-	.aura--hint::after {
-		background: linear-gradient(180deg, rgba(250, 250, 251, 0) 0%, rgba(250, 250, 251, 0.4) 50%, var(--bg-soft) 96%);
-	}
-
-	/* Drift: 18 to 26 s, alternate, transform only. Paused off screen. */
-	@media (prefers-reduced-motion: no-preference) and (min-width: 761px) {
+	@media (prefers-reduced-motion: no-preference) {
 		[data-aura='move'] .b1 {
-			animation: aura-d1 18s ease-in-out infinite alternate;
+			animation: aura-d1 calc(18s * var(--slow)) ease-in-out infinite alternate;
 		}
 		[data-aura='move'] .b2 {
-			animation: aura-d2 22s ease-in-out infinite alternate;
+			animation: aura-d2 calc(22s * var(--slow)) ease-in-out infinite alternate;
 		}
 		[data-aura='move'] .b3 {
-			animation: aura-d3 20s ease-in-out infinite alternate;
+			animation: aura-d3 calc(20s * var(--slow)) ease-in-out infinite alternate;
 		}
 		[data-aura='move'] .b4 {
-			animation: aura-d2 26s ease-in-out infinite alternate-reverse;
+			animation: aura-d2 calc(26s * var(--slow)) ease-in-out infinite alternate-reverse;
 		}
 		[data-aura='move'].is-off i {
 			animation-play-state: paused;
@@ -139,17 +128,17 @@ const blobs = variant === 'soft' || variant === 'hint' ? 3 : 4;
 	}
 	@keyframes aura-d1 {
 		to {
-			transform: translate(8%, 10%) scale(1.08);
+			transform: translate(calc(8% * var(--amp)), calc(10% * var(--amp))) scale(calc(1 + 0.08 * var(--amp)));
 		}
 	}
 	@keyframes aura-d2 {
 		to {
-			transform: translate(-10%, 8%) scale(0.94);
+			transform: translate(calc(-10% * var(--amp)), calc(8% * var(--amp))) scale(calc(1 - 0.06 * var(--amp)));
 		}
 	}
 	@keyframes aura-d3 {
 		to {
-			transform: translate(-6%, -6%) scale(1.1);
+			transform: translate(calc(-6% * var(--amp)), calc(-6% * var(--amp))) scale(calc(1 + 0.1 * var(--amp)));
 		}
 	}
 </style>

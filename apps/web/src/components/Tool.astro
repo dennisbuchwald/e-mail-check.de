@@ -24,7 +24,6 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 
 <section class="tool" id="tool" data-mode={mode} data-setup-url={SITE.setupUrl} aria-live="polite">
 	<Aura variant="hero" grain class="tool-aura" />
-	<Aura variant="hint" class="result-aura" />
 
 	<!-- START -->
 	<div class="screen hero" data-screen="start" hidden={mode === 'result'}>
@@ -225,24 +224,6 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 		z-index: 1;
 	}
 
-	/* Result: a breath of aura behind verdict and score, full width and still.
-	   "Sehr gut" gets a little green instead of pink; problems stay neutral blue and violet. */
-	.result {
-		position: relative;
-		z-index: 1;
-	}
-	:global(.result-aura) {
-		display: none;
-		top: -76px !important;
-		bottom: auto !important;
-		height: 620px;
-	}
-	:global(body[data-tool-state='result']) :global(.result-aura) {
-		display: block;
-	}
-	.tool:has(:global(.rv[data-band='good'])) :global(.result-aura .b3) {
-		--c: #8ce8b8;
-	}
 
 	/* HERO */
 	.hero {

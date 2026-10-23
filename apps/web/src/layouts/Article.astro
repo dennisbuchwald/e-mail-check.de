@@ -6,7 +6,6 @@ import Prose from '../components/Prose.astro';
 import Faq from '../components/Faq.astro';
 import Cta from '../components/Cta.astro';
 import Figure from '../components/Figure.astro';
-import Aura from '../components/Aura.astro';
 import type { FigureName } from '../data/figures';
 import { articleSchema, breadcrumbSchema, faqSchema } from '../data/schema';
 
@@ -33,7 +32,6 @@ const jsonLd = noindex ? [] : [breadcrumbSchema(crumbs), ...(stand ? [articleSch
 ---
 
 <Base title={seoTitle} description={description} path={path} noindex={noindex} jsonLd={jsonLd} band={!noindex}>
-	{!noindex && <Aura variant="head" class="head-aura" />}
 	<article class="wrap article">
 		<div class:list={['narrow head', { 'has-fig': figure }]}>
 			{figure && <Figure name={figure.name} label={figure.label} class="head-fig" />}
@@ -83,15 +81,7 @@ const jsonLd = noindex ? [] : [breadcrumbSchema(crumbs), ...(stand ? [articleSch
 </Base>
 
 <style>
-	/* Guides: a small aura behind eyebrow and H1, from behind the status bar into white. */
-	:global(.head-aura) {
-		top: -76px !important;
-		bottom: auto !important;
-		height: 356px;
-	}
 	.article {
-		position: relative;
-		z-index: 1;
 		padding-top: 40px;
 		display: flex;
 		flex-direction: column;
@@ -102,9 +92,6 @@ const jsonLd = noindex ? [] : [breadcrumbSchema(crumbs), ...(stand ? [articleSch
 		width: 100%;
 	}
 	.head {
-		/* Muted text sits on the aura here. */
-		--muted: var(--muted-aura);
-		--muted-2: var(--muted-aura);
 		display: flex;
 		flex-direction: column;
 		gap: 18px;

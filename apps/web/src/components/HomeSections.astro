@@ -2,7 +2,6 @@
 // "Was bedeutet die Zahl?". Plain, crawlable HTML.
 // "Was wir prüfen" is now MailRoute.astro (the six stations of the result page).
 import { BANDS } from '@emc/shared';
-import Aura from './Aura.astro';
 
 const bands = [
 	{ key: 'risk', color: 'var(--bad)', flex: 50 },
@@ -20,7 +19,6 @@ const fmt = (n: number) => n.toLocaleString('de-DE');
 			<h2 id="zahl-title">Was bedeutet die Zahl?</h2>
 		</div>
 		<div class="card scale">
-			<Aura variant="soft" class="scale-aura" />
 			<div class="scale-bar" aria-hidden="true">
 				{bands.map((b) => <span style={`flex:${b.flex};background:${b.color}`} />)}
 			</div>
@@ -50,23 +48,11 @@ const fmt = (n: number) => n.toLocaleString('de-DE');
 </section>
 
 <style>
-	/* A tender aura sits behind the scale; the content stays above it. */
 	.scale {
-		position: relative;
-		overflow: hidden;
 		padding: 36px;
-		--muted-2: var(--muted-aura);
 		display: flex;
 		flex-direction: column;
 		gap: 24px;
-	}
-	.scale > :not(:global(.aura)) {
-		position: relative;
-		z-index: 1;
-	}
-	:global(.scale-aura) {
-		height: 260px;
-		bottom: auto !important;
 	}
 	.scale-bar {
 		display: flex;
