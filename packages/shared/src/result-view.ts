@@ -347,7 +347,7 @@ export function renderResultView(r: MailResult, opts: ResultViewOptions): string
 		? `<details class="card rv-passed"><summary><span class="eyebrow">Bestanden</span><span class="rv-passed-chips">${passed.map((f) => `<span class="tag with-dot is-ok">${esc(PASSED_LABEL[f.id] ?? f.tech)}</span>`).join('')}</span><span class="rv-passed-more">Details</span></summary><ul>${passed.map((f) => `<li><b>${esc(f.title)}</b> <span>${esc(f.text)}</span></li>`).join('')}</ul></details>`
 		: '';
 
-	return `<div class="rv" data-rv data-final="${r.score}" data-result-id="${esc(r.id)}">
+	return `<div class="rv" data-rv data-final="${r.score}" data-band="${esc(r.band)}" data-result-id="${esc(r.id)}">
 <div class="card rv-head">
 	<span class="rv-head-i"><span class="eyebrow">Absender</span><span class="mono" data-mh-from>${esc(r.mail?.from ?? r.fromDomain ?? 'unbekannt')}</span></span>
 	${r.mail?.subject ? `<span class="rv-head-i"><span class="eyebrow">Betreff</span><span>${esc(r.mail.subject)}</span></span>` : ''}

@@ -229,10 +229,6 @@ export function initTool(): void {
 		}
 		$('[data-fly]').hidden = true;
 		$('.wait-slot').dataset.phase = 'before';
-		for (const g of $$('[data-glow]')) {
-			delete g.dataset.result;
-			g.classList.remove('fade');
-		}
 		stopWaitTicker();
 	}
 
@@ -354,10 +350,6 @@ export function initTool(): void {
 		$('[data-orb]').className = 'orb done';
 		$('[data-wait-title]').textContent = 'Fertig, gleich kommt dein Ergebnis';
 		storage()?.removeItem(STORE_KEY);
-		// The glow briefly takes the colour of the result, then fades out over 1.5 s.
-		const glow = $('[data-glow]');
-		if (res?.ok) glow.dataset.result = res.data.light;
-		setTimeout(() => glow.classList.add('fade'), reduced ? 0 : 300);
 		await sleep(reduced ? 200 : 1800);
 		if (gen !== generation) return;
 		if (!res?.ok) return message('Ergebnis nicht gefunden', 'Das Ergebnis konnte nicht geladen werden. Starte bitte einen neuen Test.');

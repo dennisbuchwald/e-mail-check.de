@@ -1,4 +1,5 @@
-// Renders apps/web/public/og.png (1200×630) with the local brand fonts. Run: node scripts/og-image.mjs
+// Renders apps/web/public/og.jpg (1200×630, JPEG: the grain makes a PNG ~800 KB): aura background (variant A), wordmark, H1. Static.
+// Run: node scripts/og-image.mjs
 import { chromium } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -7,26 +8,36 @@ import { readFileSync } from 'node:fs';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const fonts = join(root, 'apps/web/node_modules/@fontsource-variable');
 const font = (f) => `data:font/woff2;base64,${readFileSync(join(fonts, f)).toString('base64')}`;
+const wordmark = `data:image/svg+xml;base64,${readFileSync(join(root, 'brand/wortmarke.svg')).toString('base64')}`;
+const grain = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`;
 const html = `<!doctype html><html><head><style>
 @font-face{font-family:F;src:url(${font('fraunces/files/fraunces-latin-opsz-normal.woff2')})}
 @font-face{font-family:I;src:url(${font('inter/files/inter-latin-wght-normal.woff2')})}
-body{margin:0;width:1200px;height:630px;background:#fff;font-family:I;color:#1d1d1f;box-sizing:border-box;padding:40px}
-.card{height:100%;box-sizing:border-box;border:10px solid #1d1d1f;border-radius:48px;padding:64px 72px;display:flex;flex-direction:column;justify-content:space-between}
-.top{display:flex;align-items:center;gap:16px;font-family:F;font-weight:680;font-size:34px;letter-spacing:-.02em}
-.top span{color:#8a8c8b}
-h1{font-family:F;font-weight:680;font-variation-settings:'SOFT' 0,'WONK' 0;font-size:92px;line-height:1.02;letter-spacing:-.03em;margin:0}
-.row{display:flex;gap:14px;font-size:26px;font-weight:600}
-.pill{border:3px solid #1d1d1f;border-radius:999px;padding:8px 22px;display:flex;align-items:center;gap:12px}
-.dot{width:16px;height:16px;border-radius:99px;background:#02ca50}
-</style></head><body><div class="card">
-<div class="top"><svg width="64" height="64" viewBox="0 0 120 120"><defs><mask id="m" maskUnits="userSpaceOnUse" x="0" y="0" width="120" height="120"><rect width="120" height="120" fill="#fff"/><path d="M26 60 L51 78 L76 60" fill="none" stroke="#000" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="96" cy="36" r="25" fill="#000"/></mask></defs><rect x="8" y="40" width="86" height="62" rx="13" fill="#1D1D1F" mask="url(#m)"/><circle cx="96" cy="36" r="18" fill="#02CA50"/><path d="M88.5 36.5 L94 42 L103.5 31.5" fill="none" stroke="#1D1D1F" stroke-width="5.8" stroke-linecap="round" stroke-linejoin="round"/></svg><b style="font-weight:680">e-mail-check<span>.de</span></b></div>
+body{margin:0;width:1200px;height:630px;position:relative;overflow:hidden;background:#fff;font-family:I;color:#111113}
+.aura{position:absolute;inset:0}
+.aura i{position:absolute;border-radius:50%;filter:blur(80px);opacity:.92}
+.b1{width:66%;height:100%;left:-14%;top:-22%;background:#6F86FF}
+.b2{width:58%;height:90%;left:26%;top:-30%;background:#B18CFF}
+.b3{width:56%;height:92%;right:-14%;top:4%;background:#F3A8D2}
+.b4{width:52%;height:70%;left:4%;top:56%;background:#FFD9C7;opacity:.85}
+.aura:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,0) 30%,rgba(255,255,255,.5) 100%)}
+.grain{position:absolute;inset:0;opacity:.18;mix-blend-mode:overlay;background-image:${grain}}
+.in{position:relative;height:100%;box-sizing:border-box;padding:64px 80px;display:flex;flex-direction:column;justify-content:space-between}
+.wm{height:96px;width:auto;align-self:flex-start}
+h1{font-family:F;font-weight:680;font-variation-settings:'SOFT' 0,'WONK' 0;font-size:96px;line-height:1.02;letter-spacing:-.03em;margin:0}
+.row{display:flex;gap:14px;font-size:24px;font-weight:600}
+.pill{border:1px solid rgba(255,255,255,.9);background:rgba(255,255,255,.7);border-radius:999px;padding:10px 22px;display:flex;align-items:center;gap:12px}
+.dot{width:14px;height:14px;border-radius:99px;background:#02ca50}
+</style></head><body>
+<div class="aura"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i></div><div class="grain"></div>
+<div class="in"><img class="wm" src="${wordmark}" alt="">
 <h1>Kommt deine Mail an?<br>Test in 30 Sekunden.</h1>
-<div class="row"><div class="pill"><i class="dot"></i>Score 0 bis 10</div><div class="pill">SPF · DKIM · DMARC</div><div class="pill">Server in Deutschland</div></div>
-</div></body></html>`;
+<div class="row"><div class="pill"><i class="dot"></i>Score 0 bis 10</div><div class="pill">SPF · DKIM · DMARC</div><div class="pill">Server in Deutschland</div></div></div>
+</body></html>`;
 const browser = await chromium.launch({ channel: 'chrome' });
 const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
 await page.setContent(html);
 await page.evaluate(async () => { await document.fonts.load('680 20px F'); await document.fonts.load('600 20px I'); await document.fonts.ready; });
-await page.screenshot({ path: join(root, 'apps/web/public/og.png') });
+await page.screenshot({ path: join(root, 'apps/web/public/og.jpg'), type: 'jpeg', quality: 86 });
 await browser.close();
-console.log('og.png written');
+console.log('og.jpg written');

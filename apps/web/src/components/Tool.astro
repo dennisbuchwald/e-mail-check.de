@@ -3,6 +3,7 @@
 // mode "result" renders /ergebnis/<id>.
 import { STEP_LABELS, STEPS } from '@emc/shared';
 import { PROVIDERS, SITE } from '../data/site';
+import Aura from './Aura.astro';
 
 interface Props {
 	mode?: 'test' | 'result';
@@ -22,7 +23,8 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 ---
 
 <section class="tool" id="tool" data-mode={mode} data-setup-url={SITE.setupUrl} aria-live="polite">
-	<div class="dots" aria-hidden="true"></div>
+	<Aura variant="hero" grain class="tool-aura" />
+	<Aura variant="hint" class="result-aura" />
 
 	<!-- START -->
 	<div class="screen hero" data-screen="start" hidden={mode === 'result'}>
@@ -31,7 +33,6 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 			{intro && <p class="lead">{intro}</p>}
 		</div>
 		<div class="mw-wrap">
-		<div class="glow" aria-hidden="true"><i class="g-base"></i><i class="g-res"></i></div>
 		<div class="card mailwin">
 			<div class="mw-head"><span class="mw-title">Neue Nachricht</span><span class="mono mw-tag">Testmail</span></div>
 			<div class="mw-row">
@@ -62,7 +63,6 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 
 	<!-- WAIT / CHECK -->
 	<div class="screen wait" data-screen="wait" hidden>
-		<div class="glow" aria-hidden="true" data-glow><i class="g-base"></i><i class="g-res"></i></div>
 		<div class="wait-visual">
 			<div class="orb" data-orb>
 				<div class="prog" data-prog></div>
@@ -182,7 +182,8 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 	.tool {
 		position: relative;
 		background: #fff;
-		overflow: hidden;
+		/* clip, not hidden: the hero aura reaches up behind the status bar. */
+		overflow-x: clip;
 	}
 	:global(body[data-tool-state='result']) .tool,
 	:global(body[data-tool-state='guide']) .tool,
@@ -190,103 +191,57 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 		background: var(--bg-soft);
 		padding: 40px 0 72px;
 	}
-	:global(body[data-tool-state='result']) .dots,
-	:global(body[data-tool-state='guide']) .dots,
-	:global(body[data-tool-state='msg']) .dots {
-		display: none;
-	}
 	.screen[hidden] {
 		display: none !important;
 	}
 
-	/* Dot grid, fading out from the centre. */
-	.dots {
-		position: absolute;
-		inset: 0;
-		pointer-events: none;
-		background-image: radial-gradient(#cfcfd6 1px, transparent 1.2px);
-		background-size: 22px 22px;
-		-webkit-mask-image: radial-gradient(ellipse 60% 55% at 50% 42%, #000 20%, transparent 75%);
-		mask-image: radial-gradient(ellipse 60% 55% at 50% 42%, #000 20%, transparent 75%);
+	/* Hero aura: runs up behind the transparent status bar and out into white at the bottom.
+	   While checking it breathes; for result, guide and messages it goes away. */
+	:global(.tool-aura) {
+		top: -76px !important;
 	}
-
-	/* One soft green glow behind the mail window (V2 addendum). Breathes while checking,
-	   takes the result colour at the end, then fades out. Only transform/opacity move. */
+	:global(body:is([data-tool-state='result'], [data-tool-state='guide'], [data-tool-state='msg'])) :global(.tool-aura) {
+		display: none;
+	}
+	@media (prefers-reduced-motion: no-preference) {
+		:global(body[data-tool-state='wait']) :global(.tool-aura .aura-in) {
+			animation: aura-breathe 2.4s ease-in-out infinite alternate;
+		}
+	}
+	@keyframes aura-breathe {
+		from {
+			transform: scale(0.96);
+		}
+		to {
+			transform: scale(1.04);
+		}
+	}
 	.mw-wrap {
-		position: relative;
 		width: 100%;
 		max-width: 760px;
 	}
-	.mw-wrap .mailwin {
+	.wait > * {
 		position: relative;
 		z-index: 1;
 	}
-	.glow {
-		position: absolute;
-		left: 50%;
-		top: 50%;
-		width: 760px;
-		height: 300px;
-		pointer-events: none;
-		transform: translate(-50%, -38%);
-	}
-	.glow i {
-		position: absolute;
-		inset: 0;
-		border-radius: 50%;
-		filter: blur(30px);
-		transition: opacity 0.3s ease;
-	}
-	.g-base {
-		background: radial-gradient(closest-side, rgba(2, 202, 80, 0.14), rgba(2, 202, 80, 0));
-	}
-	.g-res {
-		opacity: 0;
-		background: radial-gradient(closest-side, var(--glow-c, rgba(2, 202, 80, 0.14)), rgba(255, 255, 255, 0));
-	}
-	.wait .glow {
-		transform: translate(-50%, -50%);
-	}
-	.wait > :not(.glow) {
+
+	/* Result: a breath of aura behind verdict and score, full width and still.
+	   "Sehr gut" gets a little green instead of pink; problems stay neutral blue and violet. */
+	.result {
 		position: relative;
 		z-index: 1;
 	}
-	:global(body[data-tool-state='wait']) .wait .glow:not(.fade) {
-		animation: glow-breathe 2.4s ease-in-out infinite alternate;
+	:global(.result-aura) {
+		display: none;
+		top: -76px !important;
+		bottom: auto !important;
+		height: 620px;
 	}
-	.glow[data-result='ok'] {
-		--glow-c: rgba(2, 202, 80, 0.14);
+	:global(body[data-tool-state='result']) :global(.result-aura) {
+		display: block;
 	}
-	.glow[data-result='warn'] {
-		--glow-c: rgba(255, 138, 0, 0.14);
-	}
-	.glow[data-result='bad'] {
-		--glow-c: rgba(255, 64, 52, 0.14);
-	}
-	.glow[data-result] .g-res {
-		opacity: 1;
-	}
-	.glow[data-result] .g-base {
-		opacity: 0;
-	}
-	.glow.fade {
-		opacity: 0;
-		transition: opacity 1.5s ease;
-	}
-	@keyframes glow-breathe {
-		from {
-			opacity: 0.7;
-			transform: translate(-50%, -50%) scale(0.96);
-		}
-		to {
-			opacity: 1;
-			transform: translate(-50%, -50%) scale(1.04);
-		}
-	}
-	@media (prefers-reduced-motion: reduce) {
-		:global(body[data-tool-state='wait']) .wait .glow:not(.fade) {
-			animation: none;
-		}
+	.tool:has(:global(.rv[data-band='good'])) :global(.result-aura .b3) {
+		--c: #8ce8b8;
 	}
 
 	/* HERO */
@@ -317,13 +272,20 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 		margin: 0;
 		font-size: 18px;
 		line-height: 28px;
-		color: var(--muted);
+		color: var(--muted-aura);
 	}
 	.mailwin {
 		width: 100%;
 		max-width: 760px;
 		border-radius: 18px;
-		background: rgba(255, 255, 255, 0.92);
+		/* Frosted glass over the aura. */
+		background: rgba(255, 255, 255, 0.82);
+		-webkit-backdrop-filter: blur(16px);
+		backdrop-filter: blur(16px);
+		border-color: rgba(255, 255, 255, 0.9);
+		box-shadow:
+			0 1px 2px rgba(17, 17, 19, 0.05),
+			0 24px 60px -12px rgba(40, 30, 90, 0.22);
 		overflow: hidden;
 		text-align: left;
 	}
@@ -332,8 +294,8 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 		align-items: center;
 		justify-content: space-between;
 		padding: 12px 22px;
-		border-bottom: 1px solid var(--line);
-		background: #fafafb;
+		border-bottom: 1px solid rgba(17, 17, 19, 0.06);
+		background: rgba(250, 250, 251, 0.7);
 	}
 	.mw-title {
 		font-size: 13px;
@@ -351,7 +313,7 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 		align-items: center;
 		gap: 16px;
 		padding: 16px 22px;
-		border-bottom: 1px solid var(--line);
+		border-bottom: 1px solid rgba(17, 17, 19, 0.06);
 	}
 	.mw-label {
 		width: 72px;
@@ -414,7 +376,7 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 		gap: 10px 28px;
 		flex-wrap: wrap;
 		font-size: 14px;
-		color: #4a4b50;
+		color: var(--muted-aura);
 	}
 	.trust li {
 		display: flex;
@@ -1159,10 +1121,6 @@ const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 		}
 		.hero h1 {
 			font-size: 40px;
-		}
-		.glow {
-			width: 420px;
-			height: 220px;
 		}
 		.hero .lead {
 			font-size: 16px;

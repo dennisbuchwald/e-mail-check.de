@@ -7,6 +7,7 @@ import '../styles/global.css';
 import frauncesUrl from '../fonts/fraunces-680-latin.woff2?url';
 import interUrl from '../fonts/inter-400-700-latin.woff2?url';
 import Wordmark from '../components/Wordmark.astro';
+import AuraBand from '../components/AuraBand.astro';
 import { FOOTER, RATGEBER, SITE } from '../data/site';
 
 interface Props {
@@ -21,12 +22,14 @@ interface Props {
 	tool?: boolean | 'result';
 	/** Soft grey page background (result, sub pages). */
 	soft?: boolean;
+	/** Closing aura band before the footer (start page and guides). */
+	band?: boolean;
 }
-const { title, description, path = Astro.url.pathname.replace(/\/$/, '') || '/', noindex = false, jsonLd = [], tool = false, soft = false } = Astro.props;
+const { title, description, path = Astro.url.pathname.replace(/\/$/, '') || '/', noindex = false, jsonLd = [], tool = false, soft = false, band = false } = Astro.props;
 // Umami is only loaded when PUBLIC_UMAMI_ID is set at build time (off locally).
 const umamiId = import.meta.env.PUBLIC_UMAMI_ID;
 const canonical = new URL(path, SITE.url).href.replace(/\/$/, path === '/' ? '/' : '');
-const ogImage = new URL('/og.png', SITE.url).href;
+const ogImage = new URL('/og.jpg', SITE.url).href;
 ---
 
 <!doctype html>
@@ -94,6 +97,7 @@ const ogImage = new URL('/og.png', SITE.url).href;
 
 		<main id="inhalt" tabindex="-1">
 			<slot />
+			{band && <AuraBand />}
 		</main>
 
 		<footer class="site-footer">
@@ -171,6 +175,14 @@ const ogImage = new URL('/og.png', SITE.url).href;
 		text-transform: uppercase;
 		color: #4a4b50;
 		white-space: nowrap;
+	}
+	/* Over the hero aura: frosted glass. */
+	:global(body:is([data-tool-state='start'], [data-tool-state='wait'])) .sb-pill {
+		border-color: rgba(255, 255, 255, 0.7);
+		background: rgba(255, 255, 255, 0.55);
+		-webkit-backdrop-filter: blur(10px);
+		backdrop-filter: blur(10px);
+		color: var(--muted-aura);
 	}
 	.sb-short {
 		display: none;
@@ -358,6 +370,7 @@ const ogImage = new URL('/og.png', SITE.url).href;
 		background: var(--bg-soft);
 	}
 	main {
+		position: relative;
 		flex: 1;
 		outline: none;
 	}

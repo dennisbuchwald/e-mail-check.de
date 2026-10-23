@@ -13,7 +13,7 @@ if (!page) throw new Error('content/seiten/index.md missing');
 const { Content } = await render(page);
 ---
 
-<Base title={page.data.seoTitel} description={page.data.beschreibung} path="/" tool jsonLd={[websiteSchema, appSchema, ...faqSchema(page.data.faq)]}>
+<Base title={page.data.seoTitel} description={page.data.beschreibung} path="/" tool band jsonLd={[websiteSchema, appSchema, ...faqSchema(page.data.faq)]}>
 	<Tool title={page.data.titel} intro={page.data.intro} />
 	<div class="home-below">
 		<MailRoute />

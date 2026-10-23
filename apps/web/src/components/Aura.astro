@@ -1,0 +1,155 @@
+---
+// Soft mesh gradient in the aura tokens (--aura-1 … --aura-4). Never carries a status colour.
+// Blobs are radial gradients, not blur filters (cheap on phones); only transform moves,
+// and only while the aura is on screen (scripts/aura.ts). Phones and reduced motion: still.
+// hero: start page behind the status bar · band: closing band · soft: score scale
+// head: guide header · hint: behind verdict and score on the result page, never moves.
+interface Props {
+	variant?: 'hero' | 'band' | 'soft' | 'head' | 'hint';
+	grain?: boolean;
+	class?: string;
+}
+const { variant = 'hero', grain = false, class: cls } = Astro.props;
+const moves = variant === 'hero' || variant === 'band';
+const blobs = variant === 'soft' || variant === 'hint' ? 3 : 4;
+---
+
+<div class:list={['aura', `aura--${variant}`, { grain }, cls]} aria-hidden="true" data-aura={moves ? 'move' : undefined}>
+	<div class="aura-in">{Array.from({ length: blobs }, (_, i) => <i class={`b${i + 1}`} />)}</div>
+</div>
+
+<script>
+	import '../scripts/aura';
+</script>
+
+<style>
+	.aura {
+		position: absolute;
+		inset: 0;
+		overflow: hidden;
+		pointer-events: none;
+		z-index: 0;
+	}
+	.aura-in {
+		position: absolute;
+		inset: 0;
+	}
+	/* Each blob: full colour in the middle, soft edge. closest-side keeps it elliptical like the box. */
+	.aura i {
+		position: absolute;
+		border-radius: 50%;
+		background: radial-gradient(closest-side, var(--c) 0%, var(--c) 42%, color-mix(in srgb, var(--c) 62%, transparent) 62%, color-mix(in srgb, var(--c) 22%, transparent) 82%, transparent 100%);
+		opacity: 0.95;
+	}
+	.b1 {
+		--c: var(--aura-1);
+		width: 92%;
+		height: 130%;
+		left: -32%;
+		top: -34%;
+	}
+	.b2 {
+		--c: var(--aura-2);
+		width: 74%;
+		height: 112%;
+		left: 18%;
+		top: -46%;
+	}
+	.b3 {
+		--c: var(--aura-3);
+		width: 76%;
+		height: 112%;
+		right: -28%;
+		top: -18%;
+	}
+	.b4 {
+		--c: var(--aura-4);
+		width: 70%;
+		height: 90%;
+		left: -12%;
+		top: 22%;
+		opacity: 0.8;
+	}
+	/* Run out into white towards the next section. */
+	.aura::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.15) 45%, #fff 92%);
+	}
+	/* Grain: rendered once as a tiny SVG, not animated. */
+	.grain::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: 1;
+		opacity: 0.18;
+		mix-blend-mode: overlay;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+	}
+
+	/* Closing band: lighter in the middle so the text reads, no run-out (the band has its own edge). */
+	.aura--band::after {
+		background: radial-gradient(ellipse at 50% 60%, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 70%);
+	}
+	.aura--band .b1 {
+		top: -30%;
+	}
+	.aura--band .b4 {
+		top: 34%;
+		height: 90%;
+	}
+
+	/* Score scale: a tender wash behind the bar. */
+	.aura--soft i {
+		opacity: 0.5;
+	}
+	.aura--soft::after {
+		background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.72));
+	}
+
+	/* Result page: a breath behind verdict and score. Neutral blue and violet; "Sehr gut" swaps pink for green (Tool.astro). */
+	.aura--hint i {
+		opacity: 0.32;
+	}
+	.aura--hint .b3 {
+		--c: var(--aura-2);
+	}
+	.aura--hint::after {
+		background: linear-gradient(180deg, rgba(250, 250, 251, 0) 0%, rgba(250, 250, 251, 0.4) 50%, var(--bg-soft) 96%);
+	}
+
+	/* Drift: 18 to 26 s, alternate, transform only. Paused off screen. */
+	@media (prefers-reduced-motion: no-preference) and (min-width: 761px) {
+		[data-aura='move'] .b1 {
+			animation: aura-d1 18s ease-in-out infinite alternate;
+		}
+		[data-aura='move'] .b2 {
+			animation: aura-d2 22s ease-in-out infinite alternate;
+		}
+		[data-aura='move'] .b3 {
+			animation: aura-d3 20s ease-in-out infinite alternate;
+		}
+		[data-aura='move'] .b4 {
+			animation: aura-d2 26s ease-in-out infinite alternate-reverse;
+		}
+		[data-aura='move'].is-off i {
+			animation-play-state: paused;
+		}
+	}
+	@keyframes aura-d1 {
+		to {
+			transform: translate(8%, 10%) scale(1.08);
+		}
+	}
+	@keyframes aura-d2 {
+		to {
+			transform: translate(-10%, 8%) scale(0.94);
+		}
+	}
+	@keyframes aura-d3 {
+		to {
+			transform: translate(-6%, -6%) scale(1.1);
+		}
+	}
+</style>

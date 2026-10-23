@@ -1,0 +1,67 @@
+---
+// Closing band before the footer (start page and guides). On the start page the button scrolls
+// back to the hero and focuses the address; elsewhere it opens the start page.
+import Aura from './Aura.astro';
+---
+
+<section class="aura-band" aria-labelledby="aura-band-title">
+	<Aura variant="band" grain />
+	<div class="ab-in">
+		<h2 id="aura-band-title">Bereit? Dein Test dauert 30 Sekunden.</h2>
+		<p>Kostenlos, ohne Konto, Server in Deutschland.</p>
+		<a class="btn btn-ink" href="/#tool" data-to-tool>Jetzt testen ↑</a>
+	</div>
+</section>
+
+<script>
+	const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+	for (const a of document.querySelectorAll<HTMLAnchorElement>('[data-to-tool]')) {
+		a.addEventListener('click', (e) => {
+			const copy = document.querySelector<HTMLButtonElement>('[data-screen="start"]:not([hidden]) .copy-address');
+			if (!copy) return;
+			e.preventDefault();
+			window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
+			copy.focus({ preventScroll: true });
+		});
+	}
+</script>
+
+<style>
+	.aura-band {
+		position: relative;
+		overflow: hidden;
+		margin: 0 20px 20px;
+		border-radius: 28px;
+		padding: 110px var(--gutter);
+		text-align: center;
+	}
+	.ab-in {
+		position: relative;
+		z-index: 2;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+	h2 {
+		font-size: clamp(34px, 4.4vw, 52px);
+		line-height: 1.04;
+		max-width: 700px;
+		margin: 0 0 14px;
+	}
+	p {
+		margin: 0 0 26px;
+		font-size: 17px;
+		color: var(--muted-aura);
+	}
+	/* While testing or showing a result the start page is the tool alone. */
+	:global(body:is([data-tool-state='wait'], [data-tool-state='result'], [data-tool-state='guide'], [data-tool-state='msg'])) .aura-band {
+		display: none;
+	}
+	@media (max-width: 820px) {
+		.aura-band {
+			margin: 0 12px 12px;
+			border-radius: 22px;
+			padding: 72px 20px;
+		}
+	}
+</style>

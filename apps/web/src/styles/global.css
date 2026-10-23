@@ -36,6 +36,13 @@
 	--warn-tint: #fff1e0;
 	--bad-tint: #ffe9e7;
 	--track: #ececef;
+	/* Aura (components/Aura.astro): blue, violet, pink, peach. Never a status colour. */
+	--aura-1: #6f86ff;
+	--aura-2: #b18cff;
+	--aura-3: #f3a8d2;
+	--aura-4: #ffd9c7;
+	/* Muted text on the aura (contrast ≥ 4.5:1 on the lightest blob). */
+	--muted-aura: #2c2d32;
 
 	--font-head: 'Fraunces Variable', Georgia, serif;
 	--font-body: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
