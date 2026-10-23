@@ -1,4 +1,14 @@
 // Status bar: real all-time "mails checked" number (from 100 on, else "Kostenlos · ohne Konto"), Ratgeber menu, compact fallback without scroll timelines.
+import { track } from './track';
+
+// Page view on every page, with a cleaned URL (scripts/track.ts). Links and buttons with
+// data-track="<event>" count a click (calls to action, the dbw media offer).
+track();
+document.addEventListener('click', (e) => {
+	const el = (e.target as HTMLElement).closest<HTMLElement>('[data-track]');
+	if (el) track(el.dataset.track, { seite: location.pathname.startsWith('/ergebnis') ? '/ergebnis' : location.pathname });
+});
+
 const bar = document.querySelector<HTMLElement>('[data-statusbar]')!;
 // The server caches for 60 s; the browser does too, so page views do not each hit the API.
 const showCount = (n: unknown) => {

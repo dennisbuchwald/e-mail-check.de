@@ -51,6 +51,7 @@ const { topic, title, intro } = Astro.props;
 <script>
 	import type { DnsCheckResult, Finding } from '@emc/shared';
 	import { copyText, esc, flash } from '../scripts/util';
+	import { track } from '../scripts/track';
 	import { PROVIDERS, guideUrl } from '../data/site';
 
 	const root = document.querySelector<HTMLElement>('[data-dns]')!;
@@ -114,6 +115,9 @@ const { topic, title, intro } = Astro.props;
 			const json = await res.json().catch(() => ({}));
 			if (!res.ok) throw new Error(json.message ?? 'Die Prüfung ist fehlgeschlagen.');
 			render(json as DnsCheckResult);
+			// Only the topic and the worst status, never the domain.
+			const st = (json as DnsCheckResult).findings.map((f) => f.status);
+			track('DNS-Check', { thema: topic, ergebnis: st.includes('bad') ? 'Problem' : st.includes('warn') ? 'Hinweis' : 'alles ok' });
 			history.replaceState(null, '', `?domain=${encodeURIComponent(json.domain)}`);
 		} catch (e2) {
 			err.textContent = (e2 as Error).message || 'Der Server ist gerade nicht erreichbar.';

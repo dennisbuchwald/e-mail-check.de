@@ -205,7 +205,7 @@ function recordBox(rec: TodoRecord): string {
 function setupLine(opts: ResultViewOptions, check: string): string {
 	if (!opts.setupUrl) return '';
 	const href = opts.setupUrl.replace('{check}', encodeURIComponent(check));
-	return `<p class="rv-setup">Kein Bock auf DNS? <a href="${esc(href)}" target="_blank" rel="noopener">dbw media richtet das für dich ein ›</a><small>Angebot von dbw media, der Agentur hinter diesem Projekt</small></p>`;
+	return `<p class="rv-setup">Kein Bock auf DNS? <a href="${esc(href)}" target="_blank" rel="noopener" data-track="dbw-Angebot geklickt">dbw media richtet das für dich ein ›</a><small>Angebot von dbw media, der Agentur hinter diesem Projekt</small></p>`;
 }
 
 function todoCard(t: Todo, i: number, opts: ResultViewOptions): string {

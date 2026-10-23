@@ -1,10 +1,11 @@
 // Mail test UI: drives the screens in Tool.astro from real API events (SSE, polling fallback).
 // The result behaviour lives in tool-result.ts, the provider guide in tool-guide.ts.
 import type { GuideTopic, MailPreview, MailResult, ProgressEvent, StepId, TestStatus } from '@emc/shared';
-import { fmt1 as fmt, STEPS } from '@emc/shared';
+import { BANDS, fmt1 as fmt, STEPS } from '@emc/shared';
 import { createGuide } from './tool-guide';
 import { createResultView, loadRender } from './tool-result';
 import { copyText, esc, flash } from './util';
+import { track } from './track';
 
 type Screen = 'start' | 'wait' | 'result' | 'guide' | 'msg';
 
@@ -84,6 +85,7 @@ export function initTool(): void {
 		const res = await api<TestStatus & { message?: string }>('/api/tests', { method: 'POST' }).catch(() => null);
 		if (gen !== generation) return;
 		if (!res || !res.ok) {
+			track('Fehler', { art: res?.status === 429 ? 'Limit erreicht' : 'Server nicht erreichbar' });
 			message('Gerade geht es nicht', res?.data?.message ?? 'Der Test-Server ist nicht erreichbar. Probier es in einer Minute noch einmal.');
 			return;
 		}
@@ -184,11 +186,13 @@ export function initTool(): void {
 		if (e.type === 'expired') {
 			closeStream();
 			storage()?.removeItem(STORE_KEY);
+			track('Adresse abgelaufen');
 			return message('Diese Adresse ist abgelaufen', `Testadressen gelten ${test ? validMinutes(test) : 60} Minuten und nehmen genau eine Mail an. Hol dir einfach eine neue.`);
 		}
 		if (e.type === 'error') {
 			closeStream();
 			storage()?.removeItem(STORE_KEY);
+			track('Fehler', { art: 'Auswertung fehlgeschlagen' });
 			return message('Da ist etwas schiefgelaufen', 'Die Auswertung deiner Mail ist fehlgeschlagen. Starte bitte einen neuen Test.');
 		}
 		if (e.type === 'done') {
@@ -353,6 +357,13 @@ export function initTool(): void {
 		await sleep(reduced ? 200 : 1800);
 		if (gen !== generation) return;
 		if (!res?.ok) return message('Ergebnis nicht gefunden', 'Das Ergebnis konnte nicht geladen werden. Starte bitte einen neuen Test.');
+		// The funnel's last step: band, number of problems and how long the address waited for the mail.
+		const waited = test?.createdAt ? (Date.now() - Date.parse(test.createdAt)) / 60_000 : NaN;
+		track('Test fertig', {
+			note: BANDS[res.data.band].label,
+			probleme: res.data.findings.filter((f) => f.status === 'bad').length,
+			wartezeit: !Number.isFinite(waited) ? 'unbekannt' : waited < 1 ? 'unter 1 Min' : waited < 5 ? '1 bis 5 Min' : waited < 15 ? '5 bis 15 Min' : 'über 15 Min',
+		});
 		history.pushState({ resultId }, '', `/ergebnis/${resultId}`);
 		renderResult(liveMail ? { ...res.data, mail: { ...res.data.mail, ...liveMail } } : res.data, true);
 	}
@@ -366,7 +377,10 @@ export function initTool(): void {
 	root.addEventListener('click', async (ev) => {
 		const t = ev.target as HTMLElement;
 		// Opening the mail program counts as "on its way": switch to waiting right after.
-		if (t.closest('[data-mailto]') && test) return void setTimeout(goWait, 400);
+		if (t.closest('[data-mailto]') && test) {
+			track('Mail-Programm geöffnet');
+			return void setTimeout(goWait, 400);
+		}
 		const btn = t.closest<HTMLElement>('button, [data-action], [data-fix]');
 		if (!btn) return;
 		// Links in the result work without JS; with JS they act in place.
@@ -375,9 +389,12 @@ export function initTool(): void {
 		if (action === 'copy' && test) {
 			await copyText(test.address);
 			flash(btn, 'Kopiert ✓');
+			track('Adresse kopiert');
 		} else if (action === 'sent') {
+			track('Mail ist raus');
 			goWait();
 		} else if (action === 'reset' || action === 'retest') {
+			track(action === 'retest' ? 'Erneut testen' : 'Neuer Test', { von: mode === 'result' ? 'geteilter Link' : 'eigenes Ergebnis' });
 			if (mode === 'result') return void (location.href = '/');
 			storage()?.removeItem(STORE_KEY);
 			history.pushState({}, '', '/');
@@ -392,16 +409,19 @@ export function initTool(): void {
 			const open = panel.hidden;
 			panel.hidden = !open;
 			btn.setAttribute('aria-expanded', String(open));
+			if (open) track('Mail-Quelle angesehen');
 			if (open) panel.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
 		} else if (btn.dataset.src) {
 			for (const tab of $$('[data-src]')) tab.setAttribute('aria-selected', String(tab === btn));
 			for (const p of $$('[data-src-panel]')) p.hidden = p.dataset.srcPanel !== btn.dataset.src;
 		} else if (btn.dataset.station !== undefined) {
 			selectStation(Number(btn.dataset.station));
+			track('Station angesehen', { station: Number(btn.dataset.station) + 1 });
 		} else if (btn.dataset.goto !== undefined) {
 			selectStation(Number(btn.dataset.goto), true);
 			$('.rv-route').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
 		} else if (action === 'share' && result) {
+			track('Ergebnis geteilt');
 			const url = `${location.origin}/ergebnis/${result.id}`;
 			if (navigator.share && matchMedia('(pointer: coarse)').matches) {
 				navigator.share({ title: `E-Mail-Check: ${fmt(result.score)} von 10`, url }).catch(() => undefined);
@@ -414,11 +434,14 @@ export function initTool(): void {
 			$('[data-headline]').focus();
 		} else if (btn.dataset.fix) {
 			guide.open(btn.dataset.fix as GuideTopic);
+			track('Anleitung geöffnet', { thema: btn.dataset.fix });
 		} else if (btn.dataset.provider) {
 			guide.pick(btn.dataset.provider);
+			track('Anbieter gewählt', { anbieter: btn.dataset.provider });
 		} else if (btn.dataset.copy !== undefined) {
 			await copyText(btn.dataset.copy);
 			flash(btn, 'Kopiert');
+			track('DNS-Wert kopiert');
 		}
 	});
 

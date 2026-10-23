@@ -3,6 +3,7 @@
 // and rendering a live result in the browser.
 import { BANDS, fmt1 as fmt, type MailPreview, type MailResult } from '@emc/shared';
 import type { Mailroute, SceneState } from './mailroute';
+import { track } from './track';
 
 let render_: Promise<typeof import('./result-render')> | null = null;
 /** The renderer and its styles, loaded on demand (preloaded as soon as a test is under way). */
@@ -150,6 +151,7 @@ export function createResultView(ctx: ResultContext) {
 		const raw = (f?.raw ?? {}) as { record?: string; policy?: string };
 		const ok =
 			spec.kind === 'spf' ? f?.status === 'ok' && (!spec.expect || String(raw.record ?? '').split(/\s+/).includes(spec.expect)) : spec.kind === 'dmarc' ? !!raw.policy && (spec.policies ?? []).includes(String(raw.policy)) : f?.status === 'ok';
+		track('Jetzt prüfen', { ergebnis: ok ? 'jetzt grün' : 'noch nicht sichtbar' });
 		if (!ok) {
 			status.textContent = 'Noch nicht sichtbar. DNS braucht manchmal ein paar Minuten. Wir prüfen in einer Minute noch einmal.';
 			card.dataset.retry = String(window.setTimeout(() => recheck(card), RETRY_MS));

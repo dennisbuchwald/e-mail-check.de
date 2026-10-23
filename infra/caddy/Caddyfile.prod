@@ -30,6 +30,20 @@ www.{$SITE_DOMAIN} {
 	redir https://{$SITE_DOMAIN}{uri} 301
 }
 
+# Umami dashboard for Dennis (profile "stats"). The login is the only protection: strong password,
+# no indexing, no framing. The tracking itself stays on the main domain under /stats/.
+stats.{$SITE_DOMAIN} {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Robots-Tag "noindex, nofollow"
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+		X-Content-Type-Options nosniff
+		-Server
+	}
+	reverse_proxy umami:3000
+}
+
 # Only here so Caddy fetches a certificate for STARTTLS on the mail intake.
 {$MX_HOSTNAME} {
 	respond "e-mail-check.de Testempfang" 200
