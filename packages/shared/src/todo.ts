@@ -220,7 +220,7 @@ export function proTipsOf(r: MailResult): { title: string; text: string; record?
 		}
 		if (!sec.tlsRpt) {
 			const rua = `tls-berichte@${domain}`;
-			tips.push({ title: 'Berichte über Verschlüsselung (TLS-RPT)', text: 'Andere Mailserver schicken dir dann einen Bericht, wenn die verschlüsselte Zustellung an dich scheitert. Ein einziger Eintrag, am sinnvollsten zusammen mit MTA-STS.', record: { type: 'TXT', host: '_smtp._tls', value: `v=TLSRPTv1; rua=mailto:${rua}`, placeholder: rua } });
+			tips.push({ title: 'Berichte über Verschlüsselung (TLS-RPT)', text: 'Andere Mailserver schicken dir dann Berichte, ob die verschlüsselte Zustellung an dich klappt und wo sie scheitert. Ein einziger Eintrag, am sinnvollsten zusammen mit MTA-STS.', record: { type: 'TXT', host: '_smtp._tls', value: `v=TLSRPTv1; rua=mailto:${rua}`, placeholder: rua } });
 		}
 	}
 	return tips;

@@ -2,7 +2,9 @@
 
 export type Status = 'ok' | 'warn' | 'bad' | 'skip';
 
-export type CheckId = 'spf' | 'sender' | 'dkim' | 'dmarc' | 'reputation' | 'transport' | 'content';
+export type CheckId = 'spf' | 'sender' | 'dkim' | 'dmarc' | 'reputation' | 'transport' | 'content' | BonusId;
+/** Bonus checks of the /dnssec-check page, never part of a mail result's findings. */
+export type BonusId = 'dnssec' | 'dane' | 'mta-sts' | 'tls-rpt';
 
 /** Topics a "So behebst du das" guide exists for. */
 export type GuideTopic = 'spf' | 'dkim' | 'dmarc';

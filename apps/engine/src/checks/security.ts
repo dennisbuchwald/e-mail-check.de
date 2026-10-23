@@ -1,7 +1,7 @@
 // Bonus checks without points: how well mail *to* the sender domain is protected. DNSSEC (signed zone),
 // DANE (TLSA records for the mail servers), MTA-STS and TLS-RPT (DNS records only: the MTA-STS policy file
 // is never fetched, like links in the mail). None of this changes whether the tested mail arrives.
-import type { DomainSecurity } from '@emc/shared';
+import type { DnsCheckResult, DomainSecurity, Finding } from '@emc/shared';
 import { resolveTxt, type DnsResolver } from '../dns.ts';
 import type { SecLookup } from '../dnssec.ts';
 
@@ -28,4 +28,45 @@ export async function checkSecurity(domain: string, resolve: DnsResolver, lookup
 		),
 	);
 	return { domain, dnssec, mx, mtaSts, tlsRpt };
+}
+
+/** The four bonus checks as findings for the /dnssec-check page. No deductions: missing is a hint, never a problem. */
+export function securityFindings(s: DomainSecurity): Finding[] {
+	const f = (id: Finding['id'], status: Finding['status'], title: string, tech: string, text: string, raw: Record<string, unknown>, extra: Partial<Finding> = {}): Finding => ({ id, status, title, tech, text, deductions: [], raw, ...extra });
+	const hosts = s.mx.map((m) => m.host).join(', ');
+	const dane = s.mx.filter((m) => m.dane);
+	const rua = `tls-berichte@${s.domain}`;
+	return [
+		s.dnssec === 'signed'
+			? f('dnssec', 'ok', 'Domain ist signiert', 'DNSSEC', `Die DNS-Einträge von ${s.domain} sind digital signiert. Unterwegs kann sie niemand fälschen.`, { dnssec: 'signed' })
+			: s.dnssec === 'unsigned'
+				? f('dnssec', 'warn', 'Domain ist nicht signiert', 'DNSSEC', `Die DNS-Einträge von ${s.domain} haben keine Signatur. Bei vielen Anbietern ist DNSSEC ein Schalter in den Domain-Einstellungen. Erst damit wird DANE möglich.`, { dnssec: 'unsigned' })
+				: f('dnssec', 'skip', 'DNSSEC nicht prüfbar', 'DNSSEC', 'Der Nameserver hat gerade nicht sauber geantwortet. Probier es gleich noch einmal.', { dnssec: null }),
+		!s.mx.length
+			? f('dane', 'skip', 'Keine Mailserver gefunden', 'DANE', `Für ${s.domain} gibt es keinen MX-Eintrag, also nichts, was DANE schützen könnte.`, { mx: [] })
+			: dane.length === s.mx.length
+				? f('dane', 'ok', 'DANE ist aktiv', 'DANE', `Alle Mailserver haben signierte TLSA-Einträge: ${hosts}. Andere Server wissen vorab, welches Zertifikat sie erwarten dürfen.`, { mx: s.mx })
+				: dane.length
+					? f('dane', 'warn', 'DANE nur teilweise', 'DANE', `Nur ${dane.map((m) => m.host).join(', ')} hat signierte TLSA-Einträge. Die anderen Mailserver sind ungeschützt.`, { mx: s.mx })
+					: f('dane', 'warn', 'Kein DANE', 'DANE', `Deine Mailserver (${hosts}) haben keinen signierten TLSA-Eintrag. DANE richtet ein, wer die Mailserver betreibt. Bei gehosteter Mail (IONOS, Google, Microsoft) liegt das beim Anbieter.`, { mx: s.mx }),
+		s.mtaSts
+			? f('mta-sts', 'ok', 'Verschlüsselung angekündigt', 'MTA-STS', 'Es gibt einen MTA-STS-Eintrag. Ob die Regel-Datei unter mta-sts. dazu passt, prüfen wir nicht, wir rufen sie bewusst nicht ab.', { record: s.mtaSts })
+			: f('mta-sts', 'warn', 'Kein MTA-STS', 'MTA-STS', `Mit MTA-STS sagt ${s.domain} anderen Mailservern: Mails an mich nur verschlüsselt. Gmail und Microsoft halten sich daran. Dafür braucht es einen DNS-Eintrag und eine kleine Textdatei unter mta-sts.${s.domain}.`, {}),
+		s.tlsRpt
+			? f('tls-rpt', 'ok', 'Berichte sind eingerichtet', 'TLS-RPT', 'Andere Mailserver schicken dir Berichte, ob die verschlüsselte Zustellung an dich klappt und wo sie scheitert.', { record: s.tlsRpt })
+			: f('tls-rpt', 'warn', 'Keine Berichte über Verschlüsselung', 'TLS-RPT', `Ein einziger Eintrag, und du bekommst Berichte, ob Mails an dich verschlüsselt ankommen. Ersetze ${rua} durch eine Adresse, die es gibt.`, {}, { suggestion: { type: 'TXT', host: '_smtp._tls', value: `v=TLSRPTv1; rua=mailto:${rua}` } }),
+	];
+}
+
+export async function securityCheck(domain: string, resolve: DnsResolver, lookup: SecLookup): Promise<DnsCheckResult> {
+	const findings = securityFindings(await checkSecurity(domain, resolve, lookup));
+	const warn = findings.filter((x) => x.status === 'warn').length;
+	const ok = findings.filter((x) => x.status === 'ok').length;
+	return {
+		domain,
+		light: warn ? 'warn' : 'ok',
+		headline: !warn ? 'Rundum abgesichert' : ok ? `${ok} von 4 Schutzstufen eingerichtet` : 'Noch keine Schutzstufe eingerichtet',
+		findings,
+		checkedAt: new Date().toISOString(),
+	};
 }

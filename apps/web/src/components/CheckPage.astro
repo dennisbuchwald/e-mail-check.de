@@ -8,14 +8,14 @@ import Cta from './Cta.astro';
 import { appSchema, breadcrumbSchema, faqSchema } from '../data/schema';
 
 interface Props {
-	topic: 'spf' | 'dkim' | 'dmarc';
+	topic: 'spf' | 'dkim' | 'dmarc' | 'dnssec';
 }
 const { topic } = Astro.props;
 const page = await getEntry('seiten', `${topic}-check`);
 if (!page) throw new Error(`content/seiten/${topic}-check.md missing`);
 const { Content } = await render(page);
 const path = `/${topic}-check`;
-const others = (['spf', 'dkim', 'dmarc'] as const).filter((t) => t !== topic);
+const others = (['spf', 'dkim', 'dmarc', 'dnssec'] as const).filter((t) => t !== topic);
 ---
 
 <Base

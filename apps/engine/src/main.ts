@@ -11,11 +11,13 @@ import { waitForTls, watchTls } from './tls.ts';
 
 const store = new Store(config.dbPath, { mailsCheckedSeed: config.mailsCheckedSeed });
 const resolver = createResolver(config.dnsServers);
+// DNSSEC flag only from our own validating resolver; with the system resolver the bonus checks are off.
+const secLookup = config.dnsServers[0] ? createSecLookup(config.dnsServers[0]) : undefined;
 const service = new TestService({
 	store,
 	testDomain: config.testDomain,
 	testTtlMinutes: config.testTtlMinutes,
-	deps: { resolver, mta: config.hostname, resultTtlDays: config.resultTtlDays, scanContent: rspamdScanner(config.rspamdUrl), ...(config.dnsServers[0] ? { secLookup: createSecLookup(config.dnsServers[0]) } : {}) },
+	deps: { resolver, mta: config.hostname, resultTtlDays: config.resultTtlDays, scanContent: rspamdScanner(config.rspamdUrl), ...(secLookup ? { secLookup } : {}) },
 });
 
 // Hourly cleanup: results older than 7 days are deleted.
@@ -23,7 +25,7 @@ const purge = () => console.log(`purge: ${store.purge()} rows deleted`);
 purge();
 setInterval(purge, 3600_000).unref();
 
-const api = createApi({ service, resolver, rateLimit: config.rateLimit, trustProxy: config.trustProxy, siteUrl: config.siteUrl });
+const api = createApi({ service, resolver, rateLimit: config.rateLimit, trustProxy: config.trustProxy, siteUrl: config.siteUrl, ...(secLookup ? { secLookup } : {}) });
 const http = serve({ fetch: api.fetch, port: config.httpPort }, () => console.log(`api listening on :${config.httpPort}`));
 
 // Production: STARTTLS with the certificate Caddy fetched for the MX hostname. A fresh server may still be

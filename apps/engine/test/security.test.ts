@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { proTipsOf, renderResultView, type MailResult } from '@emc/shared';
 import { analyzeMessage, type AnalyzeDeps } from '../src/analyze.ts';
+import { createApi } from '../src/api.ts';
 import { checkSecurity } from '../src/checks/security.ts';
+import { TestService } from '../src/service.ts';
+import { Store } from '../src/store.ts';
 import { buildQuery, parseAnswer, type SecLookup } from '../src/dnssec.ts';
 import { fakeResolver, fixture, GOOD_IP } from './helpers.ts';
 
@@ -127,5 +130,34 @@ describe('bonus checks in the result', () => {
 		const hosted = { ...base, security: { ...own.security!, mx: [{ host: 'mx00.ionos.de', tlsa: 0, dane: false }] } } as MailResult;
 		expect(proTipsOf(own).map((t) => t.title)).toEqual(['Mailserver festnageln (DANE)']);
 		expect(proTipsOf(hosted)).toEqual([]);
+	});
+});
+
+describe('/api/dns?topic=sicherheit (the /dnssec-check page)', () => {
+	const api = (secLookup?: SecLookup) => {
+		const store = new Store(':memory:');
+		const service = new TestService({ store, testDomain: 'test.e-mail-check.de', testTtlMinutes: 60, deps });
+		return createApi({ service, resolver: fakeResolver(zone), rateLimit: { tests: 3, dns: 5 }, trustProxy: false, clientIp: () => '1.1.1.1', ...(secLookup ? { secLookup } : {}) });
+	};
+	it('answers four bonus findings without deductions', async () => {
+		const res = await api(lookupFor(true, 1)).request('/api/dns?domain=sicher.test&topic=sicherheit');
+		expect(res.status).toBe(200);
+		const body = await res.json();
+		expect(body.findings.map((f: { id: string; status: string }) => `${f.id}:${f.status}`)).toEqual(['dnssec:ok', 'dane:ok', 'mta-sts:ok', 'tls-rpt:ok']);
+		expect(body.findings.every((f: { deductions: unknown[] }) => f.deductions.length === 0)).toBe(true);
+		expect(body.light).toBe('ok');
+		expect(body.headline).toBe('Rundum abgesichert');
+	});
+	it('missing protection is a hint with a ready TLS-RPT record, never a problem', async () => {
+		const body = await (await api(lookupFor(false, 0)).request('/api/dns?domain=offen.test&topic=sicherheit')).json();
+		expect(body.light).toBe('warn');
+		expect(body.findings.some((f: { status: string }) => f.status === 'bad')).toBe(false);
+		expect(body.findings.find((f: { id: string }) => f.id === 'tls-rpt').suggestion).toEqual({ type: 'TXT', host: '_smtp._tls', value: 'v=TLSRPTv1; rua=mailto:tls-berichte@offen.test' });
+		expect(body.headline).toBe('Noch keine Schutzstufe eingerichtet');
+	});
+	it('without our own resolver the topic is unavailable, the normal check still works', async () => {
+		const app = api();
+		expect((await app.request('/api/dns?domain=offen.test&topic=sicherheit')).status).toBe(503);
+		expect((await app.request('/api/dns?domain=gut.example.test')).status).toBe(200);
 	});
 });

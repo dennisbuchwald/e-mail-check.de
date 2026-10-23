@@ -1,7 +1,7 @@
 ---
 // DNS quick check without a test mail. The page topic is shown first and open.
 interface Props {
-	topic: 'spf' | 'dkim' | 'dmarc';
+	topic: 'spf' | 'dkim' | 'dmarc' | 'dnssec';
 	title: string;
 	intro: string;
 }
@@ -58,7 +58,7 @@ const { topic, title, intro } = Astro.props;
 	const form = root.querySelector<HTMLFormElement>('[data-dns-form]')!;
 	const err = root.querySelector<HTMLElement>('[data-dns-error]')!;
 	const out = root.querySelector<HTMLElement>('[data-dns-result]')!;
-	const topic = root.dataset.topic as 'spf' | 'dkim' | 'dmarc';
+	const topic = root.dataset.topic as 'spf' | 'dkim' | 'dmarc' | 'dnssec';
 	const LIGHT = { ok: 'Alles gut', warn: 'Hinweise', bad: 'Probleme' } as const;
 	const BADGE: Record<Finding['status'], string> = { ok: 'OK', warn: 'Hinweis', bad: 'Problem', skip: 'Nicht geprüft' };
 
@@ -109,6 +109,8 @@ const { topic, title, intro } = Astro.props;
 		const params = new URLSearchParams({ domain });
 		const sel = String(data.get('selector') ?? '').trim();
 		if (sel) params.set('selector', sel);
+		// The DNSSEC page asks the bonus checks (DNSSEC, DANE, MTA-STS, TLS-RPT) instead of SPF, DKIM, DMARC.
+		if (topic === 'dnssec') params.set('topic', 'sicherheit');
 		try {
 			const res = await fetch(`/api/dns?${params}`);
 			// A 502 from the proxy has no JSON body: no English SyntaxError for the reader.

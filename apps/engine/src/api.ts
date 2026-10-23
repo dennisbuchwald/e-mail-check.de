@@ -5,6 +5,8 @@ import { getConnInfo } from '@hono/node-server/conninfo';
 import { renderResultMissing, renderResultView, type MailResult, type ProgressEvent } from '@emc/shared';
 import { dnsCheck, normalizeDomain } from './dnscheck.ts';
 import type { DnsResolver } from './dns.ts';
+import type { SecLookup } from './dnssec.ts';
+import { securityCheck } from './checks/security.ts';
 import { RateLimiter } from './ratelimit.ts';
 import type { TestService } from './service.ts';
 
@@ -17,6 +19,8 @@ export interface ApiOptions {
 	siteUrl?: string;
 	/** Override for tests (no socket there). */
 	clientIp?: (c: Context) => string;
+	/** DNSSEC-aware lookups for /dns?topic=sicherheit; without it that topic answers 503. */
+	secLookup?: SecLookup;
 }
 
 const ID = /^[\w-]{22}$/;
@@ -192,7 +196,10 @@ export function createApi(opts: ApiOptions): Hono {
 		if (selector && !/^[a-z0-9._-]{1,63}$/.test(selector)) return c.json({ error: 'invalid_selector', message: 'Der Selektor enthält ungültige Zeichen.' }, 400);
 		const wait = dnsLimit.hit(ipOf(c));
 		if (wait) return tooMany(c, wait);
+		const topic = c.req.query('topic');
+		if (topic === 'sicherheit' && !opts.secLookup) return c.json({ error: 'unavailable', message: 'Dieser Check ist gerade nicht verfügbar.' }, 503);
 		try {
+			if (topic === 'sicherheit') return c.json(await securityCheck(domain, opts.resolver, opts.secLookup!));
 			return c.json(await dnsCheck(domain, opts.resolver, selector || undefined));
 		} catch (err) {
 			console.error('dns check failed', (err as Error).message);

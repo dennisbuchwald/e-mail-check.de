@@ -54,6 +54,7 @@ ${tool('/', 'index', 'Mail-Tester')}
 ${tool('/spf-check', 'spf-check', 'SPF-Check')}
 ${tool('/dkim-check', 'dkim-check', 'DKIM-Check')}
 ${tool('/dmarc-check', 'dmarc-check', 'DMARC-Check')}
+${tool('/dnssec-check', 'dnssec-check', 'DNSSEC-Check')}
 ${tool('/mail-tester-alternative', 'mail-tester-alternative', 'Mail-Tester-Alternative')}
 
 ## Wissen
