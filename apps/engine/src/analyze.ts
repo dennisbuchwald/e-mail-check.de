@@ -5,6 +5,7 @@ import type { MailPreview } from '@emc/shared';
 import { bandFor, computeScore, enrichFindings, hasAuthFailure, stationsOf, subScores, summarize, trafficLight, verdictFor, type Finding, type MailMeta, type MailResult, type StepId, type StepInfo } from '@emc/shared';
 import { checkAuth, type SmtpEnvelope } from './checks/auth.ts';
 import { detectProviders } from './checks/provider.ts';
+import { checkSecurity } from './checks/security.ts';
 import { checkReputation } from './checks/reputation.ts';
 import { contentFinding, scanWithRspamd, type BodyStats, type ContentAnalysis } from './checks/content.ts';
 import { simpleParser, type ParsedMail } from 'mailparser';
@@ -13,6 +14,7 @@ import { senderFinding } from './checks/sender.ts';
 import { transportFinding } from './checks/transport.ts';
 import { analyzeUnsubscribe } from './checks/unsubscribe.ts';
 import type { DnsResolver } from './dns.ts';
+import type { SecLookup } from './dnssec.ts';
 
 export interface AnalyzeDeps {
 	resolver: DnsResolver;
@@ -20,6 +22,8 @@ export interface AnalyzeDeps {
 	resultTtlDays: number;
 	/** Content scanner; null skips the content check. */
 	scanContent: ((message: Buffer, env: SmtpEnvelope, rcpt: string) => Promise<ContentAnalysis>) | null;
+	/** DNS queries with the DNSSEC flag (own validating resolver); without it the bonus checks are skipped. */
+	secLookup?: SecLookup;
 	now?: () => Date;
 }
 
@@ -45,6 +49,11 @@ export async function analyzeMessage(message: Buffer, env: SmtpEnvelope, rcpt: s
 
 	const auth = await checkAuth(message, env, deps.resolver, deps.mta);
 	const providers = detectProviders(auth.fromDomain, deps.resolver).catch(() => ({}));
+	// Bonus checks (no points), at most 6 s so they never hold up the result.
+	const security =
+		deps.secLookup && auth.fromDomain
+			? Promise.race([checkSecurity(auth.fromDomain, deps.resolver, deps.secLookup), new Promise<null>((r) => setTimeout(r, 6000, null).unref?.())]).catch(() => null)
+			: Promise.resolve(null);
 	onStep('spf', stepInfo(auth.spf));
 	onStep('dkim', stepInfo(auth.dkim));
 	onStep('dmarc', stepInfo(auth.dmarc));
@@ -69,6 +78,7 @@ export async function analyzeMessage(message: Buffer, env: SmtpEnvelope, rcpt: s
 	const { sub } = summarize(score, findings);
 	const verdict = verdictFor(score, stationsOf(findings));
 	const headline = `${verdict.line1} ${verdict.line2}`;
+	const sec = await security;
 	return {
 		id: newId(),
 		createdAt: now.toISOString(),
@@ -84,6 +94,7 @@ export async function analyzeMessage(message: Buffer, env: SmtpEnvelope, rcpt: s
 		mail: meta,
 		fromDomain: auth.fromDomain,
 		providers: await providers,
+		...(sec ? { security: sec } : {}),
 		findings,
 	};
 }

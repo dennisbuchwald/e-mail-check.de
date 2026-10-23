@@ -78,7 +78,21 @@ export interface MailResult {
 	fromDomain: string | null;
 	/** Who hosts the domain's DNS and mail (from NS and MX), for direct links to our guides. Older results lack it. */
 	providers?: Providers;
+	/** Bonus checks without points: protection of mail *to* the domain. Older results lack it. */
+	security?: DomainSecurity;
 	findings: Finding[];
+}
+
+/** DNSSEC, DANE, MTA-STS and TLS-RPT of the sender domain (apps/engine/src/checks/security.ts). */
+export interface DomainSecurity {
+	domain: string;
+	/** signed: validated by our resolver; unsigned; null: could not be checked. */
+	dnssec: 'signed' | 'unsigned' | null;
+	/** Up to three mail servers by priority, with their TLSA records (DANE = TLSA in a signed zone). */
+	mx: { host: string; tlsa: number; dane: boolean }[];
+	/** The TXT records, or null when missing. The MTA-STS policy file is not fetched. */
+	mtaSts: string | null;
+	tlsRpt: string | null;
 }
 
 /** A recognised provider; `slug` is set when we have guides for it under /anleitung/<slug>/. */

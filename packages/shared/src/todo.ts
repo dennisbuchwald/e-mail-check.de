@@ -204,5 +204,24 @@ export function proTipsOf(r: MailResult): { title: string; text: string; record?
 	if (dmarc.policy === 'quarantine' || dmarc.policy === 'reject') {
 		tips.push({ title: 'Dein Logo im Postfach (BIMI)', text: `Mit einer aktiven Schutzregel kann ${domain} sein Logo neben deinen Mails zeigen lassen, bei Gmail und Apple Mail. Dafür brauchst du ein SVG-Logo und meist ein Marken-Zertifikat (VMC).` });
 	}
+	// Bonus checks (no points): protection of mail sent *to* the domain. Not for freemail senders, who cannot change it.
+	const sec = r.security;
+	const freemail = raw(r.findings.find((f) => f.id === 'sender')).freemail === true;
+	if (sec && !freemail) {
+		if (sec.dnssec === 'unsigned') {
+			tips.push({ title: 'Domain signieren (DNSSEC)', text: `Die DNS-Einträge von ${domain} sind nicht signiert. Mit DNSSEC kann sie unterwegs niemand fälschen, und erst damit wird DANE möglich. Bei vielen Anbietern ist das ein Schalter in den Domain-Einstellungen.` });
+		}
+		const ownMx = sec.mx.filter((m) => m.host === domain || m.host.endsWith(`.${domain}`));
+		if (sec.dnssec === 'signed' && ownMx.length && ownMx.some((m) => !m.dane)) {
+			tips.push({ title: 'Mailserver festnageln (DANE)', text: `${domain} ist signiert, deine Mailserver haben aber keinen TLSA-Eintrag. Mit DANE wissen andere Server vorab, welches Zertifikat deine Mailserver haben, und lassen sich nicht auf eine unverschlüsselte Verbindung herunterhandeln. Das richtet ein, wer die Mailserver betreibt.` });
+		}
+		if (!sec.mtaSts) {
+			tips.push({ title: 'Verschlüsselung erzwingen (MTA-STS)', text: `Mit MTA-STS sagt ${domain} anderen Mailservern: Mails an mich nur verschlüsselt. Gmail und Microsoft halten sich daran. Dafür brauchst du einen DNS-Eintrag und eine kleine Textdatei unter mta-sts.${domain}.` });
+		}
+		if (!sec.tlsRpt) {
+			const rua = `tls-berichte@${domain}`;
+			tips.push({ title: 'Berichte über Verschlüsselung (TLS-RPT)', text: 'Andere Mailserver schicken dir dann einen Bericht, wenn die verschlüsselte Zustellung an dich scheitert. Ein einziger Eintrag, am sinnvollsten zusammen mit MTA-STS.', record: { type: 'TXT', host: '_smtp._tls', value: `v=TLSRPTv1; rua=mailto:${rua}`, placeholder: rua } });
+		}
+	}
 	return tips;
 }

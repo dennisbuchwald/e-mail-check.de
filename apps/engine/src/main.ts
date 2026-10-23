@@ -3,6 +3,7 @@ import { rspamdScanner } from './analyze.ts';
 import { createApi } from './api.ts';
 import { config } from './config.ts';
 import { createResolver } from './dns.ts';
+import { createSecLookup } from './dnssec.ts';
 import { TestService } from './service.ts';
 import { createSmtpServer } from './smtp.ts';
 import { Store } from './store.ts';
@@ -14,7 +15,7 @@ const service = new TestService({
 	store,
 	testDomain: config.testDomain,
 	testTtlMinutes: config.testTtlMinutes,
-	deps: { resolver, mta: config.hostname, resultTtlDays: config.resultTtlDays, scanContent: rspamdScanner(config.rspamdUrl) },
+	deps: { resolver, mta: config.hostname, resultTtlDays: config.resultTtlDays, scanContent: rspamdScanner(config.rspamdUrl), ...(config.dnsServers[0] ? { secLookup: createSecLookup(config.dnsServers[0]) } : {}) },
 });
 
 // Hourly cleanup: results older than 7 days are deleted.

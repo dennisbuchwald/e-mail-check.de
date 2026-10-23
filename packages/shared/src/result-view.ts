@@ -296,7 +296,17 @@ function nerdArea(r: MailResult): string {
 		['DNS liegt bei', esc(prov.dns?.name ?? 'nicht erkannt')],
 		['Postfach liegt bei', esc(prov.mail?.name ?? 'nicht erkannt')],
 	];
-	const json = JSON.stringify({ score: r.score, band: r.band, subScores: r.subScores, providers: r.providers, findings: r.findings.map((x) => ({ id: x.id, status: x.status, abzug: x.deductions, raw: x.raw })) }, null, 2);
+	// 7. Bonus checks without points.
+	const sec = r.security;
+	const secRows = sec
+		? [
+				['DNSSEC', esc(sec.dnssec === 'signed' ? 'signiert, von unserem Resolver geprüft' : sec.dnssec === 'unsigned' ? 'nicht signiert' : 'nicht prüfbar')],
+				...sec.mx.map((m) => [`Mailserver ${mono(m.host)}`, esc(m.dane ? `DANE aktiv (${m.tlsa} TLSA-${m.tlsa === 1 ? 'Eintrag' : 'Einträge'})` : m.tlsa ? `${m.tlsa} TLSA, aber nicht signiert (zählt nicht)` : 'kein TLSA-Eintrag (kein DANE)')]),
+				['MTA-STS', mono(sec.mtaSts ? `"${sec.mtaSts}"` : 'kein Eintrag')],
+				['TLS-RPT', mono(sec.tlsRpt ? `"${sec.tlsRpt}"` : 'kein Eintrag')],
+			]
+		: [];
+	const json = JSON.stringify({ score: r.score, band: r.band, subScores: r.subScores, providers: r.providers, security: r.security, findings: r.findings.map((x) => ({ id: x.id, status: x.status, abzug: x.deductions, raw: x.raw })) }, null, 2);
 
 	return `<details class="card rv-nerd" id="rv-nerd"><summary><span class="eyebrow">Für Nerds</span><span class="h rv-nerd-title">Alles, was wir gemessen haben</span><span class="rv-nerd-sub">Rechnung, Einträge, alle Listen und Regeln</span></summary>
 <div class="rv-nerd-body">
@@ -306,6 +316,7 @@ ${nerdSec('Server-Ruf', `${nerdTable('Server', ['Was', 'Wert'], serverRows)}${ne
 ${nerdSec('Transport', `${nerdTable('Transport', ['Was', 'Wert'], trRows)}${nerdTable('Zustellkette', ['#', 'Server', 'Zeit'], hopRows)}`)}
 ${nerdSec('Inhalt', `${nerdTable('Inhalt', ['Was', 'Wert'], contentRows)}${symRows.length ? nerdTable('Spamfilter-Regeln', ['Regel', 'Bedeutung', 'Punkte'], symRows) : '<p class="rv-small">Keine Spamfilter-Regel angeschlagen.</p>'}`, { href: '/wissen/mails-landen-im-spam', label: 'Warum Mails im Spam landen' })}
 ${nerdSec('Anbieter', nerdTable('Anbieter', ['Was', 'Wert'], provRows) + '<p class="rv-small">Erkannt über die Nameserver (NS) und Mailserver (MX) deiner Domain.</p>', { href: '/anleitung', label: 'Alle Anleitungen' })}
+${secRows.length ? nerdSec(`Postfach-Sicherheit von ${sec!.domain} (ohne Punkte)`, `${nerdTable('Postfach-Sicherheit', ['Was', 'Wert'], secRows)}<p class="rv-small">Diese Werte schützen Mails, die an deine Domain gehen, vor Mitlesen und Umleiten. Ob deine Mails ankommen, ändern sie nicht, deshalb kosten sie keine Punkte. Die MTA-STS-Datei rufen wir nicht ab, nur den DNS-Eintrag.</p>`) : ''}
 ${nerdSec('Rohdaten', `<div class="rv-nerd-json"><pre class="rv-pre">${esc(json)}</pre><button type="button" class="copybtn" data-copy="${esc(json)}">${COPY}<span>JSON kopieren</span></button></div><p class="rv-small">Genau das speichern wir 7 Tage. Den Inhalt deiner Mail nicht.</p>`)}
 </div></details>`;
 }
@@ -328,7 +339,7 @@ export function renderResultView(r: MailResult, opts: ResultViewOptions): string
 	const todoHtml = todos.length
 		? `<section class="rv-todos" aria-labelledby="rv-todo-title"><h2 class="h rv-todo-title" id="rv-todo-title">Das solltest du tun <span>· ${todos.length} ${todos.length === 1 ? 'Schritt' : 'Schritte'}</span></h2><ol>${todos.map((t, i) => todoCard(t, i, opts)).join('')}</ol>
 <div class="rv-todo-end"><span>Alles erledigt?</span><a class="btn btn-ink" href="/" data-action="retest">Erneut testen</a></div>${setupLine(opts, todos[0].check)}</section>`
-		: `<section class="card rv-green"><span class="eyebrow">Alles im grünen Bereich</span><h2 class="h">Hier gibt es nichts zu tun.</h2><p>Deine Mail ist sauber eingerichtet. Wenn du noch weiter gehen willst, sind das die nächsten Stufen. Beides ist freiwillig.</p>${proTipsOf(r)
+		: `<section class="card rv-green"><span class="eyebrow">Alles im grünen Bereich</span><h2 class="h">Hier gibt es nichts zu tun.</h2><p>Deine Mail ist sauber eingerichtet. Wenn du noch weiter gehen willst, sind das die nächsten Stufen. Alles davon ist freiwillig und ändert die Zahl nicht.</p>${proTipsOf(r)
 				.map((t) => `<div class="rv-tip-pro"><b>${esc(t.title)}</b><p>${esc(t.text)}</p>${t.record ? recordBox(t.record) : ''}</div>`)
 				.join('')}</section>`;
 
