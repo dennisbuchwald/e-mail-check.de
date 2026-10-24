@@ -123,8 +123,12 @@ function todoOf(f: Finding, r: MailResult): Todo | null {
 				recheck: { ...recheck, ...(mech ? { expect: mech } : {}) },
 			};
 		}
-		case 'sender':
+		case 'sender': {
+			const reach = (x.reach ?? {}) as { from?: string; returnPath?: { domain: string; reach: string } | null };
+			if (!x.freemail && reach.from === 'none') return { ...base, check: 'absender', title: 'Postfach für die Absenderadresse einrichten', why: `${x.domain} kann keine Mails empfangen. Wer antwortet, bekommt eine Fehlermeldung. Leg für die Domain einen MX-Eintrag mit Postfach an oder schick von einer Adresse, die Antworten annimmt.` };
+			if (!x.freemail && reach.returnPath?.reach === 'none') return { ...base, check: 'absender', title: 'Rücklauf-Adresse reparieren', why: `Die Rücklauf-Adresse (Return-Path) liegt bei ${reach.returnPath.domain}, und dort kommt keine Mail an. Stell im Versanddienst oder Formular-Plugin eine Adresse ein, die Mails empfangen kann.` };
 			return { ...base, check: 'absender', title: 'Mit eigener Domain versenden', why: 'Du schickst von einer Freemail-Adresse. Für Firmenmails wirkt eine Adresse mit deiner eigenen Domain vertrauenswürdiger und lässt sich selbst absichern.', links: [{ href: '/wissen/spf-dkim-dmarc', label: 'Was du dafür brauchst ›' }] };
+		}
 		case 'dkim': {
 			const sigs = (x.signatures ?? []) as Raw[];
 			const own = sigs.find((s) => String(s.domain ?? '').toLowerCase() === domain.toLowerCase());
@@ -201,7 +205,13 @@ export function proTipsOf(r: MailResult): { title: string; text: string; record?
 	if (dmarc.policy === 'quarantine' && dmarc.record) {
 		tips.push({ title: 'Schutzregel auf reject stellen', text: 'Gefälschte Mails werden dann nicht nur aussortiert, sondern abgelehnt. Mach das erst, wenn alle Dienste, die für dich senden, sauber unterschreiben.', record: { type: 'TXT', host: '_dmarc', value: String(dmarc.record).replace(/(;\s*p=)\w+/i, '$1reject') } });
 	}
-	if (dmarc.policy === 'quarantine' || dmarc.policy === 'reject') {
+	// DMARC reports: the one tag most rules lack. The rule's own record, with rua added.
+	const tags = (dmarc.tags ?? null) as { rua: string | null } | null;
+	if (dmarc.record && tags && !tags.rua && (dmarc.policy === 'quarantine' || dmarc.policy === 'reject')) {
+		const rua = `dmarc@${domain}`;
+		tips.push({ title: 'DMARC-Berichte einschalten', text: 'Mit Berichten siehst du, welche Server in deinem Namen Mails verschicken, auch die gefälschten. Die Berichte kommen täglich als Anhang, ein eigenes Postfach dafür ist sinnvoll.', record: { type: 'TXT', host: '_dmarc', value: `${String(dmarc.record).replace(/;?\s*$/, '')}; rua=mailto:${rua}`, placeholder: rua } });
+	}
+	if ((dmarc.policy === 'quarantine' || dmarc.policy === 'reject') && !r.security?.bimi?.record) {
 		tips.push({ title: 'Dein Logo im Postfach (BIMI)', text: `Mit einer aktiven Schutzregel kann ${domain} sein Logo neben deinen Mails zeigen lassen, bei Gmail und Apple Mail. Dafür brauchst du ein SVG-Logo und meist ein Marken-Zertifikat (VMC).` });
 	}
 	// Bonus checks (no points): protection of mail sent *to* the domain. Not for freemail senders, who cannot change it.

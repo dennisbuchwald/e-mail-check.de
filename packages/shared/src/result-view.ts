@@ -223,6 +223,8 @@ const nerdTable = (caption: string, head: string[], rows: string[][]) =>
 		: '';
 const nerdSec = (title: string, body: string, more?: { href: string; label: string }) =>
 	`<section class="rv-nerd-sec"><h3 class="h">${esc(title)}</h3>${body}${more ? `<a class="rv-nerd-more" href="${more.href}">${esc(more.label)} ›</a>` : ''}</section>`;
+const REACH: Record<string, string> = { mx: 'kommen an (MX-Eintrag)', a: 'kommen an, aber nur über die Website-Adresse (kein MX)', none: 'kommen nicht an, die Domain nimmt keine Mails', null: 'nicht prüfbar' };
+const HELO_SPF: Record<string, string> = { pass: 'erlaubt', none: 'kein Eintrag', neutral: 'neutral', softfail: 'nicht erlaubt (weich)', fail: 'nicht erlaubt', temperror: 'gerade nicht prüfbar', permerror: 'fehlerhafter Eintrag' };
 const yes = (v: unknown) => (v === true ? 'ja' : v === false ? 'nein' : '–');
 const mono = (v: unknown) => `<span class="mono">${esc(v ?? '–')}</span>`;
 
@@ -249,9 +251,23 @@ function nerdArea(r: MailResult): string {
 		['SPF-Eintrag', mono(spf.record ? `"${spf.record}"` : 'kein Eintrag')],
 		...(lookups ? [['DNS-Abfragen', mono(`${lookups.count ?? 0} von ${lookups.limit ?? 10}${lookups.void ? `, ${lookups.void} leer` : ''}`)]] : []),
 		['DMARC-Eintrag', mono(dmarc.record ? `"${dmarc.record}"` : 'kein Eintrag')],
+		...(dmarc.tags
+			? [
+					['DMARC-Berichte (rua)', dmarc.tags.rua ? mono(dmarc.tags.rua) : esc('keine, du erfährst nichts über Fälschungen')],
+					['Regel für Subdomains (sp)', esc(dmarc.tags.sp ? `sp=${dmarc.tags.sp}` : 'wie die Hauptregel')],
+					['Anteil der Mails (pct)', esc(`${dmarc.tags.pct} %`)],
+					['Ausrichtung SPF / DKIM', esc(`${dmarc.tags.aspf === 's' ? 'streng' : 'locker'} / ${dmarc.tags.adkim === 's' ? 'streng' : 'locker'}`)],
+				]
+			: []),
 		['DMARC über SPF', esc(dmarc.spfAligned ? `ja (${dmarc.spfAligned})` : 'nein')],
 		['DMARC über DKIM', esc(dmarc.dkimAligned ? `ja (${dmarc.dkimAligned})` : 'nein')],
 		['Freemail-Absender', yes(sender.freemail)],
+		...(sender.reach
+			? [
+					['Antworten an die Absender-Domain', esc(REACH[String(sender.reach.from)] ?? '–')],
+					...(sender.reach.returnPath ? [[`Rückläufer an ${esc(sender.reach.returnPath.domain)}`, esc(REACH[String(sender.reach.returnPath.reach)] ?? '–')]] : []),
+				]
+			: []),
 	];
 	const sigRows = sigs.map((g) => [esc(g.domain ?? '?'), mono(g.selector ?? '?'), mono(g.algo ?? '?'), mono(g.bits ? `${g.bits} Bit` : '?'), esc(g.result ?? '?'), esc(g.aligned ? 'ja' : 'nein')]);
 
@@ -266,6 +282,7 @@ function nerdArea(r: MailResult): string {
 		['IP-Adresse', mono(rep.ip)],
 		['Rückwärts-Name (rDNS)', `${mono(rep.ptr ?? 'keiner')}${rep.ptr ? ` · ${rep.ptrMatches ? 'zeigt zurück auf die IP' : 'zeigt nicht zurück'}` : ''}`],
 		['HELO', `${mono(rep.helo)}${rep.helo ? ` · ${rep.heloMatches ? 'passt zur IP' : 'passt nicht zur IP'}` : ''}`],
+		...(rep.heloSpf ? [['SPF für den HELO-Namen', `${esc(HELO_SPF[rep.heloSpf.result] ?? rep.heloSpf.result)}${rep.heloSpf.record ? ` · ${mono(`"${rep.heloSpf.record}"`)}` : ''} <span class="rv-small">(ohne Punkte)</span>`]] : []),
 		...(rep.bigSender ? [['Großer Versender', esc(`${rep.bigSender}: kleine Listen kosten hier keine Punkte`)]] : []),
 	];
 
@@ -273,6 +290,7 @@ function nerdArea(r: MailResult): string {
 	const hops = (tr.hops ?? []) as { host: string; sec: number }[];
 	const trRows = [
 		['Verschlüsselung', esc(tr.tls ? (tr.tls.used ? tr.tls.version ?? 'TLS' : 'ohne TLS') : '–')],
+		...(tr.tls?.cipher ? [['Verfahren', `${mono(tr.tls.cipher)}${tr.tls.bits ? ` · ${esc(`${tr.tls.bits} Bit`)}` : ''}`]] : []),
 		['Unterwegs', esc(fmtDuration(tr.durationSec) ?? 'nicht sicher bestimmbar')],
 	];
 	const hopRows = hops.map((h, i) => [esc(String(i + 1)), mono(h.host), mono(`+${h.sec} s`)]);
@@ -304,6 +322,7 @@ function nerdArea(r: MailResult): string {
 				...sec.mx.map((m) => [`Mailserver ${mono(m.host)}`, esc(m.dane ? `DANE aktiv (${m.tlsa} TLSA-${m.tlsa === 1 ? 'Eintrag' : 'Einträge'})` : m.tlsa ? `${m.tlsa} TLSA, aber nicht signiert (zählt nicht)` : 'kein TLSA-Eintrag (kein DANE)')]),
 				['MTA-STS', mono(sec.mtaSts ? `"${sec.mtaSts}"` : 'kein Eintrag')],
 				['TLS-RPT', mono(sec.tlsRpt ? `"${sec.tlsRpt}"` : 'kein Eintrag')],
+				...(sec.bimi ? [['BIMI (Logo)', sec.bimi.record ? `${mono(`"${sec.bimi.record}"`)} · ${esc(sec.bimi.logo ? (sec.bimi.vmc ? 'Logo mit Marken-Zertifikat' : 'Logo ohne Marken-Zertifikat') : 'bewusst abgelehnt (l= leer)')}` : esc('kein Eintrag')]] : []),
 			]
 		: [];
 	const json = JSON.stringify({ score: r.score, band: r.band, subScores: r.subScores, providers: r.providers, security: r.security, findings: r.findings.map((x) => ({ id: x.id, status: x.status, abzug: x.deductions, raw: x.raw })) }, null, 2);

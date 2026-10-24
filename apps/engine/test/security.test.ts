@@ -72,6 +72,7 @@ describe('checkSecurity', () => {
 			],
 			mtaSts: 'v=STSv1; id=20261023',
 			tlsRpt: 'v=TLSRPTv1; rua=mailto:tls@sicher.test',
+			bimi: { record: null, logo: false, vmc: false },
 		});
 	});
 	it('TLSA without validation is not DANE', async () => {

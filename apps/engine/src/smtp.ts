@@ -13,7 +13,7 @@ export interface SmtpOptions {
 	maxBadRcpt?: number;
 }
 
-type Session = SMTPServerSession & { tlsProtocol?: string | null; badRcpt?: number; connIp?: string };
+type Session = SMTPServerSession & { tlsProtocol?: string | null; tlsCipher?: string | null; badRcpt?: number; connIp?: string };
 const fail = (message: string, responseCode: number) => Object.assign(new Error(message), { responseCode });
 
 export function createSmtpServer(service: TestService, opts: SmtpOptions): SMTPServer {
@@ -50,6 +50,8 @@ export function createSmtpServer(service: TestService, opts: SmtpOptions): SMTPS
 		// The negotiated protocol, not the cipher's minimum version (TLS 1.2 with a CBC suite read as TLSv1.0).
 		onSecure(socket, session, callback) {
 			(session as Session).tlsProtocol = (socket as unknown as { getProtocol?: () => string | null }).getProtocol?.() ?? null;
+			const cipher = (socket as unknown as { getCipher?: () => { name?: string; standardName?: string } | null }).getCipher?.();
+			(session as Session).tlsCipher = cipher?.standardName ?? cipher?.name ?? null;
 			callback();
 		},
 		onRcptTo(address, session, callback) {
@@ -85,7 +87,7 @@ export function createSmtpServer(service: TestService, opts: SmtpOptions): SMTPS
 					ip: session.remoteAddress,
 					helo: session.hostNameAppearsAs ?? '',
 					sender: session.envelope.mailFrom ? session.envelope.mailFrom.address : '',
-					tls: session.secure ? { version: (session as Session).tlsProtocol ?? (session as unknown as { tlsOptions?: { version?: string } }).tlsOptions?.version ?? null } : null,
+					tls: session.secure ? { version: (session as Session).tlsProtocol ?? (session as unknown as { tlsOptions?: { version?: string } }).tlsOptions?.version ?? null, cipher: (session as Session).tlsCipher ?? null } : null,
 				};
 				const message = Buffer.concat(chunks);
 				chunks.length = 0;

@@ -98,5 +98,47 @@
 	],
 	"66.113.0.203.zen.spamhaus.org A": [
 		"127.0.0.2"
+	],
+	"dkim-kaputt.example.test MX": [
+		{
+			"exchange": "mx.dkim-kaputt.example.test",
+			"priority": 10
+		}
+	],
+	"gut.example.test MX": [
+		{
+			"exchange": "mx.gut.example.test",
+			"priority": 10
+		}
+	],
+	"icloud.com MX": [
+		{
+			"exchange": "mx01.mail.icloud.com",
+			"priority": 10
+		}
+	],
+	"ohne-dkim.example.test MX": [
+		{
+			"exchange": "mx.ohne-dkim.example.test",
+			"priority": 10
+		}
+	],
+	"ohne-dmarc.example.test MX": [
+		{
+			"exchange": "mx.ohne-dmarc.example.test",
+			"priority": 10
+		}
+	],
+	"softfail.example.test MX": [
+		{
+			"exchange": "mx.softfail.example.test",
+			"priority": 10
+		}
+	],
+	"ohne-spf.example.test MX": [
+		{
+			"exchange": "mx.ohne-spf.example.test",
+			"priority": 10
+		}
 	]
 }

@@ -17,7 +17,10 @@ export async function checkSecurity(domain: string, resolve: DnsResolver, lookup
 		() => [] as string[],
 	);
 	const txt = (name: string, prefix: RegExp) => resolveTxt(resolve, name).then((rows) => rows.find((r) => prefix.test(r)) ?? null, () => null);
-	const [dnssec, hosts, mtaSts, tlsRpt] = await Promise.all([signed, mxHosts, txt(`_mta-sts.${domain}`, /^v=STSv1\b/i), txt(`_smtp._tls.${domain}`, /^v=TLSRPTv1\b/i)]);
+	const [dnssec, hosts, mtaSts, tlsRpt, bimiRecord] = await Promise.all([signed, mxHosts, txt(`_mta-sts.${domain}`, /^v=STSv1\b/i), txt(`_smtp._tls.${domain}`, /^v=TLSRPTv1\b/i), txt(`default._bimi.${domain}`, /^v=BIMI1\b/i)]);
+	// BIMI: l= is the logo, a= the mark certificate. An empty l= means "declined" (e.g. iCloud).
+	const bimiTag = (k: string) => new RegExp(`(?:^|;)\\s*${k}=([^;]*)`, 'i').exec(bimiRecord ?? '')?.[1]?.trim() ?? '';
+	const bimi = { record: bimiRecord, logo: !!bimiTag('l'), vmc: !!bimiTag('a') };
 	// DANE counts only with a validated (signed) TLSA answer.
 	const mx = await Promise.all(
 		hosts.map((host) =>
@@ -27,7 +30,7 @@ export async function checkSecurity(domain: string, resolve: DnsResolver, lookup
 			),
 		),
 	);
-	return { domain, dnssec, mx, mtaSts, tlsRpt };
+	return { domain, dnssec, mx, mtaSts, tlsRpt, bimi };
 }
 
 /** The four bonus checks as findings for the /dnssec-check page. No deductions: missing is a hint, never a problem. */

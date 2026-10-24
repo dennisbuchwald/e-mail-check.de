@@ -9,7 +9,7 @@ export interface SmtpEnvelope {
 	/** MAIL FROM; empty string for a null reverse-path (bounces). */
 	sender: string;
 	/** TLS of the SMTP session, if STARTTLS was used. */
-	tls?: { version: string | null } | null;
+	tls?: { version: string | null; cipher?: string | null } | null;
 }
 
 export interface AuthFindings {
@@ -266,6 +266,7 @@ export function dmarcFinding(dmarc: DmarcResult | false, fromDomain: string | nu
 		policy: dmarc.policy ?? null,
 		spfAligned: dmarc.alignment?.spf?.result ?? null,
 		dkimAligned: dmarc.alignment?.dkim?.result ?? null,
+		tags: dmarcTags(dmarc.rr),
 	};
 	switch (dmarc.status.result) {
 		case 'none':
@@ -294,7 +295,7 @@ export function dmarcFinding(dmarc: DmarcResult | false, fromDomain: string | nu
 				guide: undefined,
 				status: 'ok',
 				title: 'Schutzregel aktiv',
-				text: `${domain} legt fest, dass gefälschte Mails ${dmarc.policy === 'reject' ? 'abgelehnt' : 'aussortiert'} werden. Deine Mail erfüllt die Regel.`,
+				text: `${domain} legt fest, dass gefälschte Mails ${dmarc.policy === 'reject' ? 'abgelehnt' : 'aussortiert'} werden. Deine Mail erfüllt die Regel.${dmarcHint(raw.tags)}`,
 				deductions: [],
 				raw,
 			};
@@ -318,4 +319,31 @@ export function dmarcFinding(dmarc: DmarcResult | false, fromDomain: string | nu
 				raw,
 			};
 	}
+}
+
+/** The DMARC tags that change what the rule does (RFC 7489 6.3), lower-cased keys. */
+export function dmarcTags(record: string | null | undefined): { rua: string | null; sp: string | null; pct: number; aspf: 'r' | 's'; adkim: 'r' | 's' } | null {
+	if (!record) return null;
+	const t: Record<string, string> = {};
+	for (const part of record.split(';')) {
+		const i = part.indexOf('=');
+		if (i > 0) t[part.slice(0, i).trim().toLowerCase()] = part.slice(i + 1).trim();
+	}
+	const pct = Number.parseInt(t.pct ?? '100', 10);
+	return {
+		rua: t.rua || null,
+		sp: t.sp?.toLowerCase() || null,
+		pct: Number.isFinite(pct) ? Math.min(100, Math.max(0, pct)) : 100,
+		aspf: t.aspf?.toLowerCase() === 's' ? 's' : 'r',
+		adkim: t.adkim?.toLowerCase() === 's' ? 's' : 'r',
+	};
+}
+
+/** One sentence for an active rule that could do more. A hint, no points. */
+function dmarcHint(tags: ReturnType<typeof dmarcTags>): string {
+	if (!tags) return '';
+	if (tags.pct < 100) return ` Hinweis: Die Regel gilt nur für ${tags.pct} % der Mails (pct=${tags.pct}). Mit pct=100 oder ohne pct gilt sie für alle.`;
+	if (tags.sp === 'none') return ' Hinweis: Für Subdomains gilt nur der Beobachtungsmodus (sp=none). Gefälschte Mails von rechnung.deine-domain.de würden durchkommen.';
+	if (!tags.rua) return ' Hinweis: Du bekommst keine DMARC-Berichte (rua fehlt). Mit ihnen siehst du, wer in deinem Namen Mails verschickt.';
+	return '';
 }

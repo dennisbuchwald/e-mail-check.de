@@ -6,6 +6,8 @@ import { bandFor, computeScore, enrichFindings, hasAuthFailure, stationsOf, subS
 import { checkAuth, type SmtpEnvelope } from './checks/auth.ts';
 import { detectProviders } from './checks/provider.ts';
 import { checkSecurity } from './checks/security.ts';
+import { reachOf } from './checks/reachability.ts';
+import { spf as spfVerify } from 'mailauth/lib/spf';
 import { checkReputation } from './checks/reputation.ts';
 import { contentFinding, scanWithRspamd, type BodyStats, type ContentAnalysis } from './checks/content.ts';
 import { simpleParser, type ParsedMail } from 'mailparser';
@@ -49,6 +51,15 @@ export async function analyzeMessage(message: Buffer, env: SmtpEnvelope, rcpt: s
 
 	const auth = await checkAuth(message, env, deps.resolver, deps.mta);
 	const providers = detectProviders(auth.fromDomain, deps.resolver).catch(() => ({}));
+	// Hints without points: do replies (From) and bounces (Return-Path) reach a mailbox? And SPF for the HELO name.
+	const rpDomain = env.sender.includes('@') ? env.sender.slice(env.sender.lastIndexOf('@') + 1).toLowerCase() : null;
+	const reach = auth.fromDomain
+		? Promise.all([reachOf(auth.fromDomain, deps.resolver), rpDomain && rpDomain !== auth.fromDomain ? reachOf(rpDomain, deps.resolver) : null]).then(
+				([from, rp]) => ({ from, returnPath: rpDomain ? { domain: rpDomain, reach: rp === null && rpDomain === auth.fromDomain ? from : rp } : null }),
+				() => undefined,
+			)
+		: Promise.resolve(undefined);
+	const heloSpf = heloSpfOf(env, deps);
 	// Bonus checks (no points), at most 6 s so they never hold up the result.
 	const security =
 		deps.secLookup && auth.fromDomain
@@ -70,7 +81,9 @@ export async function analyzeMessage(message: Buffer, env: SmtpEnvelope, rcpt: s
 	const cont = await content;
 	onStep('content', stepInfo(cont));
 
-	const sender = senderFinding(auth.fromDomain);
+	const sender = senderFinding(auth.fromDomain, await reach);
+	const helo = await heloSpf;
+	if (helo && rep.raw) rep.raw = { ...rep.raw, heloSpf: helo };
 	const received = parsed ? parsed.headerLines.filter((h) => h.key.toLowerCase() === 'received').map((h) => h.line.slice(h.line.indexOf(':') + 1).replace(/\s+/g, ' ').trim()) : [];
 	const transport = transportFinding(env.tls, received, deps.mta, now);
 	const findings = enrichFindings([auth.spf, sender, auth.dkim, auth.dmarc, rep, transport, cont]);
@@ -97,6 +110,17 @@ export async function analyzeMessage(message: Buffer, env: SmtpEnvelope, rcpt: s
 		...(sec ? { security: sec } : {}),
 		findings,
 	};
+}
+
+/** SPF of the HELO name (RFC 7208 2.3), for information only: never a deduction. */
+async function heloSpfOf(env: SmtpEnvelope, deps: AnalyzeDeps): Promise<{ result: string; record: string | null } | null> {
+	if (!/^[a-z0-9][a-z0-9.-]*\.[a-z]{2,}$/i.test(env.helo)) return null;
+	try {
+		const r = (await spfVerify({ sender: '', ip: env.ip, helo: env.helo, mta: deps.mta, resolver: deps.resolver, maxElapsedTime: 5000 })) as { status?: { result?: string }; rr?: string };
+		return { result: r.status?.result ?? 'none', record: r.rr ?? null };
+	} catch {
+		return null;
+	}
 }
 
 /** Interim status plus one short line with real values for the live checklist. */

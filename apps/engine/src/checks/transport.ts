@@ -35,11 +35,14 @@ export function tlsLevel(version: string | null | undefined): string | null {
 	return m ? m[1] : null;
 }
 
-export function transportFinding(tls: { version: string | null } | null | undefined, received: string[], ourHost: string, receivedAt: Date): Finding {
+export function transportFinding(tls: { version: string | null; cipher?: string | null } | null | undefined, received: string[], ourHost: string, receivedAt: Date): Finding {
 	const base = { id: 'transport' as const, tech: 'TLS, Zustellkette' };
 	const { hops, durationSec } = parseHops(received, ourHost, receivedAt);
 	const level = tls ? tlsLevel(tls.version) : null;
-	const raw = { tls: { used: !!tls, version: tls?.version ?? null, level }, hops, durationSec };
+	// Cipher name and its key strength (from the name: AES_256, CHACHA20 = 256, AES_128 = 128).
+	const cipher = tls?.cipher ?? null;
+	const bits = cipher ? (/(AES_?256|CHACHA20)/i.test(cipher) ? 256 : /AES_?128/i.test(cipher) ? 128 : null) : null;
+	const raw = { tls: { used: !!tls, version: tls?.version ?? null, level, ...(cipher ? { cipher, bits } : {}) }, hops, durationSec };
 	if (!tls) {
 		return {
 			...base,

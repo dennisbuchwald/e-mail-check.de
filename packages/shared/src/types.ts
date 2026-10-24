@@ -85,6 +85,9 @@ export interface MailResult {
 	findings: Finding[];
 }
 
+/** Can a domain receive mail? mx: MX record · a: only A/AAAA (implicit MX) · none: no · null: lookup failed. */
+export type Reach = 'mx' | 'a' | 'none' | null;
+
 /** DNSSEC, DANE, MTA-STS and TLS-RPT of the sender domain (apps/engine/src/checks/security.ts). */
 export interface DomainSecurity {
 	domain: string;
@@ -95,6 +98,8 @@ export interface DomainSecurity {
 	/** The TXT records, or null when missing. The MTA-STS policy file is not fetched. */
 	mtaSts: string | null;
 	tlsRpt: string | null;
+	/** BIMI record under default._bimi (logo = l= set, vmc = a= set). Older results lack it. */
+	bimi?: { record: string | null; logo: boolean; vmc: boolean };
 }
 
 /** A recognised provider; `slug` is set when we have guides for it under /anleitung/<slug>/. */
