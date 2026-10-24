@@ -1070,6 +1070,50 @@
 .rv-route-head {
 	margin-bottom: 8px;
 }
+.rv-route-tools {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex: none;
+}
+/* Replays the envelope along this mail's route. Without motion the scene shows the end state anyway. */
+.rv-replay {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-height: 36px;
+	padding: 0 12px;
+	border: 1px solid var(--border);
+	border-radius: 999px;
+	background: #fff;
+	font: 600 13px var(--font-body);
+	color: var(--ink);
+	cursor: pointer;
+	transition: border-color 0.2s ease;
+}
+.rv-replay:hover {
+	border-color: var(--border-strong);
+}
+.rv-replay:active svg {
+	transform: rotate(-90deg);
+	transition: transform 0.2s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+	.rv-replay {
+		display: none;
+	}
+}
+@media (pointer: coarse) {
+	.rv-replay {
+		min-height: 44px;
+	}
+}
+/* Phones: the hint would push the button into three lines; the station chips speak for themselves there. */
+@media (max-width: 560px) {
+	.rv-route-hint {
+		display: none;
+	}
+}
 .rv-stage {
 	position: relative;
 	width: min(100%, 520px);

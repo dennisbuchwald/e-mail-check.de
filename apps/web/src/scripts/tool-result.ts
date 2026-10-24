@@ -207,5 +207,8 @@ export function createResultView(ctx: ResultContext) {
 		if (live && !reduced && 'vibrate' in navigator && matchMedia('(pointer: coarse)').matches) navigator.vibrate?.([12, 40, 18]);
 	}
 
-	return { hydrate, render, selectStation, recheck };
+	/** Runs the envelope along the route of this mail again (button "Neu abspielen"). */
+	const replay = () => scene?.replay();
+
+	return { hydrate, render, selectStation, recheck, replay };
 }

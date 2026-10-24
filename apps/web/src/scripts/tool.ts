@@ -429,6 +429,9 @@ export function initTool(): void {
 				await copyText(url);
 				flash(btn, 'Kopiert');
 			}
+		} else if (action === 'replay') {
+			view.replay();
+			track('Szene neu abgespielt');
 		} else if (action === 'back') {
 			show('result');
 			$('[data-headline]').focus();

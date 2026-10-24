@@ -396,7 +396,7 @@ export function renderResultView(r: MailResult, opts: ResultViewOptions): string
 ${r.authWarning ? `<div class="card rv-exception" data-auth-warning><span class="tag is-warn">Ausnahme</span><span>SPF, DKIM oder DMARC schlägt fehl. Darum warnen wir, egal wie hoch die Zahl ist: Das allein kann Mails in den Spam schicken.</span></div>` : ''}
 ${todoHtml}
 <div class="card rv-route">
-	<div class="rv-route-head"><span class="eyebrow">Der Weg deiner Mail · Station anklicken für Details</span>${duration ? `<span class="mono rv-dur">Unterwegs ${duration}</span>` : ''}</div>
+	<div class="rv-route-head"><span class="eyebrow">Der Weg deiner Mail<span class="rv-route-hint"> · Station anklicken für Details</span></span><span class="rv-route-tools">${duration ? `<span class="mono rv-dur">Unterwegs ${duration}</span>` : ''}<button type="button" class="rv-replay" data-action="replay"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path></svg>Neu abspielen</button></span></div>
 	<div class="rv-stage"><div class="rv-scene" data-rv-scene data-states="${scene.states.join(',')}" data-details="${esc(JSON.stringify(scene.details))}" data-label="${esc(sceneLabel)}"></div><div class="rv-hots" role="group" aria-label="Stationen deiner Mail">${hots}</div></div>
 	<div class="rv-panels">${panels}</div>
 </div>
