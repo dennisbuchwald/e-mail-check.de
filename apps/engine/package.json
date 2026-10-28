@@ -12,7 +12,7 @@
   "dependencies": {
     "@emc/shared": "workspace:*",
     "@hono/node-server": "^2.1.5",
-    "hono": "^4.13.13",
+    "hono": "^4.13.14",
     "mailauth": "^8.0.1",
     "mailparser": "^3.10.0",
     "smtp-server": "^3.20.2"
