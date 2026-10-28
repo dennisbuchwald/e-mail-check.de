@@ -30,8 +30,8 @@ importers:
         specifier: ^4.13.13
         version: 4.13.13
       mailauth:
-        specifier: ^8.0.1
-        version: 8.0.1
+        specifier: ^8.0.4
+        version: 8.0.4
       mailparser:
         specifier: ^3.10.0
         version: 3.10.0
@@ -1166,6 +1166,10 @@ packages:
     resolution: {integrity: sha512-Byw3CchK4eSqbgzpttsUoC4hx2VPP+hnveAuYAYZNipEc+0WlDFjVb1ISNscjq/idvyDP/Xjg8mnBcdgbsgvzg==}
     engines: {node: '>=20.0.0'}
 
+  libmime@5.6.2:
+    resolution: {integrity: sha512-qkEnA6lNRmGyYnKuv6cy9Z6MU2fTEXLWUm8RvzvVPgYcyawzAP4kcvn9vtikBLSgkLlAbRznkIeT2dglni4siw==}
+    engines: {node: '>=20.0.0'}
+
   libqp@3.0.1:
     resolution: {integrity: sha512-7QZxpPX25pga1WiMueduWxmrHMVBFrZPH6ZUaozGYa/H98JH6NVBSET3qVw+4NxzoraIW7rJ81YxSU9IalvCpg==}
     engines: {node: '>=20.0.0'}
@@ -1253,9 +1257,9 @@ packages:
   magicast@0.5.5:
     resolution: {integrity: sha512-UicdXN8zQ3JHlxVq+28afMXPr1z7WNY6+7EJnzTdQWkTAlMLF5fNCCKxJHBQwGaNGR11581EiQmQzx73+MvszA==}
 
-  mailauth@8.0.1:
-    resolution: {integrity: sha512-HyHCLTgwqYZOoLbaEw+q7WaWFkHsNoT3PBM8BqqmQMhm5IHNuxKhVa/XTZXoTscbBA4CV4Bx4erzba768PKfmQ==}
-    engines: {node: '>=22.19.0'}
+  mailauth@8.0.4:
+    resolution: {integrity: sha512-cANHnIBiutXGQ3AxCCc0KVDOgJNxz99a+2E8qpjZw9/lMXUDS885T+//IamaLtbtj5fh1wOdSjT8yD8CA9EPEg==}
+    engines: {node: '>=20.18.1'}
     hasBin: true
 
   mailparser@3.10.0:
@@ -1310,6 +1314,10 @@ packages:
 
   nodemailer@10.1.7:
     resolution: {integrity: sha512-OQa6FDln5fLttmqSbjDiRYvFDOFNrBqfiOwHPlEbURil3b+vPB1v8xpi+Sp46drzNDlsTnNsS502vthmz56r4w==}
+    engines: {node: '>=20.0.0'}
+
+  nodemailer@10.2.0:
+    resolution: {integrity: sha512-/XyGw6kX2stMdKGUJdAQmYAeY1FscWfdRydfd2NtK3A3KDfUUXCqZzExSNAt2xhh90X2qLCR+o2Gd48YPJcJwA==}
     engines: {node: '>=20.0.0'}
 
   normalize-path@3.0.0:
@@ -1535,8 +1543,8 @@ packages:
   tldts-core@7.4.19:
     resolution: {integrity: sha512-goNXV6Ho9TIOfpJZanTd6CKG5DyYgYAL+k+22T0SLh8l6+KHIfBUPFuePuSZv05UttIaaLmI9tb7TmGIdK5AkQ==}
 
-  tldts@7.4.18:
-    resolution: {integrity: sha512-somxA8xKAUzlAxl0TX/jMSYIbRNFIVGnI96pVGJPeMc5BsHmfVXn6mOJT6U++ELnl04eGfzpfcEuZe8WiASkXg==}
+  tldts@7.4.19:
+    resolution: {integrity: sha512-48dH6aSpQnpbzDUc4vIQZ1VjB8tkK+e8c1yx05/SZK+rkssgjEOlxDd/yU8/a4vGYQ9vRgJr9dwMq9TJ0b3X2Q==}
     hasBin: true
 
   trim-lines@3.0.1:
@@ -1570,6 +1578,10 @@ packages:
 
   undici-types@8.9.0:
     resolution: {integrity: sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==}
+
+  undici@7.30.1:
+    resolution: {integrity: sha512-03KrMbjIFDWQR5RNPrSw3bd1r12JpyFQl9/yxjUbJtqkjmllqC5lFjZh6ujeuJCKr8EOQvRW872Oy/az+nLYxg==}
+    engines: {node: '>=20.18.1'}
 
   undici@8.12.3:
     resolution: {integrity: sha512-+fdndUTwBP86cVjihTp21hZHo7d6oj1c/47XPA3lL8mM0XHs+C4EkcjmgRsFnFk2f/UONGDy9ItBItmXsLOQHw==}
@@ -2807,6 +2819,13 @@ snapshots:
       libbase64: 1.4.1
       libqp: 3.0.1
 
+  libmime@5.6.2:
+    dependencies:
+      encoding-japanese: 2.4.0
+      iconv-lite: 0.7.3
+      libbase64: 1.4.1
+      libqp: 3.0.1
+
   libqp@3.0.1: {}
 
   lightningcss-android-arm64@1.33.0:
@@ -2874,18 +2893,18 @@ snapshots:
       '@babel/types': 7.29.8
       source-map-js: 1.2.2
 
-  mailauth@8.0.1:
+  mailauth@8.0.4:
     dependencies:
       '@postalsys/vmc': 1.1.5
       commander: 14.0.3
       fast-xml-parser: 5.11.2
       ipaddr.js: 2.5.0
       joi: 18.3.0
-      libmime: 5.5.2
-      nodemailer: 10.1.7
+      libmime: 5.6.2
+      nodemailer: 10.2.0
       punycode.js: 2.3.1
-      tldts: 7.4.18
-      undici: 8.12.3
+      tldts: 7.4.19
+      undici: 7.30.1
 
   mailparser@3.10.0:
     dependencies:
@@ -2948,6 +2967,8 @@ snapshots:
   node-mock-http@1.0.5: {}
 
   nodemailer@10.1.7: {}
+
+  nodemailer@10.2.0: {}
 
   normalize-path@3.0.0: {}
 
@@ -3206,7 +3227,7 @@ snapshots:
 
   tldts-core@7.4.19: {}
 
-  tldts@7.4.18:
+  tldts@7.4.19:
     dependencies:
       tldts-core: 7.4.19
 
@@ -3250,6 +3271,8 @@ snapshots:
   undici-types@7.24.6: {}
 
   undici-types@8.9.0: {}
+
+  undici@7.30.1: {}
 
   undici@8.12.3: {}
 
