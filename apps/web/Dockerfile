@@ -12,6 +12,6 @@ ARG PUBLIC_UMAMI_ID=""
 ENV PUBLIC_UMAMI_ID=$PUBLIC_UMAMI_ID
 RUN pnpm --filter @emc/web build && node apps/web/scripts/precompress.mjs apps/web/dist
 
-FROM caddy:2-alpine@sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f
+FROM caddy:2-alpine@sha256:eb4d35b7452d1ab6171fbdbe8d9275b2301dad6dad92115d91e19fb9b24d510f
 COPY infra/caddy/Caddyfile infra/caddy/Caddyfile.prod infra/caddy/site.caddy /etc/caddy/
 COPY --from=build /app/apps/web/dist /srv
