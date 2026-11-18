@@ -21,7 +21,7 @@ services:
         ipv4_address: 172.28.0.53
 
   rspamd:
-    image: rspamd/rspamd:4.2@sha256:47e00f62105f8a60009a30a590ebcf3bfd0b992d45468222d34afa5ca2103690
+    image: rspamd/rspamd:4.2@sha256:ab8e9525fc5a0b77fc18138be4cea0b13e08b1679eb9268ef50579637e2ab206
     restart: unless-stopped
     volumes:
       - ./infra/rspamd/local.d:/etc/rspamd/local.d:ro
