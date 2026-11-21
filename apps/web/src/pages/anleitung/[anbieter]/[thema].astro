@@ -1,7 +1,7 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Article from '../../../layouts/Article.astro';
-import { PROVIDERS, TOPIC_NAMES, guideUrl } from '../../../data/site';
+import { PROVIDERS, SITE, TOPIC_NAMES, guideUrl } from '../../../data/site';
 import { TOPIC_FIGURE } from '../../../data/figures';
 
 export async function getStaticPaths() {
@@ -49,6 +49,9 @@ const main = d.themen[0];
 			<div class="chips">{others.map((p) => <a class="chip" href={guideUrl(p.slug, main)}>{p.name}</a>)}</div>
 			<p class="muted"><a href="/anleitung">Alle Anleitungen im Überblick</a></p>
 		</section>
+		{d.anbieter === 'google-workspace' && (
+			<p class="service">Lieber nicht selbst ran? <a href={SITE.serviceUrl} data-track="Workspace-Service geklickt">buchwald.digital richtet Google Workspace für dein Team ein</a>, mit SPF, DKIM und DMARC.</p>
+		)}
 	</div>
 </Article>
 
@@ -77,5 +80,11 @@ const main = d.themen[0];
 	}
 	.muted {
 		margin: 14px 0 0;
+	}
+	.service {
+		margin: 0;
+		padding-top: 24px;
+		border-top: 1px solid var(--line, #eeeef1);
+		color: var(--muted, #4a4b50);
 	}
 </style>

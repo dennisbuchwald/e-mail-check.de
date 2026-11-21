@@ -11,7 +11,7 @@ import type { MailResult, Status } from './types.ts';
 export interface ResultViewOptions {
 	/** Absolute share URL of this result. */
 	shareUrl: string;
-	/** dbw media setup offer ("{check}" becomes utm_content). Only right after the person's own test, never on the shared link. */
+	/** buchwald.digital setup offer ("{check}" becomes utm_content). Only right after the person's own test, never on the shared link. */
 	setupUrl?: string;
 }
 
@@ -205,7 +205,7 @@ function recordBox(rec: TodoRecord): string {
 function setupLine(opts: ResultViewOptions, check: string): string {
 	if (!opts.setupUrl) return '';
 	const href = opts.setupUrl.replace('{check}', encodeURIComponent(check));
-	return `<p class="rv-setup">Kein Bock auf DNS? <a href="${esc(href)}" target="_blank" rel="noopener" data-track="dbw-Angebot geklickt">dbw media richtet das für dich ein ›</a><small>Angebot von dbw media, der Agentur hinter diesem Projekt</small></p>`;
+	return `<p class="rv-setup">Kein Bock auf DNS? <a href="${esc(href)}" target="_blank" rel="noopener" data-track="dbw-Angebot geklickt">buchwald.digital richtet das für dich ein ›</a><small>Angebot von buchwald.digital, dem Mail-Service hinter diesem Projekt</small></p>`;
 }
 
 function todoCard(t: Todo, i: number, opts: ResultViewOptions): string {

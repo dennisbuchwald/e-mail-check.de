@@ -2,7 +2,7 @@
 // to copy where one exists, the matching guide of the user's provider and, for DNS records, a live re-check.
 import type { Finding, MailResult, Providers } from './types.ts';
 
-/** What kind of problem a step is about (also the utm_content of the dbw media link). */
+/** What kind of problem a step is about (also the utm_content of the setup offer link). */
 export type TodoCheck = 'spf' | 'absender' | 'dkim' | 'dmarc' | 'sperrliste' | 'rdns' | 'tls' | 'spam' | 'inhalt';
 
 export interface TodoRecord {

@@ -30,11 +30,11 @@ test('start → mail → animation → result → steps → share', async ({ pag
 	await expect(page.locator('.rv-verdict')).toBeVisible();
 	await expect(page.locator('[data-todo]').first()).toBeVisible();
 	await expect(page.locator('[data-todo].is-bad').first()).toBeVisible();
-	// Right after the own test: the dbw media offer, marked, with the problem type only.
+	// Right after the own test: the setup offer, marked, with the problem type only.
 	const setup = page.locator('.rv-setup a').first();
-	await expect(setup).toHaveAttribute('href', /^https:\/\/dbw-media\.de\/projektanfrage\/\?utm_source=e-mail-check&utm_medium=ergebnis&utm_campaign=mail-setup&utm_content=[a-z-]+$/);
+	await expect(setup).toHaveAttribute('href', /^https:\/\/buchwald\.digital\/kontakt\/\?utm_source=e-mail-check&utm_medium=ergebnis&utm_campaign=mail-setup&utm_content=[a-z-]+$/);
 	await expect(setup).toHaveAttribute('rel', 'noopener');
-	await expect(page.locator('.rv-setup').first()).toContainText('Angebot von dbw media');
+	await expect(page.locator('.rv-setup').first()).toContainText('Angebot von buchwald.digital');
 	// No start page sections in result mode.
 	await expect(page.locator('.home-below')).toBeHidden();
 
@@ -72,7 +72,7 @@ test('start → mail → animation → result → steps → share', async ({ pag
 	// The shared page never has the mail itself.
 	await shared.getByRole('button', { name: 'Mail-Quelle & Header' }).click();
 	await expect(shared.locator('[data-preview-missing]').first()).toBeVisible();
-	// The shared link never shows the dbw media offer.
+	// The shared link never shows the setup offer.
 	await expect(shared.locator('.rv-setup')).toHaveCount(0);
 	// Server-rendered: steps and stations are in the HTML even without JavaScript.
 	const html = await (await shared.request.get(url)).text();
@@ -170,7 +170,7 @@ test('"Eingetragen? Jetzt prüfen": the DNS re-check turns the step green and ra
 	const card = page.locator('[data-todo]').first();
 	await expect(card).toContainText('_dmarc');
 	await expect(page.locator('.rv-guide, [data-todo] a').filter({ hasText: "So geht's bei IONOS" }).first()).toBeVisible();
-	// The shared link never carries the dbw media offer.
+	// The shared link never carries the setup offer.
 	await expect(page.locator('.rv-setup')).toHaveCount(0);
 
 	// Not there yet: a friendly note, the card stays open.

@@ -5,9 +5,10 @@ export const SITE = {
 	url: 'https://e-mail-check.de',
 	owner: 'Dennis Buchwald',
 	ownerUrl: 'https://dennisbuchwald.de',
-	/** "Lass es einrichten" target (decision 21.10.2026). */
-	/** dbw media setup offer; {check} = kind of problem (utm_content). Never personal data in the URL. */
-	setupUrl: 'https://dbw-media.de/projektanfrage/?utm_source=e-mail-check&utm_medium=ergebnis&utm_campaign=mail-setup&utm_content={check}',
+	/** "Lass es einrichten" target: buchwald.digital, the mail and IT service of the owner. {check} = kind of problem (utm_content). Never personal data in the URL. */
+	setupUrl: 'https://buchwald.digital/kontakt/?utm_source=e-mail-check&utm_medium=ergebnis&utm_campaign=mail-setup&utm_content={check}',
+	/** Same service, linked from the Google Workspace guides. */
+	serviceUrl: 'https://buchwald.digital/einrichten/',
 };
 
 export const PROVIDERS = [
